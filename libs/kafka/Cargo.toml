@@ -1,0 +1,22 @@
+[package]
+name = "kafka"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+tokio.workspace = true
+
+serde.workspace = true
+
+serde_json.workspace = true
+
+anyhow.workspace = true
+
+tracing.workspace = true
+
+thiserror.workspace = true
+
+futures-util = "0.3"
+
+rdkafka = "0.36"

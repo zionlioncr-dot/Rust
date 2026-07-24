@@ -1,0 +1,72 @@
+[workspace]
+resolver = "2"
+
+members = [
+
+    "apps/api-gateway",
+
+    "apps/audit-service",
+
+    "apps/audit-consumer",
+
+    "apps/outbox-worker",
+
+    "libs/domain",
+
+    "libs/common",
+
+    "libs/repository",
+
+    "libs/kafka",
+
+    "libs/event-bus",
+
+    "libs/telemetry",
+    
+    "libs/metrics"
+
+, "apps/audit-consumer", "apps/notification-service", "apps/analytics-service", "apps/api-gateway", "apps/llm-gateway", "apps/embedding-service", "apps/rag-service", "apps/workflow-engine"]
+
+[workspace.dependencies]
+
+tokio = { version = "1", features = ["full"] }
+
+axum = "0.8"
+
+serde = { version="1", features=["derive"] }
+
+serde_json = "1"
+
+uuid = { version="1", features=["v4","serde"] }
+
+chrono = { version="0.4", features=["serde"] }
+
+tower = "0.5"
+
+tower-http = { version="0.6", features=["trace"] }
+
+tracing = "0.1"
+
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+
+sqlx = { version = "0.8", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "macros"
+] }
+
+dotenvy = "0.15"
+
+anyhow = "1"
+
+thiserror = "2"
+
+async-trait = "0.1"
+
+http = "1"
+
+once_cell = "1.21"
+
+prometheus = "0.13"
