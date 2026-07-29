@@ -2,18 +2,14 @@ use anyhow::{bail, Result};
 
 use domain::events::event_envelope::EventEnvelope;
 
-use crate::{dispatcher::handler_registry::HandlerRegistry, modules::audit_module};
+use crate::dispatcher::handler_registry::HandlerRegistry;
 
 pub struct EventDispatcher {
     registry: HandlerRegistry,
 }
 
 impl EventDispatcher {
-    pub fn new() -> Self {
-        let mut registry = HandlerRegistry::new();
-
-        audit_module::register(&mut registry);
-
+    pub fn new(registry: HandlerRegistry) -> Self {
         Self { registry }
     }
 

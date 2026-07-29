@@ -10,9 +10,10 @@ domain = { path = "../../libs/domain" }
 repository = { path = "../../libs/repository" }
 telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
-metrics = { path = "../../libs/metrics" }
 
 tower.workspace = true
+
+http.workspace = true
 
 tokio = { workspace = true }
 
@@ -23,6 +24,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 uuid = { workspace = true }
+
+prometheus.workspace = true
 
 chrono = { workspace = true }
 

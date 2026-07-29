@@ -42,8 +42,6 @@ impl AuditService {
 
         let saved_event = self.audit_repository.create(event).await?;
 
-        metrics::metrics::record_audit(&saved_event.action);
-
         let outbox = OutboxBuilder::audit_created(&saved_event)?;
 
         self.outbox_repository.save(outbox).await?;

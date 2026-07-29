@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
 
     init_tracing()?;
 
-    let consumer = AuditConsumer::new()?;
+    let consumer = AuditConsumer::new().await?;
 
     consumer.run().await?;
 

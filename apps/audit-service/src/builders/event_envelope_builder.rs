@@ -1,7 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
 use serde::Serialize;
-use serde_json::Value;
 use uuid::Uuid;
 
 use domain::events::{

@@ -21,9 +21,7 @@ members = [
 
     "libs/event-bus",
 
-    "libs/telemetry",
-    
-    "libs/metrics"
+    "libs/telemetry"
 
 , "apps/audit-consumer", "apps/notification-service", "apps/analytics-service", "apps/api-gateway", "apps/llm-gateway", "apps/embedding-service", "apps/rag-service", "apps/workflow-engine"]
 

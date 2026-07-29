@@ -17,13 +17,11 @@ use state::AppState;
 
 use anyhow::Result;
 
-use telemetry::tracing::init_tracing;
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
 
-    telemetry::tracing::init_tracing()?;
+    telemetry::tracing::init_tracing().expect("failed to initialize tracing");
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
@@ -53,7 +51,7 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-    axum::serve(listener, app).await;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

@@ -1,10 +1,8 @@
-use axum::response::{IntoResponse, Response};
-
-use http::header::CONTENT_TYPE;
+use axum::response::IntoResponse;
 
 use prometheus::{Encoder, TextEncoder};
 
-pub async fn metrics() -> Response {
+pub async fn metrics() -> impl IntoResponse {
     let encoder = TextEncoder::new();
 
     let metric_families = prometheus::gather();
@@ -13,9 +11,5 @@ pub async fn metrics() -> Response {
 
     encoder.encode(&metric_families, &mut buffer).unwrap();
 
-    (
-        [(CONTENT_TYPE, encoder.format_type())],
-        String::from_utf8(buffer).unwrap(),
-    )
-        .into_response()
+    String::from_utf8(buffer).unwrap()
 }

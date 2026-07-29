@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin};
+use std::{future::Future, pin::Pin, sync::Arc};
 
 use anyhow::Result;
 
@@ -9,14 +9,12 @@ use crate::{
 };
 
 pub struct AuditHandler {
-    service: AuditProcessingService,
+    service: Arc<AuditProcessingService>,
 }
 
 impl AuditHandler {
-    pub fn new() -> Self {
-        Self {
-            service: AuditProcessingService::new(),
-        }
+    pub fn new(service: Arc<AuditProcessingService>) -> Self {
+        Self { service }
     }
 }
 

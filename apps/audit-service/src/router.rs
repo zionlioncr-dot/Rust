@@ -15,18 +15,10 @@ use crate::{
 
 pub fn create_router(state: AppState) -> Router {
     Router::new()
-
-    .route("/health", get(health))
-
-    .route("/version", get(version))
-
-    .route("/audit", post(create_audit))
-
-    .route("/metrics", get(metrics_handler::metrics))
-
-    .layer(
-        middleware::from_fn(metrics_middleware)
-    )
-
-    .with_state(state)
+        .route("/health", get(health))
+        .route("/version", get(version))
+        .route("/audit", post(create_audit))
+        .route("/metrics", get(metrics_handler::metrics))
+        .layer(middleware::from_fn(metrics_middleware))
+        .with_state(state)
 }

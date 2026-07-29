@@ -1,16 +1,10 @@
 use std::time::Instant;
 
-use axum::{
-    extract::Request,
-    middleware::Next,
-    response::Response,
-};
+use axum::{extract::Request, middleware::Next, response::Response};
 
-pub async fn metrics_middleware(
-    request: Request,
-    next: Next,
-) -> Response {
+use crate::metrics::{record_duration, record_request};
 
+pub async fn metrics_middleware(request: Request, next: Next) -> Response {
     let method = request.method().to_string();
 
     let path = request.uri().path().to_string();
@@ -19,18 +13,11 @@ pub async fn metrics_middleware(
 
     let response = next.run(request).await;
 
-    let duration = start.elapsed().as_secs_f64();
+    let elapsed = start.elapsed().as_secs_f64();
 
-    metrics::metrics::record_http(
-        &method,
-        &path,
-    );
+    record_request(&method, &path, response.status().as_str());
 
-    metrics::metrics::record_duration(
-        &method,
-        &path,
-        duration,
-    );
+    record_duration(&method, &path, elapsed);
 
     response
 }
