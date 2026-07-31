@@ -1,17 +1,18 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use sqlx::postgres::PgPoolOptions;
 use tracing::{error, info};
+
+use common::{config::AppConfig, database::create_pool};
 
 use repository::{outbox_repository::OutboxRepository, PostgresRepository};
 
-use crate::{config::Config, publisher::kafka_publisher::KafkaPublisher};
+use crate::publisher::kafka_publisher::KafkaPublisher;
 
 const BATCH_SIZE: i64 = 100;
 
 pub struct OutboxWorker {
-    config: Config,
+    config: AppConfig,
 
     repository: Arc<dyn OutboxRepository>,
 
@@ -20,21 +21,18 @@ pub struct OutboxWorker {
 
 impl OutboxWorker {
     pub async fn new() -> Result<Self> {
-        let database_url = std::env::var("DATABASE_URL")?;
+        let config = AppConfig::load();
 
-        let pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&database_url)
-            .await?;
+        let pool = create_pool(config.max_db_connections).await?;
 
         let repository = Arc::new(PostgresRepository::new(pool));
 
+        let publisher = KafkaPublisher::new(&config)?;
+
         Ok(Self {
-            config: Config::load(),
-
+            config,
             repository,
-
-            publisher: KafkaPublisher::new()?,
+            publisher,
         })
     }
 
@@ -59,18 +57,18 @@ impl OutboxWorker {
 
                         info!(
                             event_id = %event.id,
+                            event_type = %event.event_type,
                             "Event published successfully"
                         );
                     }
 
-                    Err(e) => {
+                    Err(err) => {
                         error!(
                             event_id = %event.id,
-                            error = %e,
+                            event_type = %event.event_type,
+                            error = %err,
                             "Failed to publish event"
                         );
-
-                        continue;
                     }
                 }
             }

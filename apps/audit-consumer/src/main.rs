@@ -1,8 +1,9 @@
-mod config;
 mod consumer;
+mod container;
 mod dispatcher;
 mod handler;
 mod modules;
+mod retry;
 mod service;
 
 use anyhow::Result;

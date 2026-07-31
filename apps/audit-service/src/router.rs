@@ -7,8 +7,8 @@ use telemetry::middleware::metrics_middleware;
 
 use crate::{
     handlers::{
-        audit_handler::create_audit, health_handler::health, metrics_handler,
-        version_handler::version,
+        audit_handler::create_audit, health_handler::health, live_handler::live, metrics_handler,
+        ready_handler::ready, version_handler::version,
     },
     state::AppState,
 };
@@ -16,6 +16,8 @@ use crate::{
 pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
+        .route("/live", get(live))
+        .route("/ready", get(ready))
         .route("/version", get(version))
         .route("/audit", post(create_audit))
         .route("/metrics", get(metrics_handler::metrics))

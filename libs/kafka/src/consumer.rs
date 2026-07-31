@@ -8,18 +8,21 @@ use rdkafka::{
     ClientConfig,
 };
 
-use crate::{config::KafkaConfig, event::KafkaEvent};
+use crate::event::KafkaEvent;
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
 }
 
 impl KafkaConsumer {
-    pub fn new(group: &str) -> Result<Self> {
-        let config = KafkaConfig::load();
+    pub fn new(brokers: &str, group: &str) -> Result<Self> {
+        println!("==============================");
+        println!("KafkaConsumer brokers = {}", brokers);
+        println!("Group = {}", group);
+        println!("==============================");
 
         let consumer: StreamConsumer = ClientConfig::new()
-            .set("bootstrap.servers", &config.brokers)
+            .set("bootstrap.servers", brokers)
             .set("group.id", group)
             .set("enable.auto.commit", "true")
             .set("auto.offset.reset", "earliest")
@@ -37,7 +40,6 @@ impl KafkaConsumer {
     pub async fn listen<F, Fut>(&self, mut handler: F) -> Result<()>
     where
         F: FnMut(KafkaEvent) -> Fut,
-
         Fut: std::future::Future<Output = Result<()>>,
     {
         let mut stream = self.consumer.stream();
@@ -47,17 +49,13 @@ impl KafkaConsumer {
 
             let payload = match message.payload_view::<str>() {
                 Some(Ok(value)) => value.to_string(),
-
                 Some(Err(_)) => String::new(),
-
                 None => String::new(),
             };
 
             let key = match message.key_view::<str>() {
                 Some(Ok(value)) => Some(value.to_string()),
-
                 Some(Err(_)) => None,
-
                 None => None,
             };
 

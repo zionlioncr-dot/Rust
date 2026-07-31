@@ -1,8 +1,8 @@
 use anyhow::Result;
 
-use kafka::KafkaProducer;
+use common::config::AppConfig;
 
-use crate::EventEnvelope;
+use kafka::KafkaProducer;
 
 pub struct EventPublisher {
     producer: KafkaProducer,
@@ -10,16 +10,14 @@ pub struct EventPublisher {
 
 impl EventPublisher {
     pub fn new() -> Result<Self> {
+        let config = AppConfig::load();
+
         Ok(Self {
-            producer: KafkaProducer::new()?,
+            producer: KafkaProducer::new(&config.kafka_brokers)?,
         })
     }
 
-    pub async fn publish(&self, topic: &str, event: &EventEnvelope) -> Result<()> {
-        let payload = serde_json::to_string(event)?;
-
-        self.producer
-            .publish(topic, Some(&event.id.to_string()), &payload)
-            .await
+    pub async fn publish(&self, topic: &str, key: Option<&str>, payload: &str) -> Result<()> {
+        self.producer.publish(topic, key, payload).await
     }
 }

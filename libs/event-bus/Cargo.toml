@@ -16,6 +16,8 @@ tracing.workspace = true
 
 thiserror = "2"
 
+common = { path = "../common" }
+
 kafka = { path = "../kafka" }
 
 domain = { path = "../domain" }

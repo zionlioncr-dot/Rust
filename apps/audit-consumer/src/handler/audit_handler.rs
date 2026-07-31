@@ -2,10 +2,15 @@ use std::{future::Future, pin::Pin, sync::Arc};
 
 use anyhow::Result;
 
-use domain::events::{audit_created::AuditCreatedEvent, event_envelope::EventEnvelope};
+use domain::events::{
+    audit_created::AuditCreatedEvent,
+    event_envelope::EventEnvelope,
+    event_types::AUDIT_CREATED,
+};
 
 use crate::{
-    handler::event_handler::EventHandler, service::audit_processing_service::AuditProcessingService,
+    handler::event_handler::EventHandler,
+    service::audit_processing_service::AuditProcessingService,
 };
 
 pub struct AuditHandler {
@@ -20,7 +25,7 @@ impl AuditHandler {
 
 impl EventHandler for AuditHandler {
     fn event_type(&self) -> &'static str {
-        "audit.created"
+        AUDIT_CREATED
     }
 
     fn handle(
@@ -28,7 +33,8 @@ impl EventHandler for AuditHandler {
         envelope: EventEnvelope,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + '_>> {
         Box::pin(async move {
-            let event: AuditCreatedEvent = serde_json::from_value(envelope.payload)?;
+            let event: AuditCreatedEvent =
+                serde_json::from_value(envelope.payload)?;
 
             self.service.process(event).await?;
 

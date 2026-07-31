@@ -6,6 +6,8 @@ use tracing::{info, warn};
 
 use domain::events::audit_created::AuditCreatedEvent;
 
+use metrics::recorder;
+
 use crate::service::idempotency_service::IdempotencyService;
 
 pub struct AuditProcessingService {
@@ -18,7 +20,6 @@ impl AuditProcessingService {
     }
 
     pub async fn process(&self, event: AuditCreatedEvent) -> Result<()> {
-        // Verificar si el evento ya fue procesado.
         if self.idempotency.already_processed(event.id).await? {
             warn!(
                 event_id = %event.id,
@@ -28,7 +29,6 @@ impl AuditProcessingService {
             return Ok(());
         }
 
-        // Lógica del negocio.
         info!(
             event_id = %event.id,
             user = %event.user,
@@ -37,8 +37,10 @@ impl AuditProcessingService {
         );
 
         self.idempotency
-            .mark_processed(event.id, "audit-consumer", "AuditHandler")
+            .mark_processed(event.id, "audit-consumer", "audit-processing-service")
             .await?;
+
+        recorder::processed();
 
         Ok(())
     }

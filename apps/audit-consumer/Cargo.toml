@@ -11,6 +11,7 @@ common = { path = "../../libs/common" }
 telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
 repository = { path = "../../libs/repository" }
+metrics = { path = "../../libs/metrics" }
 
 tokio.workspace = true
 serde.workspace = true

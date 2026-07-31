@@ -1,59 +1,71 @@
 # Financial Intelligence Platform
 
-> High-performance Event-Driven Financial Intelligence Platform built with Rust.
+[![Rust](https://img.shields.io/badge/Rust-1.87+-orange.svg)](https://www.rust-lang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+[![Redpanda](https://img.shields.io/badge/Redpanda-Kafka-red.svg)](https://redpanda.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
+[![Architecture](https://img.shields.io/badge/Architecture-Microservices-success.svg)]()
 
-## Overview
+---
 
-Financial Intelligence Platform is a modular, event-driven microservices architecture designed around modern distributed systems principles.
+# Financial Intelligence Platform
 
-The platform implements several enterprise patterns including:
+High-throughput event-driven platform written in Rust following modern backend architecture patterns:
 
-* Transactional Outbox Pattern
-* Inbox Pattern (Idempotent Consumers)
-* Domain Events
-* Dependency Injection
-* Repository Pattern
-* Event Dispatcher
-* Handler Registry
-* Kafka-based Event Streaming
-* PostgreSQL Persistence
-
-The objective is to provide a scalable foundation for processing millions of financial events with reliability, consistency, and high throughput.
+- Clean Architecture
+- Domain Driven Design (DDD)
+- Event Driven Architecture (EDA)
+- Transactional Outbox
+- CQRS Ready
+- Kafka / Redpanda
+- Idempotent Consumers
+- Retry Policies
+- Dead Letter Queue
+- Dependency Injection
+- OpenTelemetry Ready
+- Prometheus Metrics
+- Kubernetes Ready
 
 ---
 
 # Architecture
 
 ```
-                 Client
-                    │
-                    ▼
-              API Gateway
-                    │
-                    ▼
-             Audit Service
-                    │
-      Transactional Outbox
-                    │
-                    ▼
-              Kafka Broker
-                    │
-                    ▼
-            Audit Consumer
-                    │
-              Event Dispatcher
-                    │
-              Handler Registry
-                    │
-             Audit Handler
-                    │
-       Audit Processing Service
-                    │
-         Idempotency Service
-                    │
-       ProcessedEventRepository
-                    │
-           PostgreSQL Database
+                  +------------------+
+                  |    API Gateway   |
+                  +---------+--------+
+                            |
+                            |
+                    HTTP / REST
+                            |
+                            v
+                  +------------------+
+                  |  Audit Service   |
+                  +---------+--------+
+                            |
+          PostgreSQL Transaction
+                            |
+                            v
+                  +------------------+
+                  | Outbox Events    |
+                  +---------+--------+
+                            |
+                 Outbox Worker
+                            |
+                            v
+                     Redpanda / Kafka
+                            |
+                            |
+                +-----------+-----------+
+                |                       |
+                v                       v
+       Audit Consumer         Future Consumers
+                |
+                v
+      Business Processing
+                |
+                v
+       Processed Events
 ```
 
 ---
@@ -64,216 +76,252 @@ The objective is to provide a scalable foundation for processing millions of fin
 financial-intelligence-platform/
 
 apps/
-│
-├── api-gateway/
-├── audit-service/
-├── audit-consumer/
-├── outbox-worker/
-│
+    api-gateway/
+    audit-service/
+    outbox-worker/
+    audit-consumer/
+
 libs/
-│
-├── common/
-├── domain/
-├── event-bus/
-├── kafka/
-├── repository/
-├── telemetry/
+    common/
+    domain/
+    repository/
+    kafka/
+    event-bus/
+    telemetry/
+    metrics/
+
+docker-compose.yml
+Cargo.toml
 ```
 
 ---
 
 # Current Features
 
+## API Gateway
+
+- Reverse proxy ready
+- Middleware support
+- Request ID
+- Logging
+- Authentication ready
+
+---
+
 ## Audit Service
 
-* REST API
-* Audit Event persistence
-* Transactional Outbox
-* PostgreSQL
-* Event Envelope generation
+- Create Audit Events
+- Persist to PostgreSQL
+- Transactional Outbox
+- Health endpoint
+- Version endpoint
+- Metrics endpoint
 
 ---
 
 ## Outbox Worker
 
-* Poll unpublished events
-* Publish events to Kafka
-* Mark events as published
-* Retry-ready architecture
+Implements the Transactional Outbox Pattern.
+
+Workflow
+
+```
+Audit Service
+
+↓
+
+audit_events
+
+↓
+
+outbox_events
+
+↓
+
+Kafka Producer
+
+↓
+
+Redpanda
+```
+
+Features
+
+- Batch publishing
+- Configurable polling interval
+- Automatic publish flag
+- Retry ready
 
 ---
 
 ## Audit Consumer
 
-* Kafka Consumer
-* Event Dispatcher
-* Dynamic Handler Registry
-* Audit Handler
-* Dependency Injection
-* Inbox Pattern
-* Idempotent Processing
+Features
+
+- Kafka Consumer
+- Handler Registry
+- Retry Policy
+- Dead Letter Queue
+- Idempotency
+- Event Dispatcher
 
 ---
 
-## Repository Layer
-
-Current repositories:
-
-* AuditRepository
-* OutboxRepository
-* ProcessedEventRepository
-
-Unified PostgreSQL implementation:
-
-```
-PostgresRepository
-```
-
----
-
-# Enterprise Patterns
-
-Implemented patterns:
-
-* Repository Pattern
-* Transactional Outbox
-* Inbox Pattern
-* Dependency Injection
-* Domain Events
-* Event Envelope
-* Event Dispatcher
-* Handler Registry
-* Idempotent Consumer
-
----
-
-# Technology Stack
-
-## Language
-
-* Rust 2021
-
-## Database
-
-* PostgreSQL
-
-## Messaging
-
-* Apache Kafka
-
-## Async Runtime
-
-* Tokio
-
-## ORM
-
-* SQLx
-
-## Serialization
-
-* Serde
-
-## Logging
-
-* Tracing
-
-## Containerization
-
-* Docker
-* Docker Compose
-
----
-
-# Current Flow
+# Event Flow
 
 ```
 POST /audit
-      │
-      ▼
-AuditService
-      │
-      ▼
-AuditRepository
-      │
-      ▼
-OutboxRepository
-      │
-      ▼
-PostgreSQL
-      │
-Outbox Worker
-      │
-      ▼
-Kafka
-      │
-      ▼
+
+↓
+
+AuditEvent
+
+↓
+
+OutboxEvent
+
+↓
+
+Redpanda Topic
+
+↓
+
 Audit Consumer
-      │
-      ▼
-Dispatcher
-      │
-      ▼
+
+↓
+
 Audit Handler
-      │
-      ▼
-AuditProcessingService
-      │
-      ▼
-IdempotencyService
-      │
-      ▼
-ProcessedEventRepository
+
+↓
+
+Business Logic
+
+↓
+
+processed_events
 ```
 
 ---
 
-# Project Status
+# Event Envelope
 
-## Completed
+Every event is wrapped in a standard envelope.
 
-* Rust Workspace
-* Modular Architecture
-* PostgreSQL Integration
-* Kafka Integration
-* Transactional Outbox
-* Inbox Pattern
-* Event Dispatcher
-* Handler Registry
-* Dependency Injection
-* Repository Layer
-* Idempotency
-* Consumer Architecture
-
----
-
-## In Progress
-
-* Retry Engine
-* Dead Letter Queue
-* Health Checks
-* Metrics
-* Configuration Layer
+```json
+{
+  "metadata": {
+    "event_id": "...",
+    "correlation_id": "...",
+    "trace_id": "...",
+    "source": "...",
+    "timestamp": "..."
+  },
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "event_type": "AuditCreated",
+  "payload": {}
+}
+```
 
 ---
 
-## Planned
+# Event Versioning
 
-* CQRS
-* Event Replay
-* Saga Orchestrator
-* OpenTelemetry
-* Prometheus
-* Grafana
-* Kubernetes Deployment
-* Horizontal Scaling
-* Distributed Tracing
+Current Version
+
+```
+1.0.0
+```
+
+Future compatible.
+
+Supports:
+
+- Major
+- Minor
+- Patch
+
+---
+
+# Implemented Patterns
+
+- Repository Pattern
+- Builder Pattern
+- Dependency Injection
+- Event Dispatcher
+- Handler Registry
+- Retry Pattern
+- Dead Letter Queue
+- Idempotency Pattern
+- Transactional Outbox
+- Event Envelope
+- Event Versioning
+
+---
+
+# Observability
+
+Current
+
+- Structured Logging
+- Tracing
+- Prometheus Metrics
+- Health Checks
+- Version Endpoint
+
+Endpoints
+
+```
+GET /health
+
+GET /metrics
+
+GET /version
+```
+
+---
+
+# Technologies
+
+| Technology | Version |
+|------------|----------|
+| Rust | stable |
+| Tokio | latest |
+| Axum | latest |
+| SQLx | latest |
+| PostgreSQL | 16 |
+| Redpanda | Kafka Compatible |
+| Docker | latest |
+| Prometheus | Ready |
+| OpenTelemetry | Ready |
+
+---
+
+# Database
+
+Current tables
+
+```
+audit_events
+
+outbox_events
+
+processed_events
+
+dead_letter_events
+```
 
 ---
 
 # Build
 
-```bash
+```
 cargo fmt
+
+cargo clippy
 
 cargo check --workspace
 
@@ -284,58 +332,138 @@ cargo test --workspace
 
 # Running
 
-Start PostgreSQL and Kafka:
+## Infrastructure
 
-```bash
+```
 docker compose up -d
 ```
 
-Run the Audit Service:
+---
 
-```bash
+## API
+
+```
 cargo run -p audit-service
 ```
 
-Run the Outbox Worker:
+---
 
-```bash
+## Worker
+
+```
 cargo run -p outbox-worker
 ```
 
-Run the Audit Consumer:
+---
 
-```bash
+## Consumer
+
+```
 cargo run -p audit-consumer
 ```
 
 ---
 
-# Roadmap
+# Test
 
-## Sprint 14
+Create an audit event
 
-* Retry Engine
-* Dead Letter Queue
-* Health Checks
-* Configuration Layer
-* Metrics
+```
+curl -X POST http://localhost:3000/audit \
+-H "Content-Type: application/json" \
+-d '{
+    "user":"alejandro",
+    "action":"LOGIN"
+}'
+```
 
-## Sprint 15
+Health
 
-* Event Replay
-* CQRS Read Models
+```
+curl http://localhost:3000/health
+```
 
-## Sprint 16
+Version
 
-* Saga Orchestrator
+```
+curl http://localhost:3000/version
+```
 
-## Sprint 17
+Metrics
 
-* Observability
+```
+curl http://localhost:3000/metrics
+```
 
-## Sprint 18
+---
 
-* Kubernetes Deployment
+# Current Status
+
+## Completed
+
+- Workspace Architecture
+- Dependency Injection
+- Audit Service
+- Transactional Outbox
+- Kafka Producer
+- Kafka Consumer
+- Event Dispatcher
+- Handler Registry
+- Retry Executor
+- Dead Letter Service
+- Idempotency
+- Event Envelope
+- Event Versioning
+- Health Endpoint
+- Metrics Endpoint
+- Version Endpoint
+
+---
+
+## In Progress
+
+- End-to-End Integration Tests
+- Distributed Tracing
+- Prometheus Dashboard
+- Grafana Dashboard
+- Docker Production Images
+
+---
+
+## Planned
+
+- Schema Registry
+- Kafka Streams
+- CQRS Read Models
+- Event Sourcing
+- Saga Orchestrator
+- Redis Cache
+- gRPC Services
+- Kubernetes Deployment
+- Horizontal Scaling
+- GitHub Actions CI/CD
+- Terraform Infrastructure
+- AWS Deployment
+
+---
+
+# Design Principles
+
+- SOLID
+- Clean Architecture
+- Domain Driven Design
+- Hexagonal Architecture
+- Event Driven Architecture
+- Observable Systems
+- High Throughput
+- Fault Tolerant
+- Cloud Native
+
+---
+
+# License
+
+MIT
 
 ---
 
@@ -345,4 +473,4 @@ Alejandro Retana
 
 Financial Intelligence Platform
 
-Built with Rust using Event-Driven Architecture principles.
+2026

@@ -1,5 +1,7 @@
 use anyhow::Result;
 
+use common::config::AppConfig;
+
 use kafka::KafkaProducer;
 
 pub struct KafkaPublisher {
@@ -7,9 +9,9 @@ pub struct KafkaPublisher {
 }
 
 impl KafkaPublisher {
-    pub fn new() -> Result<Self> {
+    pub fn new(config: &AppConfig) -> Result<Self> {
         Ok(Self {
-            producer: KafkaProducer::new()?,
+            producer: KafkaProducer::new(&config.kafka_brokers)?,
         })
     }
 
