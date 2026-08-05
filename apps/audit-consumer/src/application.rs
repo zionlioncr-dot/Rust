@@ -12,8 +12,8 @@ pub async fn run() -> Result<()> {
             result?;
         }
 
-        result = wait_for_shutdown() => {
-            result?;
+        _ = wait_for_shutdown() => {
+            tracing::info!("Shutdown signal received");
         }
     }
 

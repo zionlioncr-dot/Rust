@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 
 use tracing::{info, warn};
 
 use domain::events::audit_created::AuditCreatedEvent;
 
-use metrics::recorder;
+use metrics::consumer_metrics;
 
 use crate::service::idempotency_service::IdempotencyService;
 
@@ -19,8 +19,31 @@ impl AuditProcessingService {
         Self { idempotency }
     }
 
-    pub async fn process(&self, event: AuditCreatedEvent) -> Result<()> {
+    pub async fn process(
+        &self,
+        event: AuditCreatedEvent,
+    ) -> Result<()> {
+
+        //
+        // Domain validation
+        //
+
+        if event.user.trim().is_empty() {
+            consumer_metrics::failed();
+            bail!("user cannot be empty");
+        }
+
+        if event.action.trim().is_empty() {
+            consumer_metrics::failed();
+            bail!("action cannot be empty");
+        }
+
+        //
+        // Idempotency
+        //
+
         if self.idempotency.already_processed(event.id).await? {
+
             warn!(
                 event_id = %event.id,
                 "Duplicate event ignored"
@@ -28,6 +51,10 @@ impl AuditProcessingService {
 
             return Ok(());
         }
+
+        //
+        // Business logic
+        //
 
         info!(
             event_id = %event.id,
@@ -37,10 +64,14 @@ impl AuditProcessingService {
         );
 
         self.idempotency
-            .mark_processed(event.id, "audit-consumer", "audit-processing-service")
+            .mark_processed(
+                event.id,
+                "audit-consumer",
+                "audit-processing-service",
+            )
             .await?;
 
-        recorder::processed();
+        consumer_metrics::processed();
 
         Ok(())
     }

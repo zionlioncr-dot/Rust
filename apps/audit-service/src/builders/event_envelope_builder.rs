@@ -7,9 +7,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use domain::events::{
-    event_envelope::EventEnvelope,
-    event_metadata::EventMetadata,
-    event_version::EventVersion,
+    event_envelope::EventEnvelope, event_metadata::EventMetadata, event_version::EventVersion,
 };
 
 pub struct EventEnvelopeBuilder;

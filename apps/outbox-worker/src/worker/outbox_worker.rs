@@ -7,15 +7,15 @@ use common::{config::AppConfig, database::create_pool};
 
 use repository::{outbox_repository::OutboxRepository, PostgresRepository};
 
+use metrics::outbox_metrics;
+
 use crate::publisher::kafka_publisher::KafkaPublisher;
 
 const BATCH_SIZE: i64 = 100;
 
 pub struct OutboxWorker {
     config: AppConfig,
-
     repository: Arc<dyn OutboxRepository>,
-
     publisher: KafkaPublisher,
 }
 
@@ -42,7 +42,12 @@ impl OutboxWorker {
         loop {
             let events = self.repository.find_unpublished(BATCH_SIZE).await?;
 
-            info!(pending_events = events.len(), "Fetched unpublished events");
+            if !events.is_empty() {
+                info!(
+                    pending_events = events.len(),
+                    "Fetched unpublished events"
+                );
+            }
 
             for event in events {
                 let payload = serde_json::to_string(&event.payload)?;
@@ -53,7 +58,11 @@ impl OutboxWorker {
                     .await
                 {
                     Ok(_) => {
-                        self.repository.mark_as_published(event.id).await?;
+                        self.repository
+                            .mark_as_published(event.id)
+                            .await?;
+
+                        outbox_metrics::published();
 
                         info!(
                             event_id = %event.id,
@@ -63,6 +72,8 @@ impl OutboxWorker {
                     }
 
                     Err(err) => {
+                        outbox_metrics::failed();
+
                         error!(
                             event_id = %event.id,
                             event_type = %event.event_type,
@@ -73,7 +84,10 @@ impl OutboxWorker {
                 }
             }
 
-            tokio::time::sleep(std::time::Duration::from_secs(self.config.polling_interval)).await;
+            tokio::time::sleep(
+                std::time::Duration::from_secs(self.config.polling_interval),
+            )
+            .await;
         }
     }
 }

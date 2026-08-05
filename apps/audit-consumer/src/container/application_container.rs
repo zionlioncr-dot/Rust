@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use common::{config::AppConfig, database::create_pool};
+use crate::config::ConsumerConfig;
+use common::database::create_pool;
 
 use repository::{processed_event_repository::ProcessedEventRepository, PostgresRepository};
 
@@ -18,16 +19,16 @@ use crate::{
 };
 
 pub struct ApplicationContainer {
-    config: AppConfig,
+    config: ConsumerConfig,
     dependencies: Dependencies,
     dispatcher: Arc<EventDispatcher>,
 }
 
 impl ApplicationContainer {
     pub async fn build() -> Result<Self> {
-        let config = AppConfig::load();
+        let config = ConsumerConfig::load();
 
-        let pool = create_pool(config.max_db_connections).await?;
+        let pool = create_pool(config.app.max_db_connections).await?;
 
         let postgres = Arc::new(PostgresRepository::new(pool));
 
@@ -64,7 +65,7 @@ impl ApplicationContainer {
         })
     }
 
-    pub fn config(&self) -> &AppConfig {
+    pub fn config(&self) -> &ConsumerConfig {
         &self.config
     }
 
@@ -74,5 +75,9 @@ impl ApplicationContainer {
 
     pub fn dispatcher(&self) -> Arc<EventDispatcher> {
         self.dispatcher.clone()
+    }
+
+    pub fn dead_letter_service(&self) -> Arc<DeadLetterService> {
+        self.dependencies.dead_letter_service.clone()
     }
 }

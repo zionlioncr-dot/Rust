@@ -6,7 +6,7 @@ use tokio::time::sleep;
 
 use tracing::{error, warn};
 
-use metrics::recorder;
+use metrics::consumer_metrics;
 
 use super::retry_policy::RetryPolicy;
 
@@ -28,9 +28,7 @@ impl RetryExecutor {
 
         loop {
             match operation().await {
-                Ok(_) => {
-                    return Ok(());
-                }
+                Ok(_) => return Ok(()),
 
                 Err(error) => {
                     if !self.policy.should_retry(attempt) {
@@ -43,7 +41,7 @@ impl RetryExecutor {
                         return Err(error);
                     }
 
-                    recorder::retry();
+                    consumer_metrics::retry();
 
                     let delay = self.policy.delay_for(attempt);
 

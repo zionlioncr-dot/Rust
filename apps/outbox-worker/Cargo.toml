@@ -11,6 +11,8 @@ common = { path = "../../libs/common" }
 kafka = { path = "../../libs/kafka" }
 telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
+http-server = { path = "../../libs/http-server" }
+metrics = { path = "../../libs/metrics" }
 
 tokio.workspace = true
 sqlx.workspace = true

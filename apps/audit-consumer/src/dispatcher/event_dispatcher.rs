@@ -1,12 +1,16 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
+
 use tracing::{error, info};
 
 use domain::events::event_envelope::EventEnvelope;
 
+use metrics::consumer_metrics;
+
 use crate::{
-    dispatcher::handler_registry::HandlerRegistry, retry::retry_executor::RetryExecutor,
+    dispatcher::handler_registry::HandlerRegistry,
+    retry::retry_executor::RetryExecutor,
     service::dead_letter_service::DeadLetterService,
 };
 
@@ -59,6 +63,8 @@ impl EventDispatcher {
             }
 
             Err(err) => {
+                consumer_metrics::failed();
+
                 error!(
                     event_type = %envelope.event_type,
                     event_id = %envelope.metadata.event_id,
@@ -74,7 +80,7 @@ impl EventDispatcher {
                     )
                     .await?;
 
-                Err(err)
+                Ok(())
             }
         }
     }

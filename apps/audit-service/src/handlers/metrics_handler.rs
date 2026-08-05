@@ -1,24 +1,24 @@
-use axum::response::{IntoResponse, Response};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 
-use http::{StatusCode, header::CONTENT_TYPE};
-
-use prometheus::{Encoder, TextEncoder};
-
-use metrics::metrics::REGISTRY;
+use metrics::audit_metrics;
 
 pub async fn metrics() -> Response {
-    let encoder = TextEncoder::new();
-
-    let metric_families = REGISTRY.gather();
-
-    let mut buffer = Vec::new();
-
-    encoder.encode(&metric_families, &mut buffer).unwrap();
+    let body = format!(
+        "\
+audit_requests_total {}\n\
+audit_created_total {}\n\
+",
+        audit_metrics::request_total(),
+        audit_metrics::audit_created_total(),
+    );
 
     (
         StatusCode::OK,
-        [(CONTENT_TYPE, encoder.format_type())],
-        buffer,
+        [("content-type", "text/plain; version=0.0.4")],
+        body,
     )
         .into_response()
 }

@@ -12,6 +12,7 @@ telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
 repository = { path = "../../libs/repository" }
 metrics = { path = "../../libs/metrics" }
+http-server = { path = "../../libs/http-server" }
 
 tokio.workspace = true
 serde.workspace = true

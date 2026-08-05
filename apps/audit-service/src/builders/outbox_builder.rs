@@ -8,10 +8,7 @@ use uuid::Uuid;
 
 use domain::{
     audit_event::AuditEvent,
-    events::{
-        audit_created::AuditCreatedEvent,
-        event_types::AUDIT_CREATED,
-    },
+    events::{audit_created::AuditCreatedEvent, event_types::AUDIT_CREATED},
     outbox_event::OutboxEvent,
 };
 
@@ -31,12 +28,8 @@ impl OutboxBuilder {
             created_at: audit.created_at,
         };
 
-        let envelope = EventEnvelopeBuilder::build(
-            AUDIT_CREATED,
-            "audit-service",
-            Some(audit.id),
-            &event,
-        )?;
+        let envelope =
+            EventEnvelopeBuilder::build(AUDIT_CREATED, "audit-service", Some(audit.id), &event)?;
 
         Ok(OutboxEvent {
             id: Uuid::new_v4(),

@@ -4,11 +4,12 @@ use anyhow::Result;
 
 use tracing::{error, info};
 
-use metrics::recorder;
+use domain::events::{
+    dead_letter_event::DeadLetterEvent,
+    event_envelope::EventEnvelope,
+};
 
-use domain::events::event_envelope::EventEnvelope;
-
-use domain::events::dead_letter_event::DeadLetterEvent;
+use metrics::consumer_metrics;
 
 use repository::dead_letter_repository::DeadLetterRepository;
 
@@ -44,8 +45,8 @@ impl DeadLetterService {
 
         self.repository.save(event).await?;
 
-        recorder::failed();
-        recorder::dead_letter();
+        consumer_metrics::failed();
+        consumer_metrics::dead_letter();
 
         info!(
             event_id = %envelope.metadata.event_id,
