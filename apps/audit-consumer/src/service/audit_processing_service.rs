@@ -19,11 +19,7 @@ impl AuditProcessingService {
         Self { idempotency }
     }
 
-    pub async fn process(
-        &self,
-        event: AuditCreatedEvent,
-    ) -> Result<()> {
-
+    pub async fn process(&self, event: AuditCreatedEvent) -> Result<()> {
         //
         // Domain validation
         //
@@ -43,7 +39,6 @@ impl AuditProcessingService {
         //
 
         if self.idempotency.already_processed(event.id).await? {
-
             warn!(
                 event_id = %event.id,
                 "Duplicate event ignored"
@@ -64,11 +59,7 @@ impl AuditProcessingService {
         );
 
         self.idempotency
-            .mark_processed(
-                event.id,
-                "audit-consumer",
-                "audit-processing-service",
-            )
+            .mark_processed(event.id, "audit-consumer", "audit-processing-service")
             .await?;
 
         consumer_metrics::processed();

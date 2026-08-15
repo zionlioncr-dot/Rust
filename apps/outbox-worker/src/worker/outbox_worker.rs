@@ -43,10 +43,7 @@ impl OutboxWorker {
             let events = self.repository.find_unpublished(BATCH_SIZE).await?;
 
             if !events.is_empty() {
-                info!(
-                    pending_events = events.len(),
-                    "Fetched unpublished events"
-                );
+                info!(pending_events = events.len(), "Fetched unpublished events");
             }
 
             for event in events {
@@ -58,9 +55,7 @@ impl OutboxWorker {
                     .await
                 {
                     Ok(_) => {
-                        self.repository
-                            .mark_as_published(event.id)
-                            .await?;
+                        self.repository.mark_as_published(event.id).await?;
 
                         outbox_metrics::published();
 
@@ -84,10 +79,7 @@ impl OutboxWorker {
                 }
             }
 
-            tokio::time::sleep(
-                std::time::Duration::from_secs(self.config.polling_interval),
-            )
-            .await;
+            tokio::time::sleep(std::time::Duration::from_secs(self.config.polling_interval)).await;
         }
     }
 }

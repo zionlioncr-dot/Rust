@@ -4,10 +4,7 @@ use anyhow::Result;
 
 use tracing::{error, info};
 
-use domain::events::{
-    dead_letter_event::DeadLetterEvent,
-    event_envelope::EventEnvelope,
-};
+use domain::events::{dead_letter_event::DeadLetterEvent, event_envelope::EventEnvelope};
 
 use metrics::consumer_metrics;
 

@@ -13,6 +13,7 @@ telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
 http-server = { path = "../../libs/http-server" }
 metrics = { path = "../../libs/metrics" }
+health = { path = "../../libs/health" }
 
 tokio.workspace = true
 sqlx.workspace = true

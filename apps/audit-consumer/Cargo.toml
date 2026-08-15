@@ -13,6 +13,7 @@ event-bus = { path = "../../libs/event-bus" }
 repository = { path = "../../libs/repository" }
 metrics = { path = "../../libs/metrics" }
 http-server = { path = "../../libs/http-server" }
+health = { path = "../../libs/health" }
 
 tokio.workspace = true
 serde.workspace = true

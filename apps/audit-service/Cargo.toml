@@ -12,6 +12,9 @@ telemetry = { path = "../../libs/telemetry" }
 event-bus = { path = "../../libs/event-bus" }
 common = { path = "../../libs/common" }
 metrics = { path = "../../libs/metrics" }
+bootstrap = { path = "../../libs/bootstrap" }
+health = { path = "../../libs/health" }
+http-server = { path = "../../libs/http-server" }
 
 tower.workspace = true
 

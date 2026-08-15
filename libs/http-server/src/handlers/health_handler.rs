@@ -4,9 +4,5 @@ use axum::{
 };
 
 pub async fn health() -> Response {
-    (
-        StatusCode::OK,
-        r#"{"status":"UP"}"#,
-    )
-        .into_response()
+    (StatusCode::OK, r#"{"status":"UP"}"#).into_response()
 }

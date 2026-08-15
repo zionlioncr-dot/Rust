@@ -1,4 +1,4 @@
-pub mod outbox_worker;
 pub mod outbox_metrics;
+pub mod outbox_worker;
 
 pub use outbox_worker::OutboxWorker;

@@ -2,20 +2,11 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-use common::{
-    config::AppConfig,
-    database::create_pool,
-};
+use common::{config::AppConfig, database::create_pool};
 
-use repository::{
-    outbox_repository::OutboxRepository,
-    PostgresRepository,
-};
+use repository::{outbox_repository::OutboxRepository, PostgresRepository};
 
-use crate::{
-    container::dependencies::Dependencies,
-    publisher::kafka_publisher::KafkaPublisher,
-};
+use crate::{container::dependencies::Dependencies, publisher::kafka_publisher::KafkaPublisher};
 
 pub struct ApplicationContainer {
     config: AppConfig,
@@ -30,11 +21,9 @@ impl ApplicationContainer {
 
         let postgres = Arc::new(PostgresRepository::new(pool));
 
-        let repository: Arc<dyn OutboxRepository> =
-            postgres.clone();
+        let repository: Arc<dyn OutboxRepository> = postgres.clone();
 
-        let publisher =
-            Arc::new(KafkaPublisher::new(&config)?);
+        let publisher = Arc::new(KafkaPublisher::new(&config)?);
 
         Ok(Self {
             config,

@@ -1,26 +1,26 @@
 use axum::{
-    Router, middleware,
     routing::{get, post},
+    Router,
 };
 
-use telemetry::middleware::metrics_middleware;
-
-use crate::{
-    handlers::{
-        audit_handler::create_audit, health_handler::health, live_handler::live, metrics_handler,
-        ready_handler::ready, version_handler::version,
-    },
-    state::AppState,
+use crate::handlers::{
+    audit_handler,
+    health_handler,
+    live_handler,
+    metrics_handler,
+    ready_handler,
+    version_handler,
 };
 
-pub fn create_router(state: AppState) -> Router {
+use crate::state::AppState;
+
+pub fn router(state: AppState) -> Router {
     Router::new()
-        .route("/health", get(health))
-        .route("/live", get(live))
-        .route("/ready", get(ready))
-        .route("/version", get(version))
-        .route("/audit", post(create_audit))
+        .route("/audit", post(audit_handler::create_audit))
+        .route("/health", get(health_handler::health))
+        .route("/live", get(live_handler::live))
+        .route("/ready", get(ready_handler::ready))
         .route("/metrics", get(metrics_handler::metrics))
-        .layer(middleware::from_fn(metrics_middleware))
+        .route("/version", get(version_handler::version))
         .with_state(state)
 }

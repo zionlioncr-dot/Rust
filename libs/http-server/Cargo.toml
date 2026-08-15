@@ -6,8 +6,12 @@ edition = "2021"
 [dependencies]
 anyhow = "1"
 
-axum = "0.7"
+axum = { workspace = true }
+
+serde.workspace = true
 
 tokio = { version = "1", features = ["full"] }
 
 metrics = { path = "../metrics" }
+
+health = { path = "../health" }

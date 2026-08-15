@@ -11,3 +11,8 @@ tracing-subscriber.workspace = true
 
 prometheus = "0.13"
 once_cell = "1.21"
+
+opentelemetry = "0.32"
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic", "trace"] }
+tracing-opentelemetry = "0.33"

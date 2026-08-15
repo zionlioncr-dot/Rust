@@ -17,9 +17,13 @@ members = [
 
     "libs/repository",
 
+    "libs/health",
+
     "libs/kafka",
 
     "libs/event-bus",
+
+    "libs/bootstrap",
 
     "libs/telemetry"
 
@@ -29,7 +33,7 @@ members = [
 
 tokio = { version = "1", features = ["full"] }
 
-axum = "0.8"
+axum = "0.8.9"
 
 serde = { version="1", features=["derive"] }
 

@@ -59,6 +59,20 @@ services:
       timeout: 5s
       retries: 5
 
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
+    container_name: jaeger
+
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+    restart: unless-stopped
+
   console:
     image: docker.redpanda.com/redpandadata/console:v2.6.0
     container_name: redpanda-console

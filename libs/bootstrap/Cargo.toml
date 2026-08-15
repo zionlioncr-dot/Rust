@@ -1,0 +1,22 @@
+[package]
+name = "bootstrap"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+anyhow = "1"
+
+tokio = { version = "1", features = ["full"] }
+
+tracing = "0.1"
+
+common = { path = "../common" }
+
+telemetry = { path = "../telemetry" }
+
+metrics = { path = "../metrics" }
+
+health = { path = "../health" }
+
+http-server = { path = "../http-server" }
