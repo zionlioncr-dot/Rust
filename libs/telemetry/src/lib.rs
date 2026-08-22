@@ -8,3 +8,4 @@ pub use tracing::{
     init_tracing,
     shutdown_tracing,
 };
+pub use metrics::record_audit_created;

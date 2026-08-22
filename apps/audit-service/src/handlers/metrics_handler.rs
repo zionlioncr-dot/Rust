@@ -1,24 +1,18 @@
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::response::IntoResponse;
 
-use metrics::audit_metrics;
+use prometheus::{Encoder, TextEncoder};
 
-pub async fn metrics() -> Response {
-    let body = format!(
-        "\
-audit_requests_total {}\n\
-audit_created_total {}\n\
-",
-        audit_metrics::request_total(),
-        audit_metrics::audit_created_total(),
-    );
+pub async fn metrics() -> impl IntoResponse {
+    let encoder = TextEncoder::new();
 
-    (
-        StatusCode::OK,
-        [("content-type", "text/plain; version=0.0.4")],
-        body,
-    )
-        .into_response()
+    let metric_families = prometheus::gather();
+
+    let mut buffer = Vec::new();
+
+    encoder
+        .encode(&metric_families, &mut buffer)
+        .expect("failed to encode Prometheus metrics");
+
+    String::from_utf8(buffer)
+        .expect("Prometheus metrics are not valid UTF-8")
 }

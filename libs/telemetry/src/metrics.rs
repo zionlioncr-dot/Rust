@@ -1,12 +1,19 @@
 use once_cell::sync::Lazy;
 
-use prometheus::{register_counter_vec, register_histogram_vec, CounterVec, HistogramVec};
+use prometheus::{
+    register_counter,
+    register_counter_vec,
+    register_histogram_vec,
+    Counter,
+    CounterVec,
+    HistogramVec,
+};
 
 pub static HTTP_REQUESTS: Lazy<CounterVec> = Lazy::new(|| {
     register_counter_vec!(
         "http_requests_total",
         "Total HTTP Requests",
-        &["method", "path", "status",],
+        &["method", "path", "status"],
     )
     .unwrap()
 });
@@ -15,7 +22,15 @@ pub static HTTP_DURATION: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         "http_request_duration_seconds",
         "HTTP Request Duration",
-        &["method", "path",],
+        &["method", "path"],
+    )
+    .unwrap()
+});
+
+pub static AUDIT_CREATED: Lazy<Counter> = Lazy::new(|| {
+    register_counter!(
+        "audit_created_total",
+        "Total audit events successfully created"
     )
     .unwrap()
 });
@@ -30,4 +45,8 @@ pub fn record_duration(method: &str, path: &str, duration: f64) {
     HTTP_DURATION
         .with_label_values(&[method, path])
         .observe(duration);
+}
+
+pub fn record_audit_created() {
+    AUDIT_CREATED.inc();
 }

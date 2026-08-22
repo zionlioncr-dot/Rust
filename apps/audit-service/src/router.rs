@@ -1,4 +1,5 @@
 use axum::{
+    middleware,
     routing::{get, post},
     Router,
 };
@@ -22,5 +23,8 @@ pub fn router(state: AppState) -> Router {
         .route("/ready", get(ready_handler::ready))
         .route("/metrics", get(metrics_handler::metrics))
         .route("/version", get(version_handler::version))
+        .layer(middleware::from_fn(
+            telemetry::metrics_middleware,
+        ))
         .with_state(state)
 }
