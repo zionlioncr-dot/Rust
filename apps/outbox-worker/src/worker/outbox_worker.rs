@@ -43,15 +43,24 @@ impl OutboxWorker {
             let events = self.repository.find_unpublished(BATCH_SIZE).await?;
 
             if !events.is_empty() {
-                info!(pending_events = events.len(), "Fetched unpublished events");
+                info!(
+                    pending_events = events.len(),
+                    "Fetched unpublished events"
+                );
             }
 
             for event in events {
                 let payload = serde_json::to_string(&event.payload)?;
 
+                let subject = format!("{}-value", event.event_type);
+
                 match self
                     .publisher
-                    .publish(&self.config.kafka_topic, &payload)
+                    .publish_with_schema(
+                        &self.config.kafka_topic,
+                        &subject,
+                        &payload,
+                    )
                     .await
                 {
                     Ok(_) => {
@@ -62,7 +71,8 @@ impl OutboxWorker {
                         info!(
                             event_id = %event.id,
                             event_type = %event.event_type,
-                            "Event published successfully"
+                            subject = %subject,
+                            "Event published successfully with Avro schema"
                         );
                     }
 
@@ -72,14 +82,20 @@ impl OutboxWorker {
                         error!(
                             event_id = %event.id,
                             event_type = %event.event_type,
+                            subject = %subject,
                             error = %err,
-                            "Failed to publish event"
+                            "Failed to publish event with Avro schema"
                         );
                     }
                 }
             }
 
-            tokio::time::sleep(std::time::Duration::from_secs(self.config.polling_interval)).await;
+            tokio::time::sleep(
+                std::time::Duration::from_secs(
+                    self.config.polling_interval,
+                )
+            )
+            .await;
         }
     }
 }

@@ -1,0 +1,86 @@
+{
+  "type": "record",
+  "name": "AuditCreated",
+  "namespace": "financial.audit.events",
+  "fields": [
+    {
+      "name": "event_type",
+      "type": "string"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "record",
+        "name": "EventMetadata",
+        "fields": [
+          {
+            "name": "correlation_id",
+            "type": "string"
+          },
+          {
+            "name": "event_id",
+            "type": "string"
+          },
+          {
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "string"
+          },
+          {
+            "name": "trace_id",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "AuditPayload",
+        "fields": [
+          {
+            "name": "action",
+            "type": "string"
+          },
+          {
+            "name": "created_at",
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "user",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "version",
+      "type": {
+        "type": "record",
+        "name": "EventVersion",
+        "fields": [
+          {
+            "name": "major",
+            "type": "int"
+          },
+          {
+            "name": "minor",
+            "type": "int"
+          },
+          {
+            "name": "patch",
+            "type": "int"
+          }
+        ]
+      }
+    }
+  ]
+}

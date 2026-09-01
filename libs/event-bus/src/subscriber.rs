@@ -13,11 +13,23 @@ impl EventSubscriber {
         let config = AppConfig::load();
 
         Ok(Self {
-            consumer: KafkaConsumer::new(&config.kafka_brokers, group)?,
+            consumer: KafkaConsumer::new(
+                &config.kafka_brokers,
+                group,
+                &config.schema_registry_url,
+            )?,
         })
     }
 
-    pub fn consumer(&self) -> &KafkaConsumer {
-        &self.consumer
+    pub fn subscribe(&self, topic: &str) -> Result<()> {
+        self.consumer.subscribe(topic)
+    }
+
+    pub async fn listen<F, Fut>(&self, handler: F) -> Result<()>
+    where
+        F: FnMut(kafka::KafkaEvent) -> Fut,
+        Fut: std::future::Future<Output = Result<()>>,
+    {
+        self.consumer.listen(handler).await
     }
 }

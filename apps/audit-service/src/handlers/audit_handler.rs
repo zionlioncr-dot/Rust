@@ -16,6 +16,14 @@ pub struct CreateAuditRequest {
     pub action: String,
 }
 
+#[tracing::instrument(
+    name = "audit.create",
+    skip(state, request),
+    fields(
+        audit.user = %request.user,
+        audit.action = %request.action,
+    )
+)]
 pub async fn create_audit(
     State(state): State<AppState>,
     Json(request): Json<CreateAuditRequest>,

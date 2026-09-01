@@ -18,10 +18,16 @@ pub struct AppConfig {
     pub server_port: u16,
 
     pub polling_interval: u64,
+
+    pub schema_registry_url: String,
 }
 
 impl AppConfig {
     pub fn load() -> Self {
+
+        let schema_registry_url = env::var("SCHEMA_REGISTRY_URL")
+            .unwrap_or_else(|_| "http://localhost:18081".to_string());
+
         let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
         let kafka_brokers =
@@ -50,6 +56,7 @@ impl AppConfig {
             database_url,
             kafka_brokers,
             kafka_topic,
+            schema_registry_url,
             max_db_connections,
             server_port,
             polling_interval,
