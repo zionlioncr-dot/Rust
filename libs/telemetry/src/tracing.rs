@@ -1,39 +1,21 @@
-use std::{
-    env,
-    sync::OnceLock,
-};
+use std::{env, sync::OnceLock};
 
 use anyhow::{Context, Result};
 
-use opentelemetry::{
-    global,
-    trace::TracerProvider,
-};
+use opentelemetry::{global, trace::TracerProvider};
 
-use opentelemetry_otlp::{
-    SpanExporter,
-    WithExportConfig,
-};
+use opentelemetry_otlp::{SpanExporter, WithExportConfig};
 
-use opentelemetry_sdk::{
-    trace::SdkTracerProvider,
-    Resource,
-};
+use opentelemetry_sdk::{trace::SdkTracerProvider, Resource};
 
 use tracing_opentelemetry::OpenTelemetryLayer;
 
-use tracing_subscriber::{
-    fmt,
-    layer::SubscriberExt,
-    util::SubscriberInitExt,
-    EnvFilter,
-};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 static TRACER_PROVIDER: OnceLock<SdkTracerProvider> = OnceLock::new();
 
 pub fn init_tracing() -> Result<()> {
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     let service_name = env::var("OTEL_SERVICE_NAME")
         .unwrap_or_else(|_| "financial-intelligence-platform".to_string());
@@ -47,9 +29,7 @@ pub fn init_tracing() -> Result<()> {
         .build()
         .context("failed to build OpenTelemetry OTLP exporter")?;
 
-    let resource = Resource::builder()
-        .with_service_name(service_name)
-        .build();
+    let resource = Resource::builder().with_service_name(service_name).build();
 
     let provider = SdkTracerProvider::builder()
         .with_batch_exporter(exporter)

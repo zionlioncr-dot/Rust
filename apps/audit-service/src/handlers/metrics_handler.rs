@@ -13,6 +13,5 @@ pub async fn metrics() -> impl IntoResponse {
         .encode(&metric_families, &mut buffer)
         .expect("failed to encode Prometheus metrics");
 
-    String::from_utf8(buffer)
-        .expect("Prometheus metrics are not valid UTF-8")
+    String::from_utf8(buffer).expect("Prometheus metrics are not valid UTF-8")
 }

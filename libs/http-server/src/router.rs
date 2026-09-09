@@ -1,18 +1,10 @@
 use std::sync::Arc;
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use health::manager::HealthManager;
 
-use crate::handlers::{
-    health_handler,
-    liveness_handler,
-    metrics_handler,
-    version_handler,
-};
+use crate::handlers::{health_handler, liveness_handler, metrics_handler, version_handler};
 
 pub fn router(_health: Arc<HealthManager>) -> Router {
     Router::new()

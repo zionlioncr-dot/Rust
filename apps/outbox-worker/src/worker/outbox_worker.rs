@@ -43,10 +43,7 @@ impl OutboxWorker {
             let events = self.repository.find_unpublished(BATCH_SIZE).await?;
 
             if !events.is_empty() {
-                info!(
-                    pending_events = events.len(),
-                    "Fetched unpublished events"
-                );
+                info!(pending_events = events.len(), "Fetched unpublished events");
             }
 
             for event in events {
@@ -56,11 +53,7 @@ impl OutboxWorker {
 
                 match self
                     .publisher
-                    .publish_with_schema(
-                        &self.config.kafka_topic,
-                        &subject,
-                        &payload,
-                    )
+                    .publish_with_schema(&self.config.kafka_topic, &subject, &payload)
                     .await
                 {
                     Ok(_) => {
@@ -90,12 +83,7 @@ impl OutboxWorker {
                 }
             }
 
-            tokio::time::sleep(
-                std::time::Duration::from_secs(
-                    self.config.polling_interval,
-                )
-            )
-            .await;
+            tokio::time::sleep(std::time::Duration::from_secs(self.config.polling_interval)).await;
         }
     }
 }

@@ -9,10 +9,7 @@ pub mod handlers;
 pub mod router;
 
 /// Inicia el servidor HTTP genérico de observabilidad.
-pub async fn start(
-    port: u16,
-    health: Arc<HealthManager>,
-) -> Result<()> {
+pub async fn start(port: u16, health: Arc<HealthManager>) -> Result<()> {
     let app = router::router(health);
 
     let address = format!("0.0.0.0:{port}");
@@ -26,10 +23,7 @@ pub async fn start(
 
 /// Inicia el servidor HTTP utilizando un Router
 /// proporcionado por la aplicación.
-pub async fn start_with_router(
-    port: u16,
-    app: Router,
-) -> Result<()> {
+pub async fn start_with_router(port: u16, app: Router) -> Result<()> {
     let address = format!("0.0.0.0:{port}");
 
     let listener = TcpListener::bind(&address).await?;

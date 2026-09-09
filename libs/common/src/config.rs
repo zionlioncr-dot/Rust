@@ -2,9 +2,9 @@ use std::env;
 
 /// Configuración compartida de toda la plataforma.
 ///
-/// Todas las aplicaciones (API, Workers, Consumers)
-/// deben utilizar esta estructura para acceder
-/// a las variables de entorno.
+/// Todas las aplicaciones (API, Workers, Consumers, MCP)
+/// deben utilizar esta estructura para acceder a las variables
+/// de entorno.
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     pub database_url: String,
@@ -24,6 +24,12 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn load() -> Self {
+        // Carga el .env de la raíz del workspace si existe.
+        //
+        // No hacemos panic si no existe porque en Docker/Kubernetes
+        // las variables normalmente serán proporcionadas directamente
+        // por el entorno del proceso.
+        let _ = dotenvy::dotenv();
 
         let schema_registry_url = env::var("SCHEMA_REGISTRY_URL")
             .unwrap_or_else(|_| "http://localhost:18081".to_string());

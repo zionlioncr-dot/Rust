@@ -1,0 +1,31 @@
+[package]
+name = "mcp-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+common = { path = "../../libs/common" }
+domain = { path = "../../libs/domain" }
+repository = { path = "../../libs/repository" }
+kafka = { path = "../../libs/kafka" }
+
+
+anyhow.workspace = true
+tokio.workspace = true
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+uuid.workspace = true
+chrono.workspace = true
+
+rmcp = { version = "3.2.0", features = [
+    "server",
+    "macros",
+    "schemars",
+    "transport-streamable-http-server"
+] }

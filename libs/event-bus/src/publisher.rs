@@ -13,19 +13,11 @@ impl EventPublisher {
         let config = AppConfig::load();
 
         Ok(Self {
-            producer: KafkaProducer::new(
-                &config.kafka_brokers,
-                &config.schema_registry_url,
-            )?,
+            producer: KafkaProducer::new(&config.kafka_brokers, &config.schema_registry_url)?,
         })
     }
 
-    pub async fn publish(
-        &self,
-        topic: &str,
-        key: Option<&str>,
-        payload: &str,
-    ) -> Result<()> {
+    pub async fn publish(&self, topic: &str, key: Option<&str>, payload: &str) -> Result<()> {
         self.producer.publish(topic, key, payload).await
     }
 }

@@ -11,10 +11,7 @@ use bootstrap::BootstrapBuilder;
 
 use container::application_container::ApplicationContainer;
 
-use telemetry::tracing::{
-    init_tracing,
-    shutdown_tracing,
-};
+use telemetry::tracing::{init_tracing, shutdown_tracing};
 
 #[tokio::main]
 async fn main() -> Result<()> {

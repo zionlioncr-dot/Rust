@@ -1,11 +1,7 @@
 use once_cell::sync::Lazy;
 
 use prometheus::{
-    register_counter,
-    register_counter_vec,
-    register_histogram_vec,
-    Counter,
-    CounterVec,
+    register_counter, register_counter_vec, register_histogram_vec, Counter, CounterVec,
     HistogramVec,
 };
 

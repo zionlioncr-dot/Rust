@@ -1,419 +1,190 @@
 # Financial Intelligence Platform
 
-Event-driven financial intelligence platform built as a Rust workspace using microservices, PostgreSQL, transactional outbox, Apache Kafka/Redpanda, Confluent Schema Registry, Apache Avro, OpenTelemetry, Jaeger, and Prometheus.
+A production-oriented financial intelligence platform built as a Rust-based microservice architecture with event-driven processing, transactional outbox, Apache Avro serialization, Confluent-compatible Schema Registry, Redpanda/Kafka, OpenTelemetry, Jaeger, Prometheus, MCP, and an AI Agent powered by Ollama.
 
-The project is designed around asynchronous event-driven architecture, reliable event publication, schema governance, observability, and independently deployable services.
+The platform is designed around reliable event processing, observability, schema governance, and AI-assisted access to operational data.
 
 ---
 
-## Architecture
+## 1. Architecture
 
 ```text
-                         ┌──────────────────────┐
-                         │      API Gateway     │
-                         │        :3000         │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    audit-service     │
-                         │                      │
-                         │ REST /audit          │
-                         │ OpenTelemetry        │
-                         │ Prometheus metrics   │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │      PostgreSQL      │
-                         │        :5432         │
-                         │                      │
-                         │ audit records        │
-                         │ outbox_events        │
-                         └──────────┬───────────┘
-                                    │
-                         Transactional Outbox
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    outbox-worker     │
-                         │                      │
-                         │ Poll unpublished     │
-                         │ events               │
-                         └──────────┬───────────┘
-                                    │
-                                    │ Schema lookup
-                                    ▼
-                         ┌──────────────────────┐
-                         │  Schema Registry     │
-                         │       :18081         │
-                         │                      │
-                         │ AuditCreated-value   │
-                         │ Avro schema          │
-                         └──────────┬───────────┘
-                                    │
-                                    │ Avro datum
-                                    ▼
-                         ┌──────────────────────┐
-                         │      Redpanda        │
-                         │       :19092         │
-                         │                      │
-                         │ topic: audit-events  │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    audit-consumer    │
-                         │                      │
-                         │ Avro decoding        │
-                         │ validation           │
-                         │ version routing      │
-                         │ event dispatch       │
-                         └──────────────────────┘
+                                  ┌──────────────────────┐
+                                  │      Client / UI      │
+                                  └──────────┬───────────┘
+                                             │
+                                             │ HTTP
+                                             ▼
+                                  ┌──────────────────────┐
+                                  │       AI Agent       │
+                                  │      Rust / Axum      │
+                                  │       :8001            │
+                                  └──────────┬───────────┘
+                                             │
+                                             │ MCP
+                                             ▼
+                                  ┌──────────────────────┐
+                                  │      MCP Server      │
+                                  │   Streamable HTTP     │
+                                  │       :8000/mcp       │
+                                  └──────────┬───────────┘
+                                             │
+                    ┌────────────────────────┼────────────────────────┐
+                    │                        │                        │
+                    ▼                        ▼                        ▼
+             ┌──────────────┐        ┌──────────────┐        ┌──────────────┐
+             │  PostgreSQL  │        │   Redpanda   │        │    Schema    │
+             │     :5432    │        │    :19092    │        │   Registry   │
+             │              │        │              │        │    :18081    │
+             └──────────────┘        └──────────────┘        └──────────────┘
+                    │                        │
+                    │                        │
+                    ▼                        ▼
+             ┌──────────────┐        ┌──────────────┐
+             │ Audit Service│        │Audit Consumer│
+             │     :3000    │        │              │
+             └──────────────┘        └──────────────┘
+
+                                  ┌──────────────────────┐
+                                  │        Ollama        │
+                                  │      qwen3:0.6b      │
+                                  │       :11434         │
+                                  └──────────────────────┘
 
 
-             ┌─────────────────────────────────────────┐
-             │              Observability             │
-             │                                         │
-             │  OpenTelemetry → Jaeger                │
-             │  Prometheus ← /metrics                 │
-             └─────────────────────────────────────────┘
+                    Observability
+                    ─────────────
+
+             ┌──────────────┐       ┌──────────────┐
+             │  Prometheus  │       │    Jaeger    │
+             │     :9090    │       │     :16686   │
+             └──────────────┘       └──────────────┘
+                    ▲                       ▲
+                    │                       │
+                    └──── Metrics ──────────┴──── OpenTelemetry
 ```
 
 ---
 
-## Current Status
+# 2. Main Components
 
-The core event-driven pipeline is operational.
+## Audit Service
 
-### Working
+The first core microservice of the platform.
 
-* Rust workspace compilation
-* `audit-service`
-* PostgreSQL persistence
-* Transactional Outbox Pattern
-* `outbox-worker`
-* Redpanda
-* `audit-events` topic
-* Confluent Schema Registry
-* `AuditCreated-value` Avro schema
-* JSON → Apache Avro conversion
-* Confluent Avro wire format
-* Avro producer
-* Avro consumer
-* `audit-consumer`
-* Event validation
-* Event version routing
-* Event dispatching
-* Prometheus metrics
-* Jaeger/OpenTelemetry infrastructure
+Responsibilities:
 
-### End-to-end event flow validated
+* Receive audit events.
+* Persist audit records in PostgreSQL.
+* Create transactional outbox records.
+* Expose health and metrics endpoints.
+* Emit OpenTelemetry traces.
+* Participate in the event-driven architecture.
+
+Endpoints:
 
 ```text
+GET  /health
 POST /audit
-     │
-     ▼
-audit-service
-     │
-     ▼
-PostgreSQL
-     │
-     ▼
-outbox_events
-     │
-     ▼
-outbox-worker
-     │
-     ├── Schema Registry
-     │
-     ▼
-Avro serialization
-     │
-     ▼
-Redpanda / audit-events
-     │
-     ▼
-audit-consumer
-     │
-     ▼
-EventEnvelope
-     │
-     ▼
-EventSchemaValidator
-     │
-     ▼
-EventVersionRouter
-     │
-     ▼
-EventDispatcher
-     │
-     ▼
-AuditProcessingService
+GET  /metrics
 ```
 
-The consumer has successfully processed:
+Default port:
 
 ```text
-event_type = AuditCreated
-user       = alejandro
-action     = LOGIN
+3000
 ```
 
 ---
 
-# Technology Stack
+## Transactional Outbox
 
-## Backend
+The platform uses the transactional outbox pattern to guarantee consistency between database state and event publication.
 
-* Rust
-* Tokio
-* Axum
-* SQLx
-* PostgreSQL
-* Apache Kafka protocol
-* Redpanda
-* Apache Avro
-* Confluent Schema Registry
-* Reqwest
-* Serde / Serde JSON
-* Tracing
-* OpenTelemetry
+The workflow is:
 
-## Observability
+```text
+HTTP Request
+     │
+     ▼
+Audit Service
+     │
+     ├───────────────┐
+     ▼               ▼
+PostgreSQL       outbox_events
+                     │
+                     ▼
+               Outbox Worker
+                     │
+                     ▼
+                Schema Registry
+                     │
+                     ▼
+                  Avro
+                     │
+                     ▼
+                 Redpanda
+```
 
-* OpenTelemetry
-* Jaeger
-* Prometheus
-* `tracing`
-* `tracing-subscriber`
+The outbox worker retrieves unpublished events and publishes them to Kafka/Redpanda.
 
-## Infrastructure
+Published events are marked:
 
-* Docker
-* Docker Compose
-* Redpanda
-* PostgreSQL
-* Schema Registry
-* Prometheus
-* Jaeger
+```text
+published = true
+```
+
+This prevents already-published events from being processed again.
 
 ---
 
-# Workspace Structure
+# 3. Redpanda / Kafka
 
-```text
-financial-intelligence-platform/
-│
-├── apps/
-│   │
-│   ├── api-gateway/
-│   │
-│   ├── audit-service/
-│   │
-│   ├── audit-consumer/
-│   │
-│   └── outbox-worker/
-│
-├── libs/
-│   │
-│   ├── common/
-│   │
-│   ├── domain/
-│   │
-│   ├── event-bus/
-│   │
-│   ├── health/
-│   │
-│   ├── http-server/
-│   │
-│   ├── kafka/
-│   │
-│   ├── metrics/
-│   │
-│   ├── repository/
-│   │
-│   └── telemetry/
-│
-├── migrations/
-│
-├── prometheus/
-│   └── prometheus.yml
-│
-├── docker-compose.yml
-│
-├── Cargo.toml
-│
-└── README.md
-```
+Redpanda provides the Kafka-compatible event streaming infrastructure.
 
----
-
-# Core Services
-
-## audit-service
-
-Responsible for receiving audit events and persisting them.
-
-Endpoint:
-
-```text
-POST /audit
-```
-
-Example:
-
-```bash
-curl -i -X POST http://localhost:3000/audit \
-  -H 'Content-Type: application/json' \
-  -d '{"user":"alejandro","action":"LOGIN"}'
-```
-
-Example response:
-
-```json
-{
-  "id": "f71e9a95-1b68-42d3-874b-f16770328209",
-  "timestamp": "2026-09-01T01:53:33.766705572Z"
-}
-```
-
-The service writes the business record and its corresponding outbox event transactionally.
-
----
-
-# PostgreSQL
-
-Default development configuration:
-
-```text
-Host: localhost
-Port: 5432
-Database: financial
-User: postgres
-Password: postgres
-```
-
-The main event table is:
-
-```text
-outbox_events
-```
-
-Important fields include:
-
-```text
-id
-event_type
-payload
-published
-created_at
-```
-
-Check pending events:
-
-```bash
-docker exec -it postgres \
-  psql -U postgres -d financial \
-  -c "SELECT COUNT(*) AS pending_events FROM outbox_events WHERE published = false;"
-```
-
-Expected result after successful publication:
-
-```text
-pending_events
----------------
-0
-```
-
----
-
-# Transactional Outbox Pattern
-
-The platform uses the Transactional Outbox Pattern to prevent the classic dual-write problem.
-
-Instead of:
-
-```text
-Database
-   +
-Kafka
-```
-
-being independently committed, the event is first persisted in PostgreSQL.
-
-```text
-Business operation
-       │
-       ├── business data
-       │
-       └── outbox event
-              │
-              ▼
-          PostgreSQL
-              │
-              ▼
-        outbox-worker
-              │
-              ▼
-           Redpanda
-```
-
-The worker publishes only events where:
-
-```text
-published = false
-```
-
-After successful publication, the event is marked as published.
-
----
-
-# Redpanda
-
-Redpanda is used as the Kafka-compatible event streaming platform.
-
-Development broker:
-
-```text
-localhost:19092
-```
-
-Topic:
+Current topic:
 
 ```text
 audit-events
 ```
 
-Check the topic:
-
-```bash
-docker exec redpanda rpk topic describe audit-events
-```
-
-Expected configuration:
+Default configuration:
 
 ```text
-NAME        audit-events
-PARTITIONS  1
-REPLICAS    1
+Kafka Brokers:
+localhost:19092
 ```
 
-Consume messages:
+Internal Docker address:
 
-```bash
-docker exec redpanda \
-  rpk topic consume audit-events --num 10
+```text
+redpanda:9092
 ```
+
+The platform currently uses the topic:
+
+```text
+audit-events
+```
+
+The architecture is compatible with Kafka-based event-driven processing.
 
 ---
 
-# Schema Registry
+# 4. Schema Registry
 
-Schema Registry:
+The platform uses a Confluent-compatible Schema Registry for Avro schema governance.
+
+External endpoint:
 
 ```text
 http://localhost:18081
+```
+
+Internal Docker endpoint:
+
+```text
+http://redpanda:8081
 ```
 
 Current subject:
@@ -422,18 +193,10 @@ Current subject:
 AuditCreated-value
 ```
 
-Retrieve the latest schema:
-
-```bash
-curl -s \
-  http://localhost:18081/subjects/AuditCreated-value/versions/latest \
-  | python3 -m json.tool
-```
-
-Current schema ID:
+Compatibility:
 
 ```text
-1
+BACKWARD
 ```
 
 Current schema version:
@@ -442,307 +205,421 @@ Current schema version:
 1
 ```
 
----
+Current schema ID:
 
-# Avro Schema
-
-The current `AuditCreated` schema is:
-
-```json
-{
-  "type": "record",
-  "name": "AuditCreated",
-  "namespace": "financial.audit.events",
-  "fields": [
-    {
-      "name": "event_type",
-      "type": "string"
-    },
-    {
-      "name": "metadata",
-      "type": {
-        "type": "record",
-        "name": "EventMetadata",
-        "fields": [
-          {
-            "name": "correlation_id",
-            "type": "string"
-          },
-          {
-            "name": "event_id",
-            "type": "string"
-          },
-          {
-            "name": "source",
-            "type": "string"
-          },
-          {
-            "name": "timestamp",
-            "type": "string"
-          },
-          {
-            "name": "trace_id",
-            "type": "string"
-          }
-        ]
-      }
-    },
-    {
-      "name": "payload",
-      "type": {
-        "type": "record",
-        "name": "AuditPayload",
-        "fields": [
-          {
-            "name": "action",
-            "type": "string"
-          },
-          {
-            "name": "created_at",
-            "type": "string"
-          },
-          {
-            "name": "id",
-            "type": "string"
-          },
-          {
-            "name": "user",
-            "type": "string"
-          }
-        ]
-      }
-    },
-    {
-      "name": "version",
-      "type": {
-        "type": "record",
-        "name": "EventVersion",
-        "fields": [
-          {
-            "name": "major",
-            "type": "int"
-          },
-          {
-            "name": "minor",
-            "type": "int"
-          },
-          {
-            "name": "patch",
-            "type": "int"
-          }
-        ]
-      }
-    }
-  ]
-}
+```text
+1
 ```
+
+The `AuditCreated` Avro record contains:
+
+```text
+AuditCreated
+├── event_type
+├── metadata
+│   ├── correlation_id
+│   ├── event_id
+│   ├── source
+│   ├── timestamp
+│   └── trace_id
+├── payload
+│   ├── action
+│   ├── created_at
+│   ├── id
+│   └── user
+└── version
+    ├── major
+    ├── minor
+    └── patch
+```
+
+Schema evolution is controlled through Schema Registry compatibility rules.
 
 ---
 
-# Confluent Avro Wire Format
+# 5. Avro Event Pipeline
 
-The producer uses the Confluent wire format:
+Events are serialized using Apache Avro before publication.
 
-```text
-+------------+-------------------+------------------+
-| Magic Byte | Schema ID         | Avro Datum       |
-|    0       | 4 bytes big endian | binary payload   |
-+------------+-------------------+------------------+
-```
-
-For schema ID `1`:
+The complete pipeline is:
 
 ```text
-00 00 00 00 01
+Audit Event
+    │
+    ▼
+PostgreSQL
+    │
+    ▼
+Transactional Outbox
+    │
+    ▼
+Outbox Worker
+    │
+    ▼
+Schema Registry
+    │
+    ▼
+Avro Serialization
+    │
+    ▼
+Redpanda
+    │
+    ▼
+Audit Consumer
 ```
 
-The implementation uses:
+The outbox worker has been validated to:
 
-```rust
-to_avro_datum(&schema, avro_value)
-```
+* Fetch unpublished events.
+* Resolve the schema from Schema Registry.
+* Serialize the event using Avro.
+* Publish the event to `audit-events`.
+* Mark the outbox record as published.
 
-rather than `apache_avro::Writer`.
-
-This distinction is important.
-
-`Writer` produces an Avro Object Container File (OCF), beginning with:
-
-```text
-Obj
-avro.schema
-avro.codec
-```
-
-That is **not** the payload format expected after the Confluent Schema Registry wire-format header.
-
-The current implementation therefore produces:
-
-```text
-magic byte
-    +
-schema ID
-    +
-Avro binary datum
-```
-
----
-
-# outbox-worker
-
-Start the worker:
-
-```bash
-cargo run -p outbox-worker
-```
-
-Expected startup:
-
-```text
-AppConfig kafka_brokers = localhost:19092
-KafkaProducer brokers = localhost:19092
-Schema Registry = http://localhost:18081
-```
-
-Successful publication:
-
-```text
-Event published successfully with Avro schema
-```
-
-The worker also resolves the schema from Schema Registry:
+Example successful flow:
 
 ```text
 Schema Registry schema resolved
 subject=AuditCreated-value
 schema_version=1
 schema_id=1
-```
 
----
-
-# audit-consumer
-
-Start the consumer:
-
-```bash
-cargo run -p audit-consumer
-```
-
-Expected configuration:
-
-```text
-KafkaConsumer brokers = localhost:19092
-Group = audit-group
-Schema Registry = http://localhost:18081
-```
-
-The consumer:
-
-1. Connects to Redpanda.
-2. Reads `audit-events`.
-3. Reads the Confluent schema ID from the message.
-4. Resolves the schema through Schema Registry.
-5. Decodes the Avro datum.
-6. Builds `EventEnvelope`.
-7. Validates the event.
-8. Routes the event according to its version.
-9. Dispatches the event.
-10. Processes the audit event.
-
-Successful processing looks like:
-
-```text
-Audit Event Processed
-event_id=...
-user=alejandro
-action=LOGIN
-
-Event processed successfully
+Event published successfully
 event_type=AuditCreated
-event_id=...
 ```
 
 ---
 
-# Event Envelope
+# 6. Audit Consumer
 
-Events use the following logical structure:
+The audit consumer subscribes to the Kafka/Redpanda event stream.
+
+Responsibilities:
+
+* Consume `audit-events`.
+* Deserialize Avro events.
+* Validate event structure.
+* Process `AuditCreated` events.
+* Provide a foundation for downstream event-driven processing.
+
+---
+
+# 7. MCP Server
+
+The MCP server provides an AI-accessible interface to platform operations.
+
+Technology:
+
+```text
+Rust
+rmcp 3.2.0
+Streamable HTTP
+Axum
+```
+
+Endpoint:
+
+```text
+http://localhost:8000/mcp
+```
+
+Health:
+
+```text
+http://localhost:8000/health
+```
+
+The MCP server exposes the following tools:
+
+```text
+system.health
+audit.list_events
+audit.get_event
+audit.get_pending_outbox
+kafka.list_topics
+schema.get_latest
+```
+
+## MCP Tools
+
+### `system.health`
+
+Returns platform health information.
+
+---
+
+### `audit.list_events`
+
+Lists audit events.
+
+Example conceptual request:
 
 ```json
 {
-  "event_type": "AuditCreated",
-  "metadata": {
-    "correlation_id": "...",
-    "event_id": "...",
-    "source": "audit-service",
-    "timestamp": "...",
-    "trace_id": "..."
-  },
-  "payload": {
-    "action": "LOGIN",
-    "created_at": "...",
-    "id": "...",
-    "user": "alejandro"
-  },
-  "version": {
-    "major": 1,
-    "minor": 0,
-    "patch": 0
-  }
+  "limit": 5
 }
 ```
 
 ---
 
-# Prometheus
+### `audit.get_event`
 
-Prometheus is configured to scrape:
+Retrieves a specific audit event by UUID.
 
-```text
-audit-service
+Example:
+
+```json
+{
+  "id": "f71e9a95-1b68-42d3-874b-f16770328209"
+}
 ```
-
-Metrics endpoint:
-
-```text
-http://localhost:3000/metrics
-```
-
-Check metrics:
-
-```bash
-curl -s http://localhost:3000/metrics
-```
-
-Prometheus:
-
-```text
-http://localhost:9090
-```
-
-Check targets:
-
-```bash
-curl -s \
-  http://localhost:9090/api/v1/targets
-```
-
-The `audit-service` target should report:
-
-```text
-health = up
-```
-
-Current metrics include HTTP request duration histograms and consumer/outbox metrics.
 
 ---
 
-# Jaeger / OpenTelemetry
+### `audit.get_pending_outbox`
 
-Jaeger is used for distributed tracing.
+Returns unpublished transactional outbox events.
 
-Jaeger UI:
+Example:
+
+```json
+{
+  "limit": 10
+}
+```
+
+---
+
+### `kafka.list_topics`
+
+Returns the Kafka/Redpanda topics currently exposed by the MCP layer.
+
+Current topic:
+
+```text
+audit-events
+```
+
+---
+
+### `schema.get_latest`
+
+Retrieves the latest schema for a Schema Registry subject.
+
+Example:
+
+```json
+{
+  "subject": "AuditCreated-value"
+}
+```
+
+---
+
+# 8. AI Agent
+
+The AI Agent is a Rust service that combines:
+
+* Ollama
+* Qwen3 0.6B
+* MCP
+* deterministic tool routing
+* Axum HTTP API
+
+The agent provides natural-language access to real platform information.
+
+Current model:
+
+```text
+qwen3:0.6b
+```
+
+Ollama endpoint:
+
+```text
+http://127.0.0.1:11434/api/chat
+```
+
+MCP endpoint:
+
+```text
+http://127.0.0.1:8000/mcp
+```
+
+AI Agent HTTP port:
+
+```text
+8001
+```
+
+---
+
+# 9. AI Agent HTTP API
+
+## Health
+
+```http
+GET /health
+```
+
+Example:
+
+```bash
+curl -i http://localhost:8001/health
+```
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "ai-agent"
+}
+```
+
+This endpoint represents the liveness of the AI Agent process.
+
+It does not by itself assert that all platform dependencies are healthy.
+
+---
+
+## Chat
+
+```http
+POST /chat
+```
+
+Request:
+
+```json
+{
+  "message": "How many pending events are in the outbox?"
+}
+```
+
+Example:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"How many pending events are in the outbox?"}'
+```
+
+Example response:
+
+```json
+{
+  "answer": "There are no pending events in the outbox.",
+  "tool": "audit.get_pending_outbox",
+  "execution_time_ms": 4054
+}
+```
+
+The response includes:
+
+* `answer` — natural-language response.
+* `tool` — MCP tool used.
+* `execution_time_ms` — total request execution time.
+
+---
+
+# 10. Deterministic AI Tool Policy
+
+The AI Agent does not rely exclusively on the language model to decide whether operational data should be queried.
+
+For known operational questions, a deterministic policy selects the MCP tool first.
+
+Examples:
+
+| User Question                             | MCP Tool                   |
+| ----------------------------------------- | -------------------------- |
+| Is the platform healthy?                  | `system.health`            |
+| How many pending outbox events are there? | `audit.get_pending_outbox` |
+| Show the latest audit events              | `audit.list_events`        |
+| Get event by UUID                         | `audit.get_event`          |
+| What is the latest Avro schema?           | `schema.get_latest`        |
+| What are the Kafka topics?                | `kafka.list_topics`        |
+
+This architecture prevents the LLM from inventing operational state.
+
+The flow is:
+
+```text
+User Question
+      │
+      ▼
+Deterministic Policy
+      │
+      ├── Known operational question
+      │          │
+      │          ▼
+      │       MCP Tool
+      │          │
+      │          ▼
+      │       Real Data
+      │          │
+      │          ▼
+      │        Ollama
+      │          │
+      │          ▼
+      │      Final Answer
+      │
+      └── Other question
+                 │
+                 ▼
+             Ollama
+                 │
+                 ▼
+           Tool Selection
+                 │
+                 ▼
+                MCP
+```
+
+---
+
+# 11. Ollama Optimization
+
+The current local model is:
+
+```text
+qwen3:0.6b
+```
+
+The platform is designed to run on CPU-only development environments.
+
+To reduce inference overhead, after MCP data is obtained the agent does not send the complete MCP tool definitions to Ollama again.
+
+Initial request:
+
+```text
+messages + tool definitions
+```
+
+Follow-up request:
+
+```text
+messages + MCP result
+```
+
+without the tool definitions.
+
+This significantly reduces the prompt size for the second inference request.
+
+---
+
+# 12. Observability
+
+The platform includes:
+
+* OpenTelemetry
+* Jaeger
+* Prometheus
+* structured Rust tracing
+
+## Jaeger
+
+UI:
 
 ```text
 http://localhost:16686
@@ -760,41 +637,146 @@ OTLP HTTP:
 localhost:4318
 ```
 
-The architecture is intended to propagate tracing context through:
-
-```text
-audit-service
-      │
-      ▼
-PostgreSQL Outbox
-      │
-      ▼
-outbox-worker
-      │
-      ▼
-Redpanda
-      │
-      ▼
-audit-consumer
-```
-
-The event metadata includes:
-
-```text
-trace_id
-correlation_id
-event_id
-```
-
-This allows business-event correlation with distributed traces.
+Jaeger is used for distributed tracing.
 
 ---
 
-# Docker Infrastructure
+## Prometheus
 
-The development infrastructure is managed through Docker Compose.
+UI:
 
-Start infrastructure:
+```text
+http://localhost:9090
+```
+
+Audit service metrics:
+
+```text
+http://localhost:3000/metrics
+```
+
+Prometheus scrape configuration targets:
+
+```text
+host.docker.internal:3000
+```
+
+Metrics endpoint:
+
+```text
+/metrics
+```
+
+---
+
+# 13. Infrastructure
+
+Current Docker services include:
+
+```text
+postgres
+redpanda
+jaeger
+redpanda-console
+prometheus
+```
+
+Main ports:
+
+| Component        |  Port |
+| ---------------- | ----: |
+| PostgreSQL       |  5432 |
+| AI Agent         |  8001 |
+| MCP Server       |  8000 |
+| Audit Service    |  3000 |
+| Redpanda Kafka   | 19092 |
+| Redpanda Admin   |  9644 |
+| Schema Registry  | 18081 |
+| Redpanda Console |  8080 |
+| Prometheus       |  9090 |
+| Jaeger UI        | 16686 |
+| OTLP gRPC        |  4317 |
+| OTLP HTTP        |  4318 |
+| Ollama           | 11434 |
+
+---
+
+# 14. Environment Configuration
+
+The current `.env` configuration includes:
+
+```env
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/financial
+
+POLLING_INTERVAL=2
+
+KAFKA_TOPIC=audit-events
+KAFKA_BROKERS=localhost:19092
+
+SCHEMA_REGISTRY_URL=http://localhost:18081
+
+KAFKA_DLQ_TOPIC=audit-events-dlq
+
+SERVICE_NAME=audit-service
+
+RUST_LOG=info
+
+METRICS_PORT=3000
+
+RETRY_MAX_ATTEMPTS=5
+RETRY_INITIAL_DELAY_MS=100
+RETRY_MULTIPLIER=2
+RETRY_MAX_DELAY_MS=10000
+
+CONSUMER_WORKERS=4
+CHANNEL_SIZE=100
+```
+
+---
+
+# 15. Development
+
+From the project root:
+
+```bash
+cd /mnt/c/Rust/financial-intelligence-platform
+```
+
+Build the complete workspace:
+
+```bash
+cargo build -j 2
+```
+
+Build the AI Agent:
+
+```bash
+cargo build -p ai-agent -j 2
+```
+
+Run the AI Agent:
+
+```bash
+cargo run -p ai-agent -j 2
+```
+
+Run the MCP Server:
+
+```bash
+cargo run -p mcp-server -j 2
+```
+
+Run tests:
+
+```bash
+cargo test -j 2
+```
+
+---
+
+# 16. Starting Infrastructure
+
+Start Docker infrastructure:
 
 ```bash
 docker compose up -d
@@ -806,152 +788,50 @@ Check running containers:
 docker ps
 ```
 
-Expected infrastructure includes:
+Check Redpanda:
+
+```bash
+docker logs redpanda
+```
+
+List topics:
+
+```bash
+docker exec -it redpanda rpk topic list
+```
+
+Expected topic:
 
 ```text
-postgres
-redpanda
-schema-registry
-prometheus
-jaeger
-```
-
-Stop infrastructure:
-
-```bash
-docker compose down
-```
-
-Stop and remove volumes:
-
-```bash
-docker compose down -v
-```
-
-> Use `down -v` carefully because it removes persistent development data.
-
----
-
-# Build
-
-Build the complete workspace:
-
-```bash
-cargo build --workspace
-```
-
-Run tests:
-
-```bash
-cargo test --workspace
-```
-
-Check the workspace:
-
-```bash
-cargo check --workspace
+audit-events
 ```
 
 ---
 
-# Running the Platform
+# 17. PostgreSQL Validation
 
-## 1. Start infrastructure
-
-```bash
-docker compose up -d
-```
-
-Verify:
+Connect to PostgreSQL:
 
 ```bash
-docker ps
+docker exec -it postgres psql \
+  -U postgres \
+  -d financial
 ```
 
----
-
-## 2. Verify PostgreSQL
-
-```bash
-docker exec -it postgres \
-  psql -U postgres -d financial
-```
-
-Then:
+Inspect outbox events:
 
 ```sql
-SELECT COUNT(*)
+SELECT
+    id,
+    event_type,
+    published,
+    created_at
 FROM outbox_events
-WHERE published = false;
+ORDER BY created_at DESC
+LIMIT 10;
 ```
 
----
-
-## 3. Start audit-service
-
-```bash
-cargo run -p audit-service
-```
-
----
-
-## 4. Create an audit event
-
-From another terminal:
-
-```bash
-curl -i -X POST http://localhost:3000/audit \
-  -H 'Content-Type: application/json' \
-  -d '{"user":"alejandro","action":"LOGIN"}'
-```
-
----
-
-## 5. Start outbox-worker
-
-```bash
-cargo run -p outbox-worker
-```
-
-Expected:
-
-```text
-Event published successfully with Avro schema
-```
-
----
-
-## 6. Start audit-consumer
-
-```bash
-cargo run -p audit-consumer
-```
-
-Expected:
-
-```text
-Audit Event Processed
-```
-
-followed by:
-
-```text
-Event processed successfully
-```
-
----
-
-# Validation Checklist
-
-## PostgreSQL
-
-```bash
-docker exec -it postgres \
-  psql -U postgres -d financial \
-  -c "SELECT id,event_type,published FROM outbox_events ORDER BY created_at DESC LIMIT 10;"
-```
-
-Successful events should have:
+Expected successful events should have:
 
 ```text
 published = true
@@ -959,234 +839,452 @@ published = true
 
 ---
 
-## Redpanda
+# 18. Schema Registry Validation
+
+Check registered subjects:
 
 ```bash
-docker exec redpanda \
-  rpk topic describe audit-events
+curl http://localhost:18081/subjects
 ```
 
-Then:
-
-```bash
-docker exec redpanda \
-  rpk topic consume audit-events --num 10
-```
-
----
-
-## Schema Registry
-
-```bash
-curl -s \
-  http://localhost:18081/subjects/AuditCreated-value/versions/latest \
-  | python3 -m json.tool
-```
-
----
-
-## Prometheus
-
-```bash
-curl -s \
-  http://localhost:9090/api/v1/targets
-```
-
----
-
-## Jaeger
-
-Open:
-
-```text
-http://localhost:16686
-```
-
-Search for the relevant service and trace.
-
----
-
-# Important Avro Implementation Detail
-
-The producer must not use:
-
-```rust
-Writer::new(&schema, &mut avro_payload)
-```
-
-for Confluent messages.
-
-That creates an Avro Object Container File.
-
-The correct implementation is:
-
-```rust
-let avro_payload = to_avro_datum(
-    &schema,
-    avro_value,
-)?;
-```
-
-followed by:
-
-```rust
-wire_payload.push(0u8);
-wire_payload.extend_from_slice(
-    &schema_id.to_be_bytes()
-);
-wire_payload.extend_from_slice(
-    &avro_payload
-);
-```
-
-This produces the expected Confluent wire format.
-
----
-
-# Event Processing Guarantees
-
-The current architecture provides:
-
-### Reliable persistence
-
-Events are persisted in PostgreSQL before publication.
-
-### Transactional Outbox
-
-Business state and event creation occur within the database transaction.
-
-### Schema governance
-
-Event schemas are stored and versioned through Schema Registry.
-
-### Binary serialization
-
-Events are serialized using Apache Avro.
-
-### Schema identification
-
-Kafka messages contain the Schema Registry ID.
-
-### Consumer validation
-
-Events are decoded and validated before dispatch.
-
-### Version routing
-
-Event versions are routed through the event-version router.
-
-### Observability
-
-Metrics and distributed tracing are integrated into the architecture.
-
----
-
-# Development Roadmap
-
-## Completed
-
-* [x] Rust workspace
-* [x] PostgreSQL integration
-* [x] Audit service
-* [x] Transactional Outbox Pattern
-* [x] Kafka-compatible messaging
-* [x] Redpanda
-* [x] Schema Registry
-* [x] `AuditCreated` Avro schema
-* [x] JSON → Avro conversion
-* [x] Confluent wire format
-* [x] Avro producer
-* [x] Avro consumer
-* [x] Audit consumer
-* [x] Event validation
-* [x] Event version routing
-* [x] Event dispatching
-* [x] Prometheus metrics
-* [x] Jaeger
-* [x] OpenTelemetry infrastructure
-
-## Next
-
-* [ ] End-to-end distributed trace propagation validation
-* [ ] Correlate `trace_id` across producer and consumer
-* [ ] Improve consumer/outbox metrics
-* [ ] Clean unused Rust modules and warnings
-* [ ] Add integration tests for Avro serialization
-* [ ] Add integration tests for Schema Registry
-* [ ] Add Kafka/Redpanda integration tests
-* [ ] Add failure/retry scenarios
-* [ ] Add dead-letter strategy
-* [ ] Add schema compatibility validation
-* [ ] Add additional event types
-* [ ] Containerize application services
-* [ ] Kubernetes deployment
-* [ ] Infrastructure as Code
-* [ ] AWS deployment
-
----
-
-# Design Principles
-
-The platform follows these principles:
-
-```text
-Event-driven architecture
-        +
-Transactional consistency
-        +
-Schema governance
-        +
-Strongly typed contracts
-        +
-Distributed observability
-        +
-Independent services
-```
-
-The objective is to provide a foundation suitable for a production-oriented financial event-processing platform.
-
----
-
-# Development Notes
-
-For local development, application services connect to:
-
-```text
-PostgreSQL      localhost:5432
-Redpanda        localhost:19092
-Schema Registry localhost:18081
-Prometheus      localhost:9090
-Jaeger UI       localhost:16686
-OTLP gRPC       localhost:4317
-OTLP HTTP       localhost:4318
-```
-
-The current event topic is:
-
-```text
-audit-events
-```
-
-The current event type is:
-
-```text
-AuditCreated
-```
-
-The current Schema Registry subject is:
+Expected subject:
 
 ```text
 AuditCreated-value
 ```
 
-The current schema ID is:
+Retrieve the latest schema:
+
+```bash
+curl http://localhost:18081/subjects/AuditCreated-value/versions/latest
+```
+
+Check compatibility:
+
+```bash
+curl http://localhost:18081/config/AuditCreated-value
+```
+
+The configured compatibility level is:
 
 ```text
-1
+BACKWARD
 ```
 
 ---
 
-# License
+# 19. Redpanda Validation
 
-This project is currently under development.
+List topics:
+
+```bash
+docker exec -it redpanda rpk topic list
+```
+
+Inspect the audit topic:
+
+```bash
+docker exec -it redpanda rpk topic describe audit-events
+```
+
+Consume events:
+
+```bash
+docker exec -it redpanda rpk topic consume audit-events
+```
+
+Published events should contain the `AuditCreated` event structure.
+
+---
+
+# 20. MCP Validation
+
+Check MCP health:
+
+```bash
+curl -i http://localhost:8000/health
+```
+
+Expected:
+
+```text
+HTTP/1.1 200 OK
+```
+
+The MCP endpoint is:
+
+```text
+http://localhost:8000/mcp
+```
+
+MCP Inspector can be used to inspect and invoke the available tools.
+
+Current tools:
+
+```text
+system.health
+audit.list_events
+audit.get_event
+audit.get_pending_outbox
+kafka.list_topics
+schema.get_latest
+```
+
+---
+
+# 21. AI Agent Validation
+
+Check AI Agent health:
+
+```bash
+curl -i http://localhost:8001/health
+```
+
+Test platform health:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Is the platform healthy?"}'
+```
+
+Test audit events:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Show me the latest 5 audit events"}'
+```
+
+Test outbox:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"How many pending events are in the outbox?"}'
+```
+
+Test Schema Registry:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What is the latest Avro schema for AuditCreated-value?"}'
+```
+
+Test Kafka:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What are the Kafka topics?"}'
+```
+
+---
+
+# 22. Current Validation Status
+
+The following components have been validated:
+
+```text
+Rust workspace                    ✅
+Audit Service                     ✅
+PostgreSQL                        ✅
+Transactional Outbox              ✅
+Outbox Worker                     ✅
+Redpanda                          ✅
+audit-events topic                ✅
+Schema Registry                   ✅
+AuditCreated-value schema         ✅
+Avro serialization                ✅
+Avro publication                  ✅
+Audit Consumer                    ✅
+Prometheus                        ✅
+Jaeger / OpenTelemetry            ✅*
+MCP Server                        ✅
+MCP Streamable HTTP               ✅
+MCP Inspector                     ✅
+AI Agent                          ✅
+Ollama qwen3:0.6b                 ✅
+Deterministic MCP routing         ✅
+AI Agent HTTP /health             ✅
+AI Agent HTTP /chat               ✅
+```
+
+`*` Jaeger has previously required troubleshooting around service discovery and OTLP export; the infrastructure itself is configured for OTLP on ports `4317` and `4318`.
+
+---
+
+# 23. Verified AI Agent Operations
+
+The AI Agent has been successfully tested with real platform data.
+
+### Platform health
+
+```text
+Question:
+¿Está saludable toda la plataforma?
+
+Tool:
+system.health
+```
+
+### Audit events
+
+```text
+Question:
+¿Cuáles son los últimos 5 eventos de auditoría?
+
+Tool:
+audit.list_events
+```
+
+The response contained real PostgreSQL audit events.
+
+### Transactional outbox
+
+```text
+Question:
+¿Cuántos eventos pendientes hay en el outbox?
+
+Tool:
+audit.get_pending_outbox
+```
+
+Result:
+
+```text
+No hay eventos pendientes en el outbox.
+```
+
+### Schema Registry
+
+```text
+Question:
+¿Cuál es el último schema Avro de AuditCreated-value?
+
+Tool:
+schema.get_latest
+```
+
+The latest registered schema was successfully retrieved.
+
+### Kafka
+
+```text
+Question:
+¿Cuáles son los topics de Kafka?
+
+Tool:
+kafka.list_topics
+```
+
+Current topic:
+
+```text
+audit-events
+```
+
+---
+
+# 24. Reliability Principles
+
+The platform follows several reliability principles.
+
+## Database/Event Consistency
+
+The transactional outbox prevents losing events between database transactions and message publication.
+
+## Schema Governance
+
+Schema Registry provides centralized schema management and compatibility enforcement.
+
+## Source of Truth
+
+The AI Agent must use MCP results for operational information.
+
+The LLM must not invent:
+
+* audit events
+* Kafka topics
+* platform health
+* Schema Registry data
+* PostgreSQL state
+* outbox state
+
+## Observability
+
+Distributed tracing and metrics are first-class components.
+
+## Deterministic Tool Selection
+
+Known operational questions are routed directly to the appropriate MCP tool before LLM generation.
+
+---
+
+# 25. Project Structure
+
+The project follows a Rust workspace structure similar to:
+
+```text
+financial-intelligence-platform/
+│
+├── apps/
+│   ├── ai-agent/
+│   ├── api-gateway/
+│   ├── audit-consumer/
+│   ├── audit-service/
+│   ├── mcp-server/
+│   └── outbox-worker/
+│
+├── libs/
+│   ├── common/
+│   ├── domain/
+│   ├── event-bus/
+│   ├── kafka/
+│   ├── repository/
+│   └── ...
+│
+├── migrations/
+│
+├── docker-compose.yml
+├── Cargo.toml
+├── Cargo.lock
+├── prometheus.yml
+└── .env
+```
+
+---
+
+# 26. Technology Stack
+
+## Backend
+
+* Rust
+* Tokio
+* Axum
+* SQLx
+* PostgreSQL
+
+## Event Streaming
+
+* Redpanda
+* Kafka-compatible APIs
+* Apache Avro
+* Schema Registry
+
+## AI
+
+* Ollama
+* Qwen3 0.6B
+* MCP
+* rmcp 3.2.0
+
+## Observability
+
+* OpenTelemetry
+* Jaeger
+* Prometheus
+* tracing
+* tracing-subscriber
+
+## Infrastructure
+
+* Docker
+* Docker Compose
+* Kubernetes-ready architecture
+
+---
+
+# 27. Roadmap
+
+The next planned steps are:
+
+1. Dockerize the AI Agent.
+2. Add the AI Agent to `docker-compose.yml`.
+3. Configure container-to-container networking.
+4. Connect AI Agent to the MCP Server using the Docker service name.
+5. Connect AI Agent to Ollama through `host.docker.internal`.
+6. Add production-oriented configuration through environment variables.
+7. Add AI Agent metrics.
+8. Add distributed tracing to AI Agent requests.
+9. Improve Kafka topic discovery through Kafka Admin APIs.
+10. Improve AI Agent response latency for large Schema Registry responses.
+11. Add authentication and authorization to the MCP and AI Agent APIs.
+12. Integrate the AI Agent with the future platform UI.
+13. Prepare Kubernetes deployment manifests.
+14. Add CI/CD automation.
+
+---
+
+# 28. Quick Start
+
+Start infrastructure:
+
+```bash
+docker compose up -d
+```
+
+Start the MCP Server:
+
+```bash
+cargo run -p mcp-server -j 2
+```
+
+Start the AI Agent:
+
+```bash
+cargo run -p ai-agent -j 2
+```
+
+Verify:
+
+```bash
+curl http://localhost:8000/health
+```
+
+```bash
+curl http://localhost:8001/health
+```
+
+Ask the AI Agent:
+
+```bash
+curl -s -X POST http://localhost:8001/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"¿Cuántos eventos pendientes hay en el outbox?"}'
+```
+
+---
+
+# 29. Project Status
+
+The platform has progressed from an initial Rust microservice implementation into a functional event-driven platform with:
+
+```text
+Database
+    +
+Transactional Outbox
+    +
+Avro
+    +
+Schema Registry
+    +
+Redpanda
+    +
+Event Consumer
+    +
+OpenTelemetry
+    +
+Jaeger
+    +
+Prometheus
+    +
+MCP
+    +
+AI Agent
+    +
+HTTP API
+```
+
+The current architecture establishes a foundation for building a production-grade financial intelligence system where operational data can be queried through both conventional APIs and an AI interface while maintaining deterministic access to real system state.

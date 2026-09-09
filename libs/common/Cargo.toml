@@ -8,3 +8,4 @@ sqlx.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
+dotenvy.workspace = true
