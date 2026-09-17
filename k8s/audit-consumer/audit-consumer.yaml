@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-consumer
+  namespace: financial-platform
+  labels:
+    app: audit-consumer
+spec:
+  type: ClusterIP
+  selector:
+    app: audit-consumer
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-consumer
+  namespace: financial-platform
+  labels:
+    app: audit-consumer
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: audit-consumer
+
+  template:
+    metadata:
+      labels:
+        app: audit-consumer
+
+    spec:
+      containers:
+        - name: audit-consumer
+
+          image: audit-consumer:local
+
+          imagePullPolicy: Never
+
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/financial"
+
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+
+            - name: KAFKA_TOPIC
+              value: "audit-events"
+
+            - name: SCHEMA_REGISTRY_URL
+              value: "http://redpanda:8081"
+
+            - name: CONSUMER_WORKERS
+              value: "4"
+
+            - name: CHANNEL_SIZE
+              value: "100"
+
+            - name: RUST_LOG
+              value: "info"
+
+            - name: OTEL_SERVICE_NAME
+              value: "audit-consumer"
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+            limits:
+              cpu: 500m
+              memory: 512Mi

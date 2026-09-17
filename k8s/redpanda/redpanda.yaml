@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: financial-platform
+spec:
+  clusterIP: None
+  selector:
+    app: redpanda
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+
+    - name: admin
+      port: 9644
+      targetPort: 9644
+
+    - name: schema-registry
+      port: 8081
+      targetPort: 8081
+
+    - name: pandaproxy
+      port: 8082
+      targetPort: 8082
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redpanda-config
+  namespace: financial-platform
+data:
+  redpanda.yaml: |
+    redpanda:
+      data_directory: "/var/lib/redpanda/data"
+
+      seed_servers: []
+
+      rpc_server:
+        address: "0.0.0.0"
+        port: 33145
+
+      advertised_rpc_api:
+        address: "redpanda"
+        port: 33145
+
+      kafka_api:
+        - address: "0.0.0.0"
+          port: 9092
+
+      advertised_kafka_api:
+        - address: "redpanda"
+          port: 9092
+
+      admin:
+        address: "0.0.0.0"
+        port: 9644
+
+      developer_mode: true
+
+    pandaproxy: {}
+
+    schema_registry: {}
+
+    rpk:
+      tune_network: false
+      tune_disk_scheduler: false
+      tune_disk_nomerges: false
+      tune_disk_irq: false
+      tune_fstrim: false
+      tune_cpu: false
+      tune_aio_events: false
+      tune_clocksource: false
+      tune_swappiness: false
+      enable_memory_locking: false
+      tune_coredump: false
+
+      coredump_dir: "/var/lib/redpanda/coredump"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redpanda-pvc
+  namespace: financial-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redpanda
+  namespace: financial-platform
+spec:
+  serviceName: redpanda
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: redpanda
+
+  template:
+    metadata:
+      labels:
+        app: redpanda
+
+    spec:
+      containers:
+        - name: redpanda
+
+          image: docker.redpanda.com/redpandadata/redpanda:v24.1.7
+          imagePullPolicy: IfNotPresent
+
+          command:
+            - /opt/redpanda/bin/redpanda
+
+          args:
+            - --redpanda-cfg
+            - /etc/redpanda/redpanda.yaml
+
+          ports:
+            - name: kafka
+              containerPort: 9092
+
+            - name: admin
+              containerPort: 9644
+
+            - name: schema-registry
+              containerPort: 8081
+
+            - name: pandaproxy
+              containerPort: 8082
+
+          volumeMounts:
+            - name: redpanda-config
+              mountPath: /etc/redpanda/redpanda.yaml
+              subPath: redpanda.yaml
+              readOnly: true
+
+            - name: redpanda-storage
+              mountPath: /var/lib/redpanda/data
+
+          readinessProbe:
+            httpGet:
+              path: /v1/status/ready
+              port: 9644
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+
+          livenessProbe:
+            httpGet:
+              path: /v1/status/ready
+              port: 9644
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+
+      volumes:
+        - name: redpanda-config
+          configMap:
+            name: redpanda-config
+
+        - name: redpanda-storage
+          persistentVolumeClaim:
+            claimName: redpanda-pvc

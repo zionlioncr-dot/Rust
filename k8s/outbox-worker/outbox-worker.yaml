@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outbox-worker
+  namespace: financial-platform
+  labels:
+    app: outbox-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: outbox-worker
+  template:
+    metadata:
+      labels:
+        app: outbox-worker
+    spec:
+      containers:
+        - name: outbox-worker
+          image: outbox-worker:local
+          imagePullPolicy: Never
+
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/financial"
+
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+
+            - name: KAFKA_TOPIC
+              value: "audit-events"
+
+            - name: SCHEMA_REGISTRY_URL
+              value: "http://redpanda:8081"
+
+            - name: POLLING_INTERVAL
+              value: "2"
+
+            - name: RUST_LOG
+              value: "info"
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
