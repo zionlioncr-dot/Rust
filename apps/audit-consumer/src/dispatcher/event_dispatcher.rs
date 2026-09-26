@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 
 use domain::events::event_envelope::EventEnvelope;
 
@@ -32,6 +32,14 @@ impl EventDispatcher {
         }
     }
 
+    #[instrument(
+        name = "audit.dispatch",
+        skip(self, envelope),
+        fields(
+            event_type = %envelope.event_type,
+            event_id = %envelope.metadata.event_id
+        )
+    )]
     pub async fn dispatch(&self, envelope: EventEnvelope) -> Result<()> {
         let handler = self
             .registry

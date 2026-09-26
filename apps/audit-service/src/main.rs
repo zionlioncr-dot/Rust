@@ -1,6 +1,7 @@
 mod builders;
 mod container;
 mod handlers;
+mod middleware;
 mod router;
 mod service;
 mod state;

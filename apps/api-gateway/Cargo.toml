@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 
-
 tokio.workspace = true
 anyhow.workspace = true
 serde.workspace = true
@@ -24,5 +23,9 @@ tower-http = { version = "0.6", features = [
     "cors",
     "compression-full"
 ] }
+
+reqwest = { version = "0.12", features = ["json"] }
+
+jsonwebtoken = "9"
 
 telemetry = { path = "../../libs/telemetry" }

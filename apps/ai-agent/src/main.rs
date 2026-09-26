@@ -227,11 +227,7 @@ impl AiAgent {
             .build()
             .context("Failed to create Ollama HTTP client")?;
 
-        Ok(Self {
-            ollama,
-            mcp,
-            tools,
-        })
+        Ok(Self { ollama, mcp, tools })
     }
 
     fn ollama_tools(&self) -> Vec<OllamaTool> {
@@ -278,9 +274,7 @@ impl AiAgent {
 
         let result = self
             .mcp
-            .call_tool(
-                CallToolRequestParams::new(name.to_string()).with_arguments(arguments),
-            )
+            .call_tool(CallToolRequestParams::new(name.to_string()).with_arguments(arguments))
             .await
             .with_context(|| format!("MCP tool call failed: {name}"))?;
 
@@ -315,8 +309,7 @@ impl AiAgent {
             think: false,
         };
 
-        let payload =
-            serde_json::to_vec(&request).context("Failed to serialize Ollama request")?;
+        let payload = serde_json::to_vec(&request).context("Failed to serialize Ollama request")?;
 
         info!(
             url = OLLAMA_CHAT_URL,
@@ -347,13 +340,10 @@ impl AiAgent {
             "Ollama HTTP response received"
         );
 
-        let response_text = timeout(
-            Duration::from_secs(OLLAMA_TIMEOUT_SECONDS),
-            response.text(),
-        )
-        .await
-        .context("Timed out reading Ollama response")?
-        .context("Failed to read Ollama response body")?;
+        let response_text = timeout(Duration::from_secs(OLLAMA_TIMEOUT_SECONDS), response.text())
+            .await
+            .context("Timed out reading Ollama response")?
+            .context("Failed to read Ollama response body")?;
 
         info!(
             response_bytes = response_text.len(),
@@ -370,13 +360,8 @@ impl AiAgent {
             anyhow::bail!("Ollama returned HTTP {}: {}", status, response_text);
         }
 
-        let parsed: OllamaResponse =
-            serde_json::from_str(&response_text).with_context(|| {
-                format!(
-                    "Failed to deserialize Ollama response: {}",
-                    response_text
-                )
-            })?;
+        let parsed: OllamaResponse = serde_json::from_str(&response_text)
+            .with_context(|| format!("Failed to deserialize Ollama response: {}", response_text))?;
 
         info!(
             has_tool_calls = parsed.message.tool_calls.is_some(),
@@ -398,10 +383,7 @@ impl AiAgent {
         Ok(parsed.message)
     }
 
-    fn forced_tool_for_question(
-        &self,
-        question: &str,
-    ) -> Option<(&'static str, Value)> {
+    fn forced_tool_for_question(&self, question: &str) -> Option<(&'static str, Value)> {
         let q = question.to_lowercase();
 
         // ------------------------------------------------------------
@@ -423,10 +405,7 @@ impl AiAgent {
         // ------------------------------------------------------------
         // 2. TRANSACTIONAL OUTBOX
         // ------------------------------------------------------------
-        if q.contains("outbox")
-            || q.contains("pendiente")
-            || q.contains("pendientes")
-        {
+        if q.contains("outbox") || q.contains("pendiente") || q.contains("pendientes") {
             return Some((
                 "audit.get_pending_outbox",
                 json!({
@@ -550,9 +529,7 @@ impl AiAgent {
         // ============================================================
         // DETERMINISTIC TOOL POLICY
         // ============================================================
-        if let Some((tool_name, arguments)) =
-            self.forced_tool_for_question(&question)
-        {
+        if let Some((tool_name, arguments)) = self.forced_tool_for_question(&question) {
             info!(
                 tool = tool_name,
                 arguments = %arguments,
@@ -619,11 +596,9 @@ impl AiAgent {
                 "Running agent iteration"
             );
 
-            let assistant_message =
-                self.chat(messages.clone(), include_tools).await?;
+            let assistant_message = self.chat(messages.clone(), include_tools).await?;
 
-            let tool_calls =
-                assistant_message.tool_calls.clone().unwrap_or_default();
+            let tool_calls = assistant_message.tool_calls.clone().unwrap_or_default();
 
             if tool_calls.is_empty() {
                 info!(
@@ -659,22 +634,21 @@ impl AiAgent {
                     "Executing requested MCP tool"
                 );
 
-                let tool_result =
-                    match self.call_mcp_tool(&tool_name, arguments).await {
-                        Ok(result) => result,
-                        Err(error) => {
-                            warn!(
-                                tool = %tool_name,
-                                error = %error,
-                                "MCP tool execution failed"
-                            );
+                let tool_result = match self.call_mcp_tool(&tool_name, arguments).await {
+                    Ok(result) => result,
+                    Err(error) => {
+                        warn!(
+                            tool = %tool_name,
+                            error = %error,
+                            "MCP tool execution failed"
+                        );
 
-                            json!({
-                                "error": error.to_string()
-                            })
-                            .to_string()
-                        }
-                    };
+                        json!({
+                            "error": error.to_string()
+                        })
+                        .to_string()
+                    }
+                };
 
                 messages.push(OllamaMessage {
                     role: "tool".to_string(),
@@ -836,9 +810,7 @@ fn extract_schema_subject(question: &str) -> Option<String> {
         while let Some(part) = parts.next() {
             let candidate = part.trim();
 
-            if candidate.ends_with("-value")
-                && candidate.len() > "-value".len()
-            {
+            if candidate.ends_with("-value") && candidate.len() > "-value".len() {
                 return Some(candidate.to_string());
             }
         }
@@ -855,8 +827,7 @@ fn extract_schema_subject(question: &str) -> Option<String> {
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info")),
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
         )
         .init();
 

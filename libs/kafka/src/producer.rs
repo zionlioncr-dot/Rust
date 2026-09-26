@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use apache_avro::{to_avro_datum, types::Value, Schema};
 
 use rdkafka::{
+    message::{Header, OwnedHeaders},
     producer::{FutureProducer, FutureRecord},
     util::Timeout,
     ClientConfig,
@@ -56,6 +57,7 @@ impl KafkaProducer {
         key: Option<&str>,
         subject: &str,
         payload: &str,
+        traceparent: Option<&str>,
     ) -> Result<()> {
         let schema_response = self
             .schema_registry
@@ -79,35 +81,12 @@ impl KafkaProducer {
             );
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * Do NOT use apache_avro::Writer here.
-         *
-         * Writer creates an Avro Object Container File (OCF),
-         * which starts with the "Obj" header.
-         *
-         * Confluent Schema Registry wire format requires:
-         *
-         *   byte 0      = magic byte 0
-         *   bytes 1..5  = schema ID, big endian
-         *   bytes 5..   = Avro binary datum
-         *
-         * Therefore we use to_avro_datum().
-         */
-
         let avro_payload =
             to_avro_datum(&schema, avro_value).context("Failed to serialize Avro payload")?;
 
         let schema_id = schema_response.id;
 
         let mut wire_payload = Vec::with_capacity(5 + avro_payload.len());
-
-        // Confluent wire format.
-        //
-        // [0]       = magic byte
-        // [1..5]    = schema ID, big endian
-        // [5..]     = Avro binary datum
 
         wire_payload.push(0u8);
 
@@ -122,13 +101,21 @@ impl KafkaProducer {
             "Publishing Avro message using Confluent wire format"
         );
 
+        let mut record = FutureRecord::to(topic)
+            .payload(&wire_payload)
+            .key(key.unwrap_or(""));
+
+        if let Some(traceparent) = traceparent {
+            let headers = OwnedHeaders::new().insert(Header {
+                key: "traceparent",
+                value: Some(traceparent),
+            });
+
+            record = record.headers(headers);
+        }
+
         self.producer
-            .send(
-                FutureRecord::to(topic)
-                    .payload(&wire_payload)
-                    .key(key.unwrap_or("")),
-                Timeout::Never,
-            )
+            .send(record, Timeout::Never)
             .await
             .map_err(|(error, _)| anyhow::anyhow!(error))?;
 

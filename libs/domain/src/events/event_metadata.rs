@@ -10,6 +10,9 @@ pub struct EventMetadata {
 
     pub trace_id: String,
 
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub traceparent: Option<String>,
+
     pub source: String,
 
     pub timestamp: DateTime<Utc>,

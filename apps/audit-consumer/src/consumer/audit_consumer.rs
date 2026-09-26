@@ -75,6 +75,15 @@ impl AuditConsumer {
                 let router = router.clone();
 
                 async move {
+                    /*
+                     * Extract the distributed trace
+                     * BEFORE dispatch creates
+                     * audit.dispatch.
+                     */
+                    let trace_context = telemetry::tracing::extract_traceparent_context(
+                        event.traceparent.as_deref(),
+                    );
+
                     let json_value = consumer.decode_avro(&event.payload).await?;
 
                     let envelope = serde_json::from_value::<EventEnvelope>(json_value)?;
@@ -85,7 +94,20 @@ impl AuditConsumer {
 
                     consumer_metrics::consumed();
 
-                    dispatcher.dispatch(envelope).await?;
+                    /*
+                     * The future is polled with the
+                     * extracted Kafka context active.
+                     *
+                     * Therefore audit.dispatch
+                     * becomes a child of the
+                     * audit-service span whose
+                     * traceparent was persisted.
+                     */
+                    telemetry::tracing::run_with_context(
+                        trace_context,
+                        dispatcher.dispatch(envelope),
+                    )
+                    .await?;
 
                     Ok(())
                 }

@@ -6,12 +6,6 @@ members = [
     "apps/audit-service",
     "apps/audit-consumer",
     "apps/outbox-worker",
-    "apps/notification-service",
-    "apps/analytics-service",
-    "apps/llm-gateway",
-    "apps/embedding-service",
-    "apps/rag-service",
-    "apps/workflow-engine",
     "apps/mcp-server",
     "apps/ai-agent",
 

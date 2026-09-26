@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: financial-platform
+  labels:
+    app: api-gateway
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: api-gateway
+
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway:local
+          imagePullPolicy: Never
+
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+
+          env:
+            - name: SERVER_ADDR
+              value: "0.0.0.0:8088"
+
+            - name: AUDIT_SERVICE_URL
+              value: "http://audit-service:3000"
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-jwt
+                  key: JWT_SECRET
+
+            - name: JWT_ISSUER
+              value: "financial-intelligence-platform"
+
+            - name: JWT_AUDIENCE
+              value: "financial-api"
+
+            - name: OTEL_SERVICE_NAME
+              value: "api-gateway"
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8088
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8088
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

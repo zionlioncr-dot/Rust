@@ -1,19 +1,5 @@
-use axum::Json;
+use axum::http::StatusCode;
 
-use serde::Serialize;
-
-#[derive(Serialize)]
-
-pub struct HealthResponse {
-    status: &'static str,
-
-    service: &'static str,
-}
-
-pub async fn health() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "UP",
-
-        service: "api-gateway",
-    })
+pub async fn health() -> (StatusCode, &'static str) {
+    (StatusCode::OK, "OK")
 }

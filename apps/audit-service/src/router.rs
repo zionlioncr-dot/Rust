@@ -18,5 +18,8 @@ pub fn router(state: AppState) -> Router {
         .route("/metrics", get(metrics_handler::metrics))
         .route("/version", get(version_handler::version))
         .layer(middleware::from_fn(telemetry::metrics_middleware))
+        .layer(middleware::from_fn(
+            crate::middleware::trace_context::propagate_incoming_context,
+        ))
         .with_state(state)
 }

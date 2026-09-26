@@ -1,27 +1,42 @@
 mod config;
 mod middleware;
+mod proxy;
 mod router;
 mod routes;
 
+use std::net::SocketAddr;
+
 use anyhow::Result;
-use router::build_router;
-use telemetry::tracing::init_tracing;
+
+use crate::config::Config;
+use crate::router::build_router;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenvy::dotenv().ok();
+    telemetry::init_tracing()?;
 
-    init_tracing()?;
+    let config = Config::load();
 
-    let config = config::Config::load();
+    let app = build_router(config.clone());
 
-    let app = build_router();
+    let addr: SocketAddr = config.server_addr.parse()?;
 
-    let listener = tokio::net::TcpListener::bind(&config.server_addr).await?;
+    tracing::info!(
+        service = "api-gateway",
+        address = %addr,
+        "API Gateway starting"
+    );
 
-    tracing::info!("Gateway running on {}", config.server_addr);
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+
+    tracing::info!(
+        address = %addr,
+        "API Gateway listening"
+    );
 
     axum::serve(listener, app).await?;
+
+    telemetry::shutdown_tracing();
 
     Ok(())
 }

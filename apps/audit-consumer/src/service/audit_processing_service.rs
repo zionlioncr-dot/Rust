@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{bail, Result};
 
-use tracing::{info, warn};
+use tracing::{info, instrument, warn};
 
 use domain::events::audit_created::AuditCreatedEvent;
 
@@ -19,6 +19,15 @@ impl AuditProcessingService {
         Self { idempotency }
     }
 
+    #[instrument(
+        name = "audit.process",
+        skip(self, event),
+        fields(
+            event_id = %event.id,
+            user = %event.user,
+            action = %event.action
+        )
+    )]
     pub async fn process(&self, event: AuditCreatedEvent) -> Result<()> {
         //
         // Domain validation

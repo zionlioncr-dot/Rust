@@ -15,7 +15,9 @@ const BATCH_SIZE: i64 = 100;
 
 pub struct OutboxWorker {
     config: AppConfig,
+
     repository: Arc<dyn OutboxRepository>,
+
     publisher: KafkaPublisher,
 }
 
@@ -51,9 +53,27 @@ impl OutboxWorker {
 
                 let subject = format!("{}-value", event.event_type);
 
+                /*
+                 * The traceparent was persisted inside
+                 * the outbox JSON payload.
+                 *
+                 * It is not a database column.
+                 */
+                let traceparent = event
+                    .payload
+                    .get("metadata")
+                    .and_then(|metadata| metadata.get("traceparent"))
+                    .and_then(|value| value.as_str());
+
+                tracing::debug!(
+                    event_id = %event.id,
+                    traceparent = ?traceparent,
+                    "Preparing Kafka trace propagation"
+                );
+
                 match self
                     .publisher
-                    .publish_with_schema(&self.config.kafka_topic, &subject, &payload)
+                    .publish_with_schema(&self.config.kafka_topic, &subject, &payload, traceparent)
                     .await
                 {
                     Ok(_) => {
@@ -65,6 +85,7 @@ impl OutboxWorker {
                             event_id = %event.id,
                             event_type = %event.event_type,
                             subject = %subject,
+                            traceparent = ?traceparent,
                             "Event published successfully with Avro schema"
                         );
                     }

@@ -24,9 +24,10 @@ impl KafkaPublisher {
         topic: &str,
         subject: &str,
         payload: &str,
+        traceparent: Option<&str>,
     ) -> Result<()> {
         self.producer
-            .publish_with_schema(topic, None, subject, payload)
+            .publish_with_schema(topic, None, subject, payload, traceparent)
             .await
     }
 }

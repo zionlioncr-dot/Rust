@@ -6,7 +6,7 @@ use futures_util::StreamExt;
 
 use rdkafka::{
     consumer::{Consumer, StreamConsumer},
-    message::Message,
+    message::{Headers, Message},
     ClientConfig,
 };
 
@@ -76,7 +76,29 @@ impl KafkaConsumer {
                 None => None,
             };
 
-            handler(KafkaEvent { key, payload }).await?;
+            let traceparent = message.headers().and_then(|headers| {
+                headers.iter().find_map(|header| {
+                    if header.key == "traceparent" {
+                        header
+                            .value
+                            .and_then(|value| std::str::from_utf8(value).ok().map(String::from))
+                    } else {
+                        None
+                    }
+                })
+            });
+
+            tracing::debug!(
+                traceparent = ?traceparent,
+                "Kafka trace context extracted"
+            );
+
+            handler(KafkaEvent {
+                key,
+                payload,
+                traceparent,
+            })
+            .await?;
         }
 
         Ok(())
