@@ -10,6 +10,8 @@ use domain::events::{
     event_envelope::EventEnvelope, event_metadata::EventMetadata, event_version::EventVersion,
 };
 
+use telemetry::tracing::current_trace_context;
+
 pub struct EventEnvelopeBuilder;
 
 impl EventEnvelopeBuilder {
@@ -22,9 +24,9 @@ impl EventEnvelopeBuilder {
     where
         T: Serialize,
     {
-        let (current_trace_id, traceparent) = telemetry::tracing::current_trace_context();
+        let (trace_id, traceparent) = current_trace_context();
 
-        let trace_id = current_trace_id.unwrap_or_else(|| Uuid::new_v4().simple().to_string());
+        let trace_id = trace_id.unwrap_or_else(|| Uuid::new_v4().simple().to_string());
 
         Ok(EventEnvelope {
             metadata: EventMetadata {

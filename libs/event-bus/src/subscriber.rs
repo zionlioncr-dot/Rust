@@ -1,7 +1,6 @@
 use anyhow::Result;
 
 use common::config::AppConfig;
-
 use kafka::KafkaConsumer;
 
 pub struct EventSubscriber {
@@ -21,8 +20,8 @@ impl EventSubscriber {
         })
     }
 
-    pub fn subscribe(&self, topic: &str) -> Result<()> {
-        self.consumer.subscribe(topic)
+    pub async fn subscribe(&self, topic: &str) -> Result<()> {
+        self.consumer.subscribe(&[topic]).await
     }
 
     pub async fn listen<F, Fut>(&self, handler: F) -> Result<()>

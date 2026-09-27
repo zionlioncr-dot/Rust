@@ -1,7 +1,6 @@
 use anyhow::Result;
 
 use common::config::AppConfig;
-
 use kafka::KafkaProducer;
 
 pub struct KafkaPublisher {

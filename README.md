@@ -1,221 +1,157 @@
 # Financial Intelligence Platform
 
-A distributed, event-driven financial intelligence platform built with **Rust, PostgreSQL, Redpanda/Kafka, Apache Avro, Schema Registry, OpenTelemetry, Jaeger, Prometheus, Kubernetes, MCP, and AI agents**.
+A production-oriented financial intelligence platform built around **Rust microservices, PostgreSQL, Kafka/Redpanda, Apache Avro, Schema Registry, Kubernetes, OpenTelemetry, Jaeger, Prometheus, MCP and Ollama**.
 
-The platform is designed around reliable event processing, transactional outbox patterns, observability, schema evolution, secure API access, and AI-assisted operational tooling.
-
----
-
-## 1. Project Status
-
-The core event-driven platform is currently running successfully on a local **Kind Kubernetes cluster**.
-
-### Current status
-
-| Component                | Status           |
-| ------------------------ | ---------------- |
-| Kubernetes / Kind        | ✅ Operational    |
-| PostgreSQL               | ✅ Operational    |
-| Audit Service            | ✅ Operational    |
-| Transactional Outbox     | ✅ Operational    |
-| Outbox Worker            | ✅ Operational    |
-| Redpanda                 | ✅ Operational    |
-| Schema Registry          | ✅ Operational    |
-| Audit Consumer           | ✅ Operational    |
-| Prometheus               | ✅ Operational    |
-| OpenTelemetry            | ✅ Operational    |
-| Jaeger                   | ✅ Operational    |
-| Kafka Consumer Group     | ✅ Stable / Lag 0 |
-| API Gateway              | 🚧 Next          |
-| JWT Authentication       | 🚧 Next          |
-| Authorization / Scopes   | 🚧 Next          |
-| MCP Server on Kubernetes | 🚧 Next          |
-| AI Agent on Kubernetes   | 🚧 Next          |
-| Frontend                 | 🚧 Planned       |
-
-The end-to-end audit event pipeline has already been validated in Kubernetes.
+The platform is designed around asynchronous event processing, transactional consistency, schema evolution, distributed tracing, idempotent consumers and AI-assisted operational intelligence.
 
 ---
 
-# 2. Architecture
-
-The current architecture is based on asynchronous event processing and a transactional outbox.
+## Architecture
 
 ```text
                          ┌──────────────────────┐
-                         │      Client          │
-                         │ Web / Mobile / API   │
+                         │      Client / API     │
                          └──────────┬───────────┘
                                     │
-                              Future HTTPS
-                                    │
+                                    │ JWT / HTTP
                                     ▼
                          ┌──────────────────────┐
                          │     API Gateway      │
+                         │      :8088           │
                          │                      │
-                         │ JWT Validation       │
-                         │ Authorization        │
-                         │ Routing              │
-                         │ Rate Limiting       │
-                         │ Observability       │
+                         │ JWT / scopes         │
+                         │ request-id           │
+                         │ trace propagation    │
+                         └──────────┬───────────┘
+                                    │
+                                    │ HTTP
+                                    ▼
+                         ┌──────────────────────┐
+                         │    Audit Service     │
+                         │      :3000           │
+                         └──────────┬───────────┘
+                                    │
+                                    │ PostgreSQL
+                                    ▼
+                         ┌──────────────────────┐
+                         │      PostgreSQL      │
+                         │                      │
+                         │ audit_events         │
+                         │ outbox_events        │
+                         │ processed_events     │
+                         │ dead_letter_events   │
+                         └──────────┬───────────┘
+                                    │
+                                    │ Transactional Outbox
+                                    ▼
+                         ┌──────────────────────┐
+                         │    Outbox Worker     │
+                         └──────────┬───────────┘
+                                    │
+                                    │ Avro
+                                    │ traceparent
+                                    ▼
+                 ┌────────────────────────────────────┐
+                 │          Redpanda / Kafka          │
+                 │                                    │
+                 │          audit-events              │
+                 └────────────────┬───────────────────┘
+                                  │
+                                  │ Kafka Consumer
+                                  ▼
+                         ┌──────────────────────┐
+                         │    Audit Consumer    │
+                         │                      │
+                         │ validation           │
+                         │ version routing      │
+                         │ idempotency          │
+                         │ retry                 │
+                         │ dead-letter           │
                          └──────────┬───────────┘
                                     │
                                     ▼
                          ┌──────────────────────┐
-                         │    Audit Service     │
+                         │ Audit Processing     │
+                         └──────────────────────┘
+
+
+                 ┌────────────────────────────────────┐
+                 │          Schema Registry            │
+                 │                                    │
+                 │          AuditCreated-value        │
+                 └────────────────────────────────────┘
+
+
+                         Observability
+                 ┌────────────────────────────────────┐
+                 │                                    │
+                 │ OpenTelemetry                      │
+                 │        │                           │
+                 │        ▼                           │
+                 │      Jaeger                        │
+                 │                                    │
+                 │ Prometheus                         │
+                 │        │                           │
+                 │        ▼                           │
+                 │     Metrics                        │
+                 └────────────────────────────────────┘
+
+
+                         AI / MCP Layer
+                 ┌────────────────────────────────────┐
+                 │          MCP Server                 │
+                 │                                    │
+                 │ audit.get_event                    │
+                 │ audit.list_events                  │
+                 │ audit.get_pending_outbox           │
+                 │ kafka.list_topics                  │
+                 │ schema.get_latest                  │
+                 │ system.health                      │
+                 └────────────────┬───────────────────┘
+                                  │
+                                  │ MCP
+                                  ▼
+                         ┌──────────────────────┐
+                         │      AI Agent        │
                          │       Rust           │
                          └──────────┬───────────┘
                                     │
-                           Transactional Write
-                                    │
-                    ┌───────────────┴────────────────┐
-                    │                                │
-                    ▼                                ▼
-             audit_events                     outbox_events
-                    │                                │
-                    │                                ▼
-                    │                         Outbox Worker
-                    │                                │
-                    │                         Avro Serialization
-                    │                                │
-                    │                                ▼
-                    │                           Schema Registry
-                    │                                │
-                    │                                ▼
-                    │                            Redpanda
-                    │                                │
-                    │                                ▼
-                    │                         Audit Consumer
-                    │                                │
-                    │                                ▼
-                    │                       processed_events
-                    │
-                    └──────────────────────────────────────┐
-                                                           │
-                                                           ▼
-                                                  PostgreSQL
-```
-
-Observability runs alongside the platform:
-
-```text
-                     ┌─────────────────────┐
-                     │   Rust Services     │
-                     └─────────┬───────────┘
-                               │
-                 ┌─────────────┴─────────────┐
-                 │                           │
-                 ▼                           ▼
-           Prometheus                 OpenTelemetry
-           /metrics                       │
-                 │                        ▼
-                 │                      Jaeger
-                 │
-                 ▼
-              Metrics
+                                    │ HTTP
+                                    ▼
+                         ┌──────────────────────┐
+                         │       Ollama         │
+                         │      Local LLM        │
+                         │                      │
+                         │      qwen3:0.6b      │
+                         └──────────────────────┘
 ```
 
 ---
 
-# 3. Event-Driven Flow
+# Project Goals
 
-The validated Kubernetes flow is:
+The platform focuses on the following architectural capabilities:
 
-```text
-HTTP POST /audit
-        │
-        ▼
-audit-service
-        │
-        ├── INSERT audit_events
-        │
-        └── INSERT outbox_events
-                    │
-                    ▼
-             outbox-worker
-                    │
-                    ├── Resolve Avro schema
-                    │
-                    ├── Serialize event
-                    │
-                    └── Publish to Redpanda
-                              │
-                              ▼
-                       audit-events topic
-                              │
-                              ▼
-                       audit-consumer
-                              │
-                              └── INSERT processed_events
-```
-
-This architecture provides reliable event publication without requiring the HTTP request handler to directly publish to Kafka/Redpanda.
+* Event-driven architecture
+* Transactional Outbox Pattern
+* Kafka-compatible event streaming
+* Apache Avro serialization
+* Schema Registry and schema evolution
+* Idempotent event processing
+* Retry and Dead Letter handling
+* Distributed tracing
+* W3C Trace Context propagation
+* OpenTelemetry
+* Prometheus metrics
+* Kubernetes deployment
+* JWT authentication and authorization scopes
+* MCP-based operational access
+* Local AI inference through Ollama
+* AI-assisted platform observability and analysis
 
 ---
 
-# 4. Repository Structure
-
-```text
-financial-intelligence-platform/
-│
-├── apps/
-│   ├── audit-service/
-│   ├── audit-consumer/
-│   ├── outbox-worker/
-│   ├── api-gateway/
-│   ├── mcp-server/
-│   ├── ai-agent/
-│   │
-│   ├── analytics/
-│   ├── embedding/
-│   ├── llm-gateway/
-│   ├── notification/
-│   ├── rag/
-│   └── workflow/
-│
-├── libs/
-│   ├── bootstrap/
-│   ├── common/
-│   ├── domain/
-│   ├── event-bus/
-│   ├── health/
-│   ├── http-server/
-│   ├── kafka/
-│   ├── metrics/
-│   ├── repository/
-│   └── telemetry/
-│
-├── migrations/
-│   ├── 0001_create_audit_events.sql
-│   ├── 0002_create_outbox_events.sql
-│   ├── 0003_dead_letter.sql
-│   ├── 0004_processed_events.sql
-│   └── 0007_alter_processed_events.sql
-│
-├── k8s/
-│   ├── namespace.yaml
-│   ├── postgres/
-│   ├── redpanda/
-│   ├── jaeger/
-│   ├── prometheus/
-│   ├── audit-service/
-│   ├── outbox-worker/
-│   ├── audit-consumer/
-│   ├── api-gateway/
-│   ├── mcp-server/
-│   └── ai-agent/
-│
-├── docker-compose.yml
-├── Cargo.toml
-├── Cargo.lock
-├── .env
-├── kind-config.yaml
-└── README.md
-```
-
----
-
-# 5. Technology Stack
+# Technology Stack
 
 ## Backend
 
@@ -224,1405 +160,1143 @@ financial-intelligence-platform/
 * Axum
 * SQLx
 * PostgreSQL
+* rdkafka
 * Apache Avro
-* Kafka protocol
-* Redpanda
-* Schema Registry
-* OpenTelemetry
-* Prometheus
-* Jaeger
+* Reqwest
+* Serde
+* JSON Web Tokens
 
-## Infrastructure
+## Event Infrastructure
+
+* Redpanda
+* Kafka protocol
+* Apache Avro
+* Confluent-compatible Schema Registry
+* Transactional Outbox Pattern
+
+## Observability
+
+* OpenTelemetry
+* Jaeger
+* Prometheus
+* W3C Trace Context
+* `traceparent`
+
+## Container / Infrastructure
 
 * Docker
 * Docker Compose
 * Kubernetes
-* Kind
-* Kubernetes Services
-* PersistentVolumeClaims
-* ConfigMaps
-* Secrets
+* kind
 
-## AI / Tooling
+## AI
 
-* Model Context Protocol (MCP)
-* `rmcp`
 * Ollama
-* AI Agent
-* Tool-based deterministic workflows
+* Local LLM inference
+* MCP
+* Rust MCP client/server
+* `rmcp`
 
 ---
 
-# 6. Kubernetes Environment
-
-The local Kubernetes cluster is:
+# Workspace Structure
 
 ```text
-financial-cluster
-```
-
-Kind configuration:
-
-```yaml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-name: financial-cluster
-
-nodes:
-  - role: control-plane
-  - role: worker
-  - role: worker
-```
-
-Current namespace:
-
-```text
-financial-platform
-```
-
-Check the cluster:
-
-```bash
-kubectl get nodes
-```
-
-Check all workloads:
-
-```bash
-kubectl get pods -n financial-platform
-```
-
-Check services:
-
-```bash
-kubectl get svc -n financial-platform
+financial-intelligence-platform/
+│
+├── apps/
+│   ├── api-gateway/
+│   │
+│   ├── audit-service/
+│   │
+│   ├── audit-consumer/
+│   │
+│   ├── outbox-worker/
+│   │
+│   ├── mcp-server/
+│   │
+│   └── ai-agent/
+│
+├── libs/
+│   ├── common/
+│   ├── domain/
+│   ├── event-bus/
+│   ├── kafka/
+│   ├── metrics/
+│   ├── repository/
+│   └── telemetry/
+│
+├── deploy/
+│   ├── kubernetes/
+│   └── ...
+│
+├── docker-compose.yml
+├── Cargo.toml
+└── README.md
 ```
 
 ---
 
-# 7. Kubernetes Components
+# Core Event Flow
 
-## PostgreSQL
-
-Internal Kubernetes address:
+An audit request follows this lifecycle:
 
 ```text
-postgres:5432
-```
-
-Database:
-
-```text
-financial
-```
-
-Credentials used by the local development environment:
-
-```text
-username: postgres
-password: postgres
-```
-
-PostgreSQL uses a persistent volume.
-
-Verify:
-
-```bash
-kubectl get pods -n financial-platform -l app=postgres
-kubectl get pvc -n financial-platform
+HTTP Request
+    │
+    ▼
+API Gateway
+    │
+    │ JWT validation
+    │ scope validation
+    │ trace creation
+    ▼
+Audit Service
+    │
+    │ database transaction
+    ├───────────────┐
+    │               │
+    ▼               ▼
+audit_events    outbox_events
+                    │
+                    │ published = false
+                    ▼
+              Outbox Worker
+                    │
+                    │ Avro serialization
+                    │ Schema Registry
+                    │ traceparent
+                    ▼
+                 Redpanda
+                    │
+                    ▼
+              Audit Consumer
+                    │
+                    ├── decode Avro
+                    ├── validate schema
+                    ├── validate event
+                    ├── route version
+                    ├── idempotency
+                    ├── retry
+                    └── dead-letter
+                    │
+                    ▼
+              Audit Processing
 ```
 
 ---
 
-# 8. Redpanda
+# Transactional Outbox
 
-Redpanda is deployed as a StatefulSet.
+The Audit Service does not directly depend on Kafka availability to commit an audit operation.
 
-Internal Kafka address:
+Instead:
+
+```text
+BEGIN TRANSACTION
+
+INSERT audit event
+
+INSERT outbox event
+
+COMMIT
+```
+
+The Outbox Worker subsequently publishes the event to Redpanda.
+
+This provides a reliable boundary between PostgreSQL state and asynchronous event publication.
+
+Example:
+
+```text
+outbox_events
+
+id
+event_type
+payload
+published
+created_at
+```
+
+The worker retrieves unpublished events and publishes them using the registered Avro schema.
+
+---
+
+# Kafka / Redpanda
+
+Primary event topic:
+
+```text
+audit-events
+```
+
+Kubernetes configuration:
 
 ```text
 redpanda:9092
 ```
 
-Admin API:
+The platform uses Kafka-compatible APIs through `rdkafka`.
+
+The producer publishes events using Confluent-compatible Avro wire format:
 
 ```text
-redpanda:9644
+Byte 0      = magic byte
+Bytes 1..5  = schema ID
+Bytes 5..   = Avro binary payload
 ```
 
-Schema Registry:
-
-```text
-http://redpanda:8081
-```
-
-The current deployment uses the **integrated Redpanda Schema Registry**.
-
-No separate Schema Registry deployment is required.
-
-Check Redpanda:
-
-```bash
-kubectl get pods -n financial-platform -l app=redpanda
-```
-
-Check cluster:
-
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  rpk cluster info
-```
-
-Check topics:
-
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  rpk topic list
-```
-
-Current main topic:
-
-```text
-audit-events
-```
+The consumer resolves the schema ID through Schema Registry before decoding the event.
 
 ---
 
-# 9. Schema Registry
+# Schema Registry
 
-The current event subject is:
+Schema Registry is used to manage event contracts.
+
+Current event subject:
 
 ```text
 AuditCreated-value
 ```
 
-Compatibility mode:
+Example logical schema:
 
 ```text
-BACKWARD
+AuditCreated
+├── event_type
+├── metadata
+│   ├── correlation_id
+│   ├── event_id
+│   ├── source
+│   ├── timestamp
+│   └── trace_id
+├── payload
+│   ├── action
+│   ├── created_at
+│   ├── id
+│   └── user
+└── version
+    ├── major
+    ├── minor
+    └── patch
 ```
 
-Check subjects:
+Compatibility is configured through Schema Registry.
 
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  curl -s http://localhost:8081/subjects
-```
-
-Check versions:
-
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  curl -s http://localhost:8081/subjects/AuditCreated-value/versions
-```
-
-The current schema is an Avro record:
-
-```text
-financial.audit.events.AuditCreated
-```
-
-with:
-
-```text
-event_type
-metadata
-payload
-version
-```
-
-The metadata contains:
-
-```text
-correlation_id
-event_id
-source
-timestamp
-trace_id
-```
-
-The payload contains:
-
-```text
-action
-created_at
-id
-user
-```
-
-The version contains:
-
-```text
-major
-minor
-patch
-```
+The current platform uses backward-compatible schema evolution.
 
 ---
 
-# 10. Audit Service
+# Audit Consumer
 
-The Audit Service is implemented in Rust using Axum.
+The Audit Consumer performs:
 
-Internal Kubernetes service:
+1. Kafka subscription
+2. Confluent Avro decoding
+3. Schema resolution
+4. EventEnvelope deserialization
+5. Event validation
+6. Version routing
+7. Idempotency checking
+8. Event dispatch
+9. Retry handling
+10. Dead-letter processing
+11. Distributed trace propagation
 
-```text
-audit-service:3000
-```
-
-Endpoints:
-
-```text
-GET  /health
-GET  /live
-GET  /ready
-GET  /metrics
-GET  /version
-POST /audit
-```
-
-Example:
-
-```bash
-kubectl port-forward -n financial-platform svc/audit-service 3000:3000
-```
-
-Then:
-
-```bash
-curl -i -X POST http://localhost:3000/audit \
-  -H 'Content-Type: application/json' \
-  -d '{"user":"alejandro","action":"KUBERNETES_TEST"}'
-```
-
-Example response:
-
-```json
-{
-  "id": "fe1672c2-5f16-4753-bb08-3d76e92e2333",
-  "user": "alejandro",
-  "action": "KUBERNETES_TEST",
-  "created_at": "2026-09-17T02:31:46.630764469Z"
-}
-```
-
----
-
-# 11. Transactional Outbox
-
-The Audit Service writes the business record and the outbox record as part of the database transaction.
-
-Tables:
+The consumer uses:
 
 ```text
-audit_events
-outbox_events
-```
-
-The Outbox Worker periodically searches for:
-
-```text
-published = false
-```
-
-events.
-
-It then:
-
-1. Loads the event.
-2. Resolves the Avro schema.
-3. Serializes the event.
-4. Publishes it to Redpanda.
-5. Marks the event as published.
-
-Example validation:
-
-```bash
-kubectl exec -n financial-platform deploy/postgres -- \
-  psql -U postgres -d financial -c \
-  "SELECT id, event_type, published, created_at
-   FROM outbox_events
-   ORDER BY created_at DESC
-   LIMIT 5;"
-```
-
-A successful event should show:
-
-```text
-published = t
-```
-
----
-
-# 12. Outbox Worker
-
-The Outbox Worker runs independently from the Audit Service.
-
-Configuration inside Kubernetes:
-
-```text
-DATABASE_URL=postgres://postgres:postgres@postgres:5432/financial
 KAFKA_BROKERS=redpanda:9092
 KAFKA_TOPIC=audit-events
 SCHEMA_REGISTRY_URL=http://redpanda:8081
-POLLING_INTERVAL=2
-```
-
-Check logs:
-
-```bash
-kubectl logs -n financial-platform deploy/outbox-worker --tail=100
-```
-
-Successful output includes:
-
-```text
-Event published successfully with Avro schema
 ```
 
 ---
 
-# 13. Audit Consumer
+# Idempotency
 
-The Audit Consumer reads:
+Events are processed through an idempotency layer backed by PostgreSQL.
 
-```text
-audit-events
-```
+This prevents duplicate Kafka deliveries from producing duplicate business processing.
 
-using the consumer group:
+Conceptually:
 
 ```text
-audit-group
-```
-
-The consumer:
-
-1. Reads the Kafka event.
-2. Resolves the Avro schema.
-3. Deserializes the event.
-4. Validates the event envelope.
-5. Routes according to event version.
-6. Processes the audit event.
-7. Records successful processing in PostgreSQL.
-
-Check the consumer group:
-
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  rpk group describe audit-group
-```
-
-A healthy state should look like:
-
-```text
-STATE        Stable
-TOTAL-LAG    0
-```
-
-The current Kubernetes deployment has been validated with:
-
-```text
-CURRENT-OFFSET  2
-LOG-END-OFFSET  2
-LAG             0
-```
-
----
-
-# 14. Idempotent Event Processing
-
-Processed events are stored in:
-
-```text
-processed_events
-```
-
-Schema:
-
-```text
+Kafka Event
+    │
+    ▼
 event_id
-consumer
-handler
-processed_at
-```
-
-The primary key on `event_id` provides an idempotency mechanism for consumer processing.
-
-Example:
-
-```bash
-kubectl exec -n financial-platform deploy/postgres -- \
-  psql -U postgres -d financial -c \
-  "SELECT event_id, consumer, handler, processed_at
-   FROM processed_events
-   ORDER BY processed_at DESC
-   LIMIT 5;"
+    │
+    ▼
+processed_events
+    │
+    ├── already processed ──► ignore
+    │
+    └── new event ──────────► process
 ```
 
 ---
 
-# 15. Prometheus
+# Retry and Dead Letter Handling
 
-Prometheus is deployed inside Kubernetes.
+The consumer includes:
 
-Internal service:
+* Retry policy
+* Retry executor
+* Dead Letter Service
+* Persistent processing state
 
-```text
-prometheus:9090
-```
+Failures are therefore not treated as simple application crashes.
 
-The current scrape target is:
-
-```text
-audit-service:3000/metrics
-```
-
-Check Prometheus:
-
-```bash
-kubectl get pods -n financial-platform -l app=prometheus
-```
-
-Port-forward:
-
-```bash
-kubectl port-forward -n financial-platform svc/prometheus 9090:9090
-```
-
-Check targets:
-
-```bash
-curl -s http://localhost:9090/api/v1/targets
-```
-
-The current target is:
+The intended flow is:
 
 ```text
-audit-service:3000
-```
-
-with:
-
-```text
-health = up
-```
-
-The platform exposes metrics including:
-
-```text
-http_requests_total
-```
-
-Example:
-
-```bash
-curl -s http://localhost:9090/api/v1/query \
-  --data-urlencode 'query=http_requests_total'
+Event
+ │
+ ▼
+Process
+ │
+ ├── success ───────────────► ACK / completed
+ │
+ └── failure
+       │
+       ▼
+     Retry
+       │
+       ├── success ─────────► completed
+       │
+       └── retry exhausted
+              │
+              ▼
+          Dead Letter
 ```
 
 ---
 
-# 16. OpenTelemetry and Jaeger
+# Authentication
 
-OpenTelemetry is integrated into the Rust services through the shared `telemetry` library.
-
-Current libraries include:
+The API Gateway validates JWT tokens using:
 
 ```text
-opentelemetry       0.32
-opentelemetry_sdk   0.32
-opentelemetry-otlp  0.32
-tracing-opentelemetry 0.33
+Algorithm: HS256
+
+Issuer:
+financial-intelligence-platform
+
+Audience:
+financial-api
 ```
 
-The Kubernetes configuration uses:
+Authorization is scope-based.
 
-```text
-OTEL_SERVICE_NAME=audit-service
-OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
-```
-
-Jaeger receives OTLP over gRPC.
-
-Internal service:
-
-```text
-jaeger:4317
-```
-
-Jaeger UI:
-
-```text
-jaeger:16686
-```
-
-Port-forward:
-
-```bash
-kubectl port-forward -n financial-platform svc/jaeger 16686:16686
-```
-
-Check registered services:
-
-```bash
-curl -s http://localhost:16686/api/services
-```
-
-Current result includes:
-
-```text
-audit-service
-jaeger
-```
-
-The platform has successfully produced traces such as:
-
-```text
-operationName: audit.create
-```
-
-with attributes including:
-
-```text
-audit.action = KUBERNETES_TEST
-audit.user   = alejandro
-```
-
-This confirms that OpenTelemetry → OTLP → Jaeger is working end-to-end.
-
----
-
-# 17. Observability Architecture
-
-The current observability architecture is:
-
-```text
-                    Rust Services
-                         │
-              ┌──────────┴──────────┐
-              │                     │
-              ▼                     ▼
-         Prometheus            OpenTelemetry
-              │                     │
-              ▼                     ▼
-           Metrics                Jaeger
-```
-
-The platform therefore provides both:
-
-* Metrics
-* Distributed tracing
-
-The next step is to propagate correlation and trace information consistently across:
-
-```text
-API Gateway
-     │
-     ▼
-Audit Service
-     │
-     ▼
-Outbox Worker
-     │
-     ▼
-Redpanda
-     │
-     ▼
-Audit Consumer
-```
-
----
-
-# 18. API Gateway
-
-The API Gateway application exists in the workspace and is planned as the external entry point for the platform.
-
-Target architecture:
-
-```text
-Client
-  │
-  ▼
-API Gateway
-  │
-  ├── Authentication
-  ├── JWT validation
-  ├── Authorization
-  ├── Routing
-  ├── Rate limiting
-  ├── Request ID
-  ├── CORS
-  ├── Metrics
-  └── Tracing
-  │
-  ▼
-Internal Services
-```
-
-The API Gateway is the next major implementation step.
-
-Planned protected endpoint:
-
-```text
-POST /api/audit
-```
-
-which will route to:
-
-```text
-audit-service:3000/audit
-```
-
----
-
-# 19. JWT Authentication
-
-JWT-based authentication is planned at the API Gateway layer.
-
-The Gateway will validate:
-
-```text
-Authorization: Bearer <JWT>
-```
-
-Expected validation includes:
-
-* Signature
-* Algorithm
-* Issuer
-* Audience
-* Expiration
-* Not-before timestamp
-* Required claims
-* Scopes / permissions
-
-Example conceptual claims:
-
-```json
-{
-  "sub": "user-123",
-  "iss": "financial-platform",
-  "aud": "api",
-  "exp": 1789616000,
-  "scope": "audit:read audit:write"
-}
-```
-
-Authorization will be based on scopes/permissions.
-
-Example:
+Current audit scopes:
 
 ```text
 audit:read
 audit:write
 ```
 
-The Gateway should reject:
+HTTP methods map to scopes:
 
 ```text
-401 Unauthorized
+GET
+ └── audit:read
+
+POST
+PUT
+PATCH
+DELETE
+ └── audit:write
 ```
 
-when authentication fails.
+Example claims:
 
-It should reject:
-
-```text
-403 Forbidden
+```json
+{
+  "sub": "user",
+  "iss": "financial-intelligence-platform",
+  "aud": "financial-api",
+  "iat": 0,
+  "exp": 0,
+  "scopes": [
+    "audit:read",
+    "audit:write"
+  ]
+}
 ```
 
-when authentication succeeds but the required permission is missing.
+Authentication infrastructure is currently present at the Gateway level. A dedicated user/login/identity service is still a future component.
 
 ---
 
-# 20. MCP Server
+# Distributed Tracing
 
-The project includes an MCP server implemented using `rmcp`.
+The platform implements W3C Trace Context.
 
-Current MCP endpoint:
+Example:
 
 ```text
-http://localhost:8000/mcp
+traceparent:
+00-9c3c3750c0821c53b1b1fd89336bdcdd-0ca4604a606a3a16-01
 ```
 
-The MCP server currently exposes tools for:
+The propagation path is:
 
 ```text
-system.health
-audit.list_events
+API Gateway
+    │
+    ▼
+Audit Service
+    │
+    ▼
+PostgreSQL Outbox
+    │
+    ▼
+Outbox Worker
+    │
+    │ Kafka traceparent header
+    ▼
+Redpanda
+    │
+    ▼
+Audit Consumer
+    │
+    ▼
+OpenTelemetry Context
+    │
+    ▼
+Audit Dispatcher
+    │
+    ▼
+Audit Processing
+```
+
+The current implementation has been verified with a real audit request.
+
+Observed trace ID:
+
+```text
+9c3c3750c0821c53b1b1fd89336bdcdd
+```
+
+The same W3C `traceparent` was observed in:
+
+* Outbox Worker
+* Kafka message
+* Audit Consumer
+
+The consumer successfully extracted the context and processed the event under the propagated trace.
+
+---
+
+# OpenTelemetry
+
+Services use OpenTelemetry for distributed tracing.
+
+Example Kubernetes configuration:
+
+```text
+OTEL_SERVICE_NAME=audit-consumer
+OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+```
+
+Jaeger receives OTLP traffic through:
+
+```text
+4317  OTLP gRPC
+4318  OTLP HTTP
+16686 Jaeger UI
+```
+
+Expected services include:
+
+```text
+api-gateway
+audit-service
+outbox-worker
+audit-consumer
+```
+
+---
+
+# Prometheus
+
+The platform exposes application metrics for Prometheus scraping.
+
+Example:
+
+```text
+/metrics
+```
+
+Prometheus is configured to scrape the platform services.
+
+Metrics include consumer processing activity and application-level counters.
+
+---
+
+# MCP
+
+The platform includes an MCP server providing controlled operational access to platform data.
+
+The MCP server exposes tools including:
+
+```text
 audit.get_event
+audit.list_events
 audit.get_pending_outbox
 kafka.list_topics
 schema.get_latest
+system.health
 ```
 
-The MCP server has already been tested with MCP Inspector.
+The MCP layer intentionally exposes controlled capabilities instead of giving the AI unrestricted access to PostgreSQL, Kafka or the Kubernetes cluster.
 
-The Kubernetes deployment is planned as the next stage.
-
-The internal Kubernetes architecture will use:
+This creates a useful separation:
 
 ```text
-mcp-server
-    │
-    ├── PostgreSQL
-    ├── Redpanda
-    ├── Schema Registry
-    └── observability
+AI
+ │
+ ▼
+MCP
+ │
+ ├── Audit
+ ├── Outbox
+ ├── Kafka
+ ├── Schema Registry
+ └── System Health
 ```
 
 ---
 
-# 21. AI Agent
+# Ollama AI Layer
 
-The project includes an AI Agent that communicates with the MCP Server.
+The platform includes local LLM inference through Ollama.
 
-Current architecture:
+Current AI Agent flow:
 
 ```text
+User
+ │
+ ▼
 AI Agent
-   │
-   ▼
-MCP Client
-   │
-   ▼
+ │
+ ▼
 MCP Server
-   │
-   ├── PostgreSQL
-   ├── Redpanda
-   └── Schema Registry
+ │
+ ├── audit.get_event
+ ├── audit.list_events
+ ├── audit.get_pending_outbox
+ ├── kafka.list_topics
+ ├── schema.get_latest
+ └── system.health
+ │
+ ▼
+Ollama
+ │
+ ▼
+Natural Language Response
 ```
 
-The local AI Agent uses Ollama and has been tested with:
+The AI Agent has already been tested with Ollama using:
 
 ```text
 qwen3:0.6b
 ```
 
-The current development HTTP endpoint is:
+Example supported questions:
 
 ```text
-http://localhost:8001
+¿Cuántos eventos pendientes hay en el outbox?
+
+¿Cuál es el último schema Avro de AuditCreated-value?
+
+¿Está saludable toda la plataforma?
 ```
 
-The next stage is deploying both the MCP Server and AI Agent to Kubernetes.
+The architecture also supports deterministic tool selection for operational questions, reducing unnecessary LLM reasoning when the requested operation maps directly to an MCP capability.
 
 ---
 
-# 22. Environment Variables
+# Kubernetes
 
-Example local `.env`:
-
-```env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/financial
-
-POLLING_INTERVAL=2
-
-KAFKA_TOPIC=audit-events
-KAFKA_BROKERS=localhost:19092
-
-SCHEMA_REGISTRY_URL=http://localhost:18081
-
-KAFKA_DLQ_TOPIC=audit-events-dlq
-
-SERVICE_NAME=audit-service
-
-RUST_LOG=info
-
-METRICS_PORT=3000
-
-RETRY_MAX_ATTEMPTS=5
-RETRY_INITIAL_DELAY_MS=100
-RETRY_MULTIPLIER=2
-RETRY_MAX_DELAY_MS=10000
-
-CONSUMER_WORKERS=4
-CHANNEL_SIZE=100
-```
-
-Kubernetes uses internal service discovery instead of localhost.
-
-For example:
+The platform runs on a local kind cluster:
 
 ```text
-PostgreSQL:
-postgres:5432
-
-Redpanda:
-redpanda:9092
-
-Schema Registry:
-http://redpanda:8081
-
-Jaeger:
-http://jaeger:4317
+financial-cluster
 ```
 
----
+Namespace:
 
-# 23. Local Docker Compose
-
-Docker Compose remains available as a separate local development environment.
-
-It should not be mixed with the Kubernetes environment during Kubernetes testing.
-
-Before testing Kubernetes, stop the Compose application containers:
-
-```bash
-docker compose down
+```text
+financial-platform
 ```
 
-Do not remove volumes unless intentionally resetting the local environment.
-
-Avoid:
-
-```bash
-docker compose down -v
-```
-
-unless a complete local data reset is intended.
-
-Docker Desktop itself must remain running because Kind uses Docker as its container runtime.
-
----
-
-# 24. Kubernetes Deployment Workflow
-
-Start the Kind cluster:
-
-```bash
-kind create cluster --config kind-config.yaml
-```
-
-Verify:
-
-```bash
-kubectl get nodes
-```
-
-Create namespace:
-
-```bash
-kubectl apply -f k8s/namespace.yaml
-```
-
-Deploy infrastructure first:
-
-```bash
-kubectl apply -f k8s/postgres/
-kubectl apply -f k8s/redpanda/
-kubectl apply -f k8s/jaeger/
-kubectl apply -f k8s/prometheus/
-```
-
-Verify:
+Example:
 
 ```bash
 kubectl get pods -n financial-platform
 ```
 
-Then deploy the Rust services:
+Core workloads include:
 
-```bash
-kubectl apply -f k8s/audit-service/
-kubectl apply -f k8s/outbox-worker/
-kubectl apply -f k8s/audit-consumer/
+```text
+api-gateway
+audit-service
+audit-consumer
+outbox-worker
+postgres
+redpanda
+jaeger
+prometheus
 ```
 
-Future deployments:
+Images can be loaded into kind for local development:
 
 ```bash
-kubectl apply -f k8s/api-gateway/
-kubectl apply -f k8s/mcp-server/
-kubectl apply -f k8s/ai-agent/
-```
-
----
-
-# 25. Building Local Images for Kind
-
-Build an image:
-
-```bash
-docker build -t audit-service:local -f apps/audit-service/Dockerfile .
-```
-
-Load it into Kind:
-
-```bash
-kind load docker-image audit-service:local \
+kind load docker-image audit-consumer:local \
   --name financial-cluster
 ```
 
-Repeat for other services:
+---
+
+# Local Development
+
+Build the entire workspace:
+
+```bash
+cargo build
+```
+
+Build release:
+
+```bash
+cargo build --release
+```
+
+Format:
+
+```bash
+cargo fmt --all
+```
+
+Run tests:
+
+```bash
+cargo test --workspace
+```
+
+---
+
+# Audit Consumer
+
+Build:
+
+```bash
+cargo build --release -p audit-consumer
+```
+
+Build Docker image:
+
+```bash
+docker build \
+  --no-cache \
+  -f apps/audit-consumer/Dockerfile \
+  -t audit-consumer:local .
+```
+
+Load into kind:
+
+```bash
+kind load docker-image audit-consumer:local \
+  --name financial-cluster
+```
+
+Restart deployment:
+
+```bash
+kubectl rollout restart deployment/audit-consumer \
+  -n financial-platform
+```
+
+Check rollout:
+
+```bash
+kubectl rollout status deployment/audit-consumer \
+  -n financial-platform
+```
+
+View logs:
+
+```bash
+kubectl logs \
+  -n financial-platform \
+  deployment/audit-consumer \
+  --timestamps
+```
+
+---
+
+# API Gateway
+
+Default local endpoint:
 
 ```text
-outbox-worker:local
-audit-consumer:local
-api-gateway:local
-mcp-server:local
-ai-agent:local
+http://localhost:8088
 ```
 
-The Kubernetes deployments use:
+Audit endpoint:
 
-```yaml
-imagePullPolicy: Never
+```text
+POST /audit
 ```
 
-for local Kind images.
-
----
-
-# 26. Health Checks
-
-Check all pods:
+Example:
 
 ```bash
-kubectl get pods -n financial-platform
-```
-
-Check services:
-
-```bash
-kubectl get svc -n financial-platform
-```
-
-Check deployments:
-
-```bash
-kubectl get deployments -n financial-platform
-```
-
-Check persistent volumes:
-
-```bash
-kubectl get pvc -n financial-platform
+curl -i -X POST http://localhost:8088/audit \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user": "alejandro",
+    "action": "TEST_EVENT"
+  }'
 ```
 
 ---
 
-# 27. End-to-End Validation
+# Health Checks
 
-A complete audit event test can be performed with:
-
-```bash
-curl -i -X POST http://localhost:3000/audit \
-  -H 'Content-Type: application/json' \
-  -d '{"user":"alejandro","action":"KUBERNETES_TEST"}'
-```
-
-Then verify PostgreSQL:
+Audit Consumer:
 
 ```bash
-kubectl exec -n financial-platform deploy/postgres -- \
-  psql -U postgres -d financial -c \
-  "SELECT id, username, action, created_at
-   FROM audit_events
-   ORDER BY created_at DESC
-   LIMIT 5;"
-```
-
-Verify outbox:
-
-```bash
-kubectl exec -n financial-platform deploy/postgres -- \
-  psql -U postgres -d financial -c \
-  "SELECT id, event_type, published, created_at
-   FROM outbox_events
-   ORDER BY created_at DESC
-   LIMIT 5;"
-```
-
-Verify worker:
-
-```bash
-kubectl logs -n financial-platform deploy/outbox-worker --tail=50
-```
-
-Verify consumer:
-
-```bash
-kubectl logs -n financial-platform deploy/audit-consumer --tail=50
-```
-
-Verify processed events:
-
-```bash
-kubectl exec -n financial-platform deploy/postgres -- \
-  psql -U postgres -d financial -c \
-  "SELECT event_id, consumer, handler, processed_at
-   FROM processed_events
-   ORDER BY processed_at DESC
-   LIMIT 5;"
-```
-
-Verify Kafka lag:
-
-```bash
-kubectl exec -n financial-platform redpanda-0 -- \
-  rpk group describe audit-group
+curl http://localhost:3001/health
 ```
 
 Expected:
 
-```text
-STATE        Stable
-TOTAL-LAG    0
+```json
+{
+  "status": "UP"
+}
 ```
 
-Verify Prometheus:
+Kubernetes:
 
 ```bash
-curl -s http://localhost:9090/api/v1/targets
-```
-
-Verify Jaeger:
-
-```bash
-curl -s http://localhost:16686/api/services
+kubectl get pods -n financial-platform
 ```
 
 ---
 
-# 28. Current End-to-End Validation Result
+# PostgreSQL
 
-The following event has successfully traversed the complete Kubernetes event pipeline:
+The platform uses PostgreSQL as the transactional source of truth.
 
-```text
-event:
-fe1672c2-5f16-4753-bb08-3d76e92e2333
-
-user:
-alejandro
-
-action:
-KUBERNETES_TEST
-```
-
-The event was observed in:
+Important tables include:
 
 ```text
 audit_events
-        ↓
 outbox_events
-        ↓
-Redpanda
-        ↓
-audit-consumer
-        ↓
 processed_events
+dead_letter_events
 ```
 
-The outbox record was marked:
+The database is accessed from Kubernetes using:
 
 ```text
-published = true
+postgres:5432
 ```
 
-The consumer group reported:
+Example connectivity test:
 
-```text
-STATE = Stable
-TOTAL-LAG = 0
+```bash
+kubectl run pg-test \
+  -n financial-platform \
+  --rm -it \
+  --restart=Never \
+  --image=postgres:16 \
+  --env="PGPASSWORD=postgres" \
+  -- psql \
+    -h postgres \
+    -U postgres \
+    -d financial \
+    -c "SELECT 1;"
 ```
-
-The corresponding OpenTelemetry trace was also received by Jaeger:
-
-```text
-operationName = audit.create
-audit.action = KUBERNETES_TEST
-audit.user = alejandro
-```
-
-This validates the core distributed architecture.
 
 ---
 
-# 29. Security Roadmap
+# Redpanda
 
-Security is intentionally being implemented after the core event infrastructure has been validated.
+Check topics:
 
-Planned security layers:
-
-```text
-Internet
-   │
-   ▼
-API Gateway
-   │
-   ├── TLS
-   ├── JWT Authentication
-   ├── Authorization
-   ├── Rate Limiting
-   └── Request Validation
-   │
-   ▼
-Internal Services
-   │
-   ├── Kubernetes NetworkPolicies
-   ├── Service-level authorization
-   ├── Secrets
-   └── Least-privilege access
+```bash
+kubectl exec -n financial-platform deploy/redpanda -- \
+  rpk topic list
 ```
 
-Future security improvements include:
+Expected topic:
 
-* JWT key rotation
-* JWKS support
-* Kubernetes Secrets
-* NetworkPolicies
-* service-to-service authentication
-* TLS
-* RBAC
-* audit logging
-* security headers
-* rate limiting
-* request size limits
+```text
+audit-events
+```
 
 ---
 
-# 30. Reliability Roadmap
+# Schema Registry
 
-Planned reliability improvements include:
+The platform uses the Redpanda Schema Registry endpoint inside Kubernetes:
 
-* Dead-letter topic processing
-* Retry backoff
-* Consumer concurrency tuning
-* Kafka partition scaling
-* PostgreSQL connection pool tuning
-* Persistent Prometheus storage
-* Persistent Jaeger storage
-* Kubernetes resource limits
+```text
+http://redpanda:8081
+```
+
+The primary subject is:
+
+```text
+AuditCreated-value
+```
+
+---
+
+# Observability
+
+The current observability architecture is:
+
+```text
+                    ┌──────────────┐
+                    │ Applications │
+                    └──────┬───────┘
+                           │
+                ┌──────────┴──────────┐
+                │                     │
+                ▼                     ▼
+        OpenTelemetry            Prometheus
+                │                     │
+                ▼                     ▼
+             Jaeger                Metrics
+```
+
+Tracing provides:
+
+* Trace IDs
+* Span IDs
+* Parent-child relationships
+* W3C Trace Context
+* Cross-service propagation
+
+Metrics provide:
+
+* Consumer activity
+* Application counters
+* Prometheus-compatible metrics
+
+---
+
+# Current Validation Status
+
+The following capabilities have been exercised successfully:
+
+| Capability                    | Status |
+| ----------------------------- | ------ |
+| Rust workspace                | ✅      |
+| Audit Service                 | ✅      |
+| API Gateway                   | ✅      |
+| JWT validation                | ✅      |
+| JWT scopes                    | ✅      |
+| PostgreSQL                    | ✅      |
+| Transactional Outbox          | ✅      |
+| Redpanda/Kafka                | ✅      |
+| Avro serialization            | ✅      |
+| Schema Registry               | ✅      |
+| Audit Consumer                | ✅      |
+| Idempotency architecture      | ✅      |
+| Retry architecture            | ✅      |
+| Dead Letter architecture      | ✅      |
+| OpenTelemetry                 | ✅      |
+| Jaeger                        | ✅      |
+| Prometheus                    | ✅      |
+| W3C Trace Context             | ✅      |
+| Kafka traceparent propagation | ✅      |
+| Kubernetes/kind               | ✅      |
+| MCP Server                    | ✅      |
+| AI Agent                      | ✅      |
+| Ollama                        | ✅      |
+
+---
+
+# Current Known Gap
+
+One trace-related detail remains under investigation.
+
+The Kafka header contains the propagated W3C context:
+
+```text
+traceparent=Some(
+  "00-9c3c3750c0821c53b1b1fd89336bdcdd-0ca4604a606a3a16-01"
+)
+```
+
+The Audit Consumer successfully extracts that context.
+
+However, the deserialized `EventEnvelope` currently reports:
+
+```text
+traceparent=None
+```
+
+Therefore:
+
+```text
+Kafka traceparent header
+        │
+        └── working
+
+OpenTelemetry context extraction
+        │
+        └── working
+
+EventEnvelope.traceparent
+        │
+        └── requires investigation
+```
+
+This does not currently prevent distributed context propagation through the Kafka header, but preserving the traceparent consistently inside the event envelope remains an architectural cleanup item.
+
+---
+
+# Production Readiness
+
+The platform currently has many characteristics expected from a production-oriented distributed system:
+
+* Strong service boundaries
+* Persistent transactional state
+* Transactional Outbox
+* Event-driven communication
+* Schema governance
+* Idempotent consumers
+* Retry handling
+* Dead Letter handling
+* Authentication
+* Authorization scopes
+* Distributed tracing
+* Metrics
+* Kubernetes deployment
+* AI operational interface
+* Controlled MCP tool access
+* Local LLM inference
+
+However, **production-ready** should not yet be interpreted as “ready to deploy to a critical production environment without further hardening.”
+
+Remaining areas include:
+
+* Dedicated identity/login service
+* Secret management
+* TLS/mTLS where appropriate
+* Production PostgreSQL topology and backups
+* Kafka/Redpanda replication strategy
+* Persistent storage strategy
+* Kubernetes resource requests/limits
 * PodDisruptionBudgets
-* Horizontal Pod Autoscaling
 * NetworkPolicies
-* readiness and liveness hardening
+* Production ingress
+* Rate limiting
+* Security scanning
+* Dependency vulnerability management
+* Load testing
+* Failure/integration testing
+* Disaster recovery
+* Alerting
+* SLO/SLI definitions
+* Log retention
+* Audit retention policies
+* Production-grade AI model sizing and evaluation
+* MCP authorization policies
+* End-to-end trace validation in Jaeger
 
 ---
 
-# 31. Testing Roadmap
+# Architectural Maturity
 
-The next testing stage will expand beyond manual integration tests.
+The project has evolved beyond a conventional CRUD backend.
 
-Planned tests:
+Its architecture can be summarized as:
 
 ```text
-Unit tests
-Integration tests
-Repository tests
-Kafka integration tests
-Schema compatibility tests
-Outbox reliability tests
-Consumer idempotency tests
-API Gateway tests
-JWT authentication tests
-Authorization tests
-MCP tool tests
-AI Agent integration tests
-End-to-end Kubernetes tests
+                    FINANCIAL INTELLIGENCE PLATFORM
+
+                         ┌──────────────┐
+                         │ API Gateway  │
+                         └──────┬───────┘
+                                │
+                         ┌──────▼───────┐
+                         │ Audit Domain │
+                         └──────┬───────┘
+                                │
+                         ┌──────▼───────┐
+                         │ PostgreSQL   │
+                         └──────┬───────┘
+                                │
+                         Transactional
+                            Outbox
+                                │
+                         ┌──────▼───────┐
+                         │ Outbox Worker│
+                         └──────┬───────┘
+                                │
+                         ┌──────▼───────┐
+                         │ Redpanda     │
+                         └──────┬───────┘
+                                │
+                         ┌──────▼───────┐
+                         │ Audit        │
+                         │ Consumer     │
+                         └──────┬───────┘
+                                │
+                    ┌───────────┴───────────┐
+                    │                       │
+             OpenTelemetry             PostgreSQL
+                    │                       │
+                 Jaeger              Idempotency /
+                                      DLQ / State
+
+
+                    AI Operational Plane
+
+                         ┌──────────────┐
+                         │   AI Agent   │
+                         └──────┬───────┘
+                                │
+                         ┌──────▼───────┐
+                         │     MCP      │
+                         └──────┬───────┘
+                                │
+                    ┌───────────┴───────────┐
+                    │                       │
+                 Platform               Ollama
+                 tools                    LLM
 ```
 
 ---
 
-# 32. CI/CD Roadmap
+# Development Philosophy
 
-Future CI/CD should include:
+The platform favors:
+
+* Explicit service boundaries
+* Strong typing
+* Event contracts
+* Asynchronous processing
+* Observable systems
+* Deterministic infrastructure access
+* Failure isolation
+* Idempotent operations
+* Schema evolution
+* AI as an operational interface rather than an uncontrolled infrastructure actor
+
+The AI layer is deliberately separated from the transactional core.
+
+The LLM does not directly own business state.
+
+Instead:
 
 ```text
-cargo fmt --check
-cargo clippy
-cargo test
-cargo build --release
-Docker image builds
-Container security scanning
-Kubernetes manifest validation
-Integration tests
-End-to-end tests
+LLM
+ │
+ ▼
+MCP
+ │
+ ▼
+Controlled tools
+ │
+ ▼
+Platform
 ```
 
-Deployment targets can later include:
-
-```text
-AWS EKS
-ECS
-EC2
-Managed PostgreSQL
-Managed Kafka / Redpanda
-```
+This allows the AI layer to evolve independently from the core financial/audit processing system.
 
 ---
 
-# 33. Development Principles
-
-The project follows several architectural principles:
-
-### Event-driven architecture
-
-Business events are persisted and published asynchronously.
-
-### Transactional outbox
-
-Database state and event creation are committed atomically.
-
-### Schema evolution
-
-Events use Avro and Schema Registry compatibility rules.
-
-### Idempotent consumers
-
-Processed event identifiers prevent duplicate processing.
-
-### Observability
-
-Metrics and distributed traces are first-class platform capabilities.
-
-### Kubernetes-native service discovery
-
-Services communicate using Kubernetes DNS rather than localhost.
-
-### Separation of concerns
-
-Business logic, infrastructure, messaging, telemetry, and HTTP concerns are separated into reusable Rust libraries.
-
-### AI through tools
-
-AI agents interact with the platform through explicit MCP tools rather than unrestricted direct infrastructure access.
-
----
-
-# 34. Roadmap
+# Roadmap
 
 ## Phase 1 — Core Platform
 
 * [x] Rust workspace
-* [x] PostgreSQL
 * [x] Audit Service
+* [x] API Gateway
+* [x] PostgreSQL
 * [x] Transactional Outbox
 * [x] Redpanda
-* [x] Avro
 * [x] Schema Registry
+* [x] Avro
 * [x] Audit Consumer
-* [x] Idempotent processing
 
-## Phase 2 — Observability
+## Phase 2 — Reliability
 
-* [x] Prometheus
-* [x] Metrics endpoint
+* [x] Idempotency
+* [x] Retry
+* [x] Dead Letter handling
+* [x] Event version routing
+* [x] Schema validation
+
+## Phase 3 — Observability
+
 * [x] OpenTelemetry
-* [x] OTLP
 * [x] Jaeger
-* [x] Distributed tracing validation
+* [x] Prometheus
+* [x] Request IDs
+* [x] W3C Trace Context
+* [x] Kafka traceparent propagation
 
-## Phase 3 — Kubernetes
+## Phase 4 — AI Platform
 
-* [x] Kind cluster
-* [x] Kubernetes namespace
-* [x] PostgreSQL deployment
-* [x] Redpanda deployment
-* [x] Jaeger deployment
-* [x] Prometheus deployment
-* [x] Audit Service deployment
-* [x] Outbox Worker deployment
-* [x] Audit Consumer deployment
-* [x] End-to-end event validation
-
-## Phase 4 — Security and API
-
-* [ ] API Gateway
-* [ ] JWT authentication
-* [ ] Authorization
-* [ ] Scopes / permissions
-* [ ] Rate limiting
-* [ ] Request correlation
-* [ ] Gateway observability
-* [ ] Kubernetes NetworkPolicies
-
-## Phase 5 — MCP
-
-* [x] MCP Server prototype
+* [x] MCP Server
 * [x] MCP tools
-* [x] MCP Inspector validation
-* [ ] Kubernetes MCP deployment
-* [ ] MCP authentication
-* [ ] MCP authorization
+* [x] Rust AI Agent
+* [x] Ollama
+* [x] Local LLM inference
+* [x] Deterministic MCP tool selection
 
-## Phase 6 — AI
+## Phase 5 — Production Hardening
 
-* [x] AI Agent prototype
-* [x] Ollama integration
-* [x] MCP client
-* [x] Deterministic tool routing
-* [ ] Kubernetes AI Agent deployment
-* [ ] Production model integration
-* [ ] AI observability
-* [ ] AI safety controls
-
-## Phase 7 — Production Readiness
-
-* [ ] CI/CD
-* [ ] Automated integration tests
-* [ ] Security scanning
-* [ ] Persistent observability storage
-* [ ] Autoscaling
-* [ ] NetworkPolicies
-* [ ] Secrets management
+* [ ] Dedicated authentication/identity service
+* [ ] Production secret management
+* [ ] TLS/mTLS
+* [ ] Production ingress
+* [ ] Rate limiting
+* [ ] Network policies
+* [ ] Resource limits
+* [ ] Production storage
+* [ ] Backup/restore
 * [ ] Disaster recovery
-* [ ] Production cloud deployment
+* [ ] Load testing
+* [ ] Security testing
+* [ ] SLO/SLI monitoring
+* [ ] Alerting
+* [ ] End-to-end trace validation
+* [ ] AI evaluation and model strategy
 
 ---
 
-# 35. License
+# License
 
-This project is currently under active development.
-
-License and commercial terms will be defined before production distribution.
+Internal / project-specific.
 
 ---
 
-# 36. Current Milestone
+# Status
 
-The platform has reached a significant architectural milestone:
+**Architecture:** Production-oriented
 
-```text
-Rust
-  +
-PostgreSQL
-  +
-Transactional Outbox
-  +
-Redpanda
-  +
-Avro
-  +
-Schema Registry
-  +
-Idempotent Consumers
-  +
-Kubernetes
-  +
-Prometheus
-  +
-OpenTelemetry
-  +
-Jaeger
-```
+**Core event pipeline:** Operational
 
-The complete event-driven pipeline has been validated in Kubernetes.
+**Event reliability patterns:** Implemented
 
-The next major milestone is:
+**Observability:** Operational
 
-```text
-API Gateway
-      +
-JWT Authentication
-      +
-Authorization
-      +
-MCP
-      +
-AI Agent
-```
+**AI/MCP layer:** Operational
 
-The goal is to evolve the current event-driven backend into a secure, observable, Kubernetes-native financial intelligence platform with AI-assisted operational capabilities.
+**Kubernetes environment:** Operational
+
+**Production hardening:** In progress

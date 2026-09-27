@@ -1,54 +1,36 @@
-use anyhow::{Context, Result};
-
-use apache_avro::{from_avro_datum, types::Value, Schema};
-
+use anyhow::Result;
+use apache_avro::types::Value as AvroValue;
 use futures_util::StreamExt;
-
 use rdkafka::{
     consumer::{Consumer, StreamConsumer},
-    message::{Headers, Message},
-    ClientConfig,
+    message::Headers,
+    Message,
 };
-
-use serde_json::Value as JsonValue;
 
 use crate::{event::KafkaEvent, schema_registry::SchemaRegistryClient};
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
-
     schema_registry: SchemaRegistryClient,
 }
 
 impl KafkaConsumer {
     pub fn new(brokers: &str, group: &str, schema_registry_url: &str) -> Result<Self> {
-        println!("==============================");
-
-        println!("KafkaConsumer brokers = {}", brokers);
-
-        println!("Group = {}", group);
-
-        println!("Schema Registry = {}", schema_registry_url);
-
-        println!("==============================");
-
-        let consumer: StreamConsumer = ClientConfig::new()
+        let consumer: StreamConsumer = rdkafka::ClientConfig::new()
             .set("bootstrap.servers", brokers)
             .set("group.id", group)
             .set("enable.auto.commit", "true")
             .set("auto.offset.reset", "earliest")
             .create()?;
 
-        let schema_registry = SchemaRegistryClient::new(schema_registry_url);
-
         Ok(Self {
             consumer,
-            schema_registry,
+            schema_registry: SchemaRegistryClient::new(schema_registry_url),
         })
     }
 
-    pub fn subscribe(&self, topic: &str) -> Result<()> {
-        self.consumer.subscribe(&[topic])?;
+    pub async fn subscribe(&self, topics: &[&str]) -> Result<()> {
+        self.consumer.subscribe(topics)?;
 
         Ok(())
     }
@@ -70,9 +52,7 @@ impl KafkaConsumer {
 
             let key = match message.key_view::<str>() {
                 Some(Ok(value)) => Some(value.to_string()),
-
                 Some(Err(_)) => None,
-
                 None => None,
             };
 
@@ -81,17 +61,12 @@ impl KafkaConsumer {
                     if header.key == "traceparent" {
                         header
                             .value
-                            .and_then(|value| std::str::from_utf8(value).ok().map(String::from))
+                            .and_then(|value| std::str::from_utf8(value).ok().map(str::to_owned))
                     } else {
                         None
                     }
                 })
             });
-
-            tracing::debug!(
-                traceparent = ?traceparent,
-                "Kafka trace context extracted"
-            );
 
             handler(KafkaEvent {
                 key,
@@ -104,197 +79,123 @@ impl KafkaConsumer {
         Ok(())
     }
 
-    pub async fn decode_avro(&self, payload: &[u8]) -> Result<JsonValue> {
+    pub async fn decode_avro(&self, payload: &[u8]) -> Result<serde_json::Value> {
         if payload.len() < 5 {
-            anyhow::bail!(
-                "Invalid Confluent Avro payload: expected at least 5 bytes, got {}",
-                payload.len()
-            );
+            anyhow::bail!("Invalid Confluent Avro payload: less than 5 bytes");
         }
 
         let magic_byte = payload[0];
 
         if magic_byte != 0 {
-            anyhow::bail!(
-                "Invalid Confluent Avro magic byte: expected 0, got {}",
-                magic_byte
-            );
+            anyhow::bail!("Invalid Confluent Avro magic byte: {}", magic_byte);
         }
 
-        let schema_id = i32::from_be_bytes([payload[1], payload[2], payload[3], payload[4]]);
+        // Confluent wire format:
+        //
+        // Byte 0      = magic byte
+        // Bytes 1..5  = schema ID, big-endian
+        // Bytes 5..   = Avro binary payload
+        let schema_id = u32::from_be_bytes([payload[1], payload[2], payload[3], payload[4]]);
 
-        tracing::debug!(schema_id, "Decoding Avro event using Schema Registry");
+        let schema_id_i32 = i32::try_from(schema_id)
+            .map_err(|_| anyhow::anyhow!("Schema ID {} exceeds i32 range", schema_id))?;
 
-        let schema_json = self
-            .schema_registry
-            .get_schema_by_id(schema_id)
-            .await
-            .with_context(|| {
-                format!(
-                    "Failed to obtain schema with ID {} from Schema Registry",
-                    schema_id
-                )
-            })?;
+        let schema_json = self.schema_registry.get_schema_by_id(schema_id_i32).await?;
 
-        let schema = Schema::parse_str(&schema_json).context("Failed to parse Avro schema")?;
+        let schema = apache_avro::Schema::parse_str(&schema_json)?;
 
-        let mut reader = &payload[5..];
+        let value = apache_avro::from_avro_datum(&schema, &mut &payload[5..], None)?;
 
-        let avro_value =
-            from_avro_datum(&schema, &mut reader, None).context("Failed to decode Avro payload")?;
-
-        let json_value =
-            avro_to_json(&avro_value, &schema).context("Failed to convert Avro value to JSON")?;
-
-        Ok(json_value)
+        Ok(avro_value_to_json(&value))
     }
 }
 
-fn avro_to_json(value: &Value, schema: &Schema) -> Result<JsonValue> {
-    match (value, schema) {
-        (Value::Null, Schema::Null) => Ok(JsonValue::Null),
+fn avro_value_to_json(value: &AvroValue) -> serde_json::Value {
+    use serde_json::{Map, Number, Value};
 
-        (Value::Boolean(value), Schema::Boolean) => Ok(JsonValue::Bool(*value)),
+    match value {
+        AvroValue::Null => Value::Null,
 
-        (Value::Int(value), Schema::Int) => Ok(JsonValue::Number((*value).into())),
+        AvroValue::Boolean(value) => Value::Bool(*value),
 
-        (Value::Long(value), Schema::Long) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::Int(value) => Value::Number(Number::from(*value)),
 
-        (Value::Float(value), Schema::Float) => {
-            let number =
-                serde_json::Number::from_f64(*value as f64).context("Invalid Avro float value")?;
+        AvroValue::Long(value) => Value::Number(Number::from(*value)),
 
-            Ok(JsonValue::Number(number))
-        }
+        AvroValue::Float(value) => Number::from_f64(*value as f64)
+            .map(Value::Number)
+            .unwrap_or(Value::Null),
 
-        (Value::Double(value), Schema::Double) => {
-            let number =
-                serde_json::Number::from_f64(*value).context("Invalid Avro double value")?;
+        AvroValue::Double(value) => Number::from_f64(*value)
+            .map(Value::Number)
+            .unwrap_or(Value::Null),
 
-            Ok(JsonValue::Number(number))
-        }
-
-        (Value::String(value), Schema::String) => Ok(JsonValue::String(value.clone())),
-
-        (Value::Bytes(value), Schema::Bytes) => {
-            let array = value
+        AvroValue::Bytes(bytes) => Value::Array(
+            bytes
                 .iter()
-                .map(|byte| JsonValue::Number(serde_json::Number::from(*byte)))
-                .collect();
+                .map(|byte| Value::Number(Number::from(*byte)))
+                .collect(),
+        ),
 
-            Ok(JsonValue::Array(array))
-        }
+        AvroValue::String(value) => Value::String(value.clone()),
 
-        (Value::Fixed(_, value), Schema::Fixed(_)) => {
-            let array = value
+        AvroValue::Fixed(_, bytes) => Value::Array(
+            bytes
                 .iter()
-                .map(|byte| JsonValue::Number(serde_json::Number::from(*byte)))
-                .collect();
+                .map(|byte| Value::Number(Number::from(*byte)))
+                .collect(),
+        ),
 
-            Ok(JsonValue::Array(array))
-        }
+        AvroValue::Enum(_, symbol) => Value::String(symbol.clone()),
 
-        (Value::Enum(index, symbol), Schema::Enum(_)) => {
-            let _ = index;
+        AvroValue::Array(values) => Value::Array(values.iter().map(avro_value_to_json).collect()),
 
-            Ok(JsonValue::String(symbol.clone()))
-        }
-
-        (Value::Array(values), Schema::Array(array_schema)) => {
-            let mut result = Vec::with_capacity(values.len());
-
-            for value in values {
-                result.push(avro_to_json(value, array_schema.items.as_ref())?);
-            }
-
-            Ok(JsonValue::Array(result))
-        }
-
-        (Value::Map(values), Schema::Map(map_schema)) => {
-            let mut result = serde_json::Map::new();
+        AvroValue::Map(values) => {
+            let mut object = Map::new();
 
             for (key, value) in values {
-                result.insert(key.clone(), avro_to_json(value, map_schema.types.as_ref())?);
+                object.insert(key.clone(), avro_value_to_json(value));
             }
 
-            Ok(JsonValue::Object(result))
+            Value::Object(object)
         }
 
-        (Value::Record(fields), Schema::Record(record_schema)) => {
-            let mut result = serde_json::Map::new();
+        AvroValue::Record(fields) => {
+            let mut object = Map::new();
 
             for (name, value) in fields {
-                let field_schema = record_schema
-                    .fields
-                    .iter()
-                    .find(|field| field.name == *name)
-                    .map(|field| &field.schema)
-                    .context(format!("Field '{}' not found in Avro schema", name))?;
-
-                result.insert(name.clone(), avro_to_json(value, field_schema)?);
+                object.insert(name.clone(), avro_value_to_json(value));
             }
 
-            Ok(JsonValue::Object(result))
+            Value::Object(object)
         }
 
-        (Value::Union(_, value), Schema::Union(union_schema)) => {
-            for branch in union_schema.variants() {
-                if let Ok(json) = avro_to_json(value, branch) {
-                    return Ok(json);
-                }
-            }
+        AvroValue::Union(_, value) => avro_value_to_json(value),
 
-            anyhow::bail!("Could not convert Avro union value to JSON")
-        }
+        AvroValue::Date(value) => Value::Number(Number::from(*value)),
 
-        (Value::Date(value), Schema::Date) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::TimeMillis(value) => Value::Number(Number::from(*value)),
 
-        (Value::TimeMillis(value), Schema::TimeMillis) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::TimeMicros(value) => Value::Number(Number::from(*value)),
 
-        (Value::TimeMicros(value), Schema::TimeMicros) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::TimestampMillis(value) => Value::Number(Number::from(*value)),
 
-        (Value::TimestampMillis(value), Schema::TimestampMillis) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::TimestampMicros(value) => Value::Number(Number::from(*value)),
 
-        (Value::TimestampMicros(value), Schema::TimestampMicros) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::TimestampNanos(value) => Value::Number(Number::from(*value)),
 
-        (Value::TimestampNanos(value), Schema::TimestampNanos) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::LocalTimestampMillis(value) => Value::Number(Number::from(*value)),
 
-        (Value::LocalTimestampMillis(value), Schema::LocalTimestampMillis) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::LocalTimestampMicros(value) => Value::Number(Number::from(*value)),
 
-        (Value::LocalTimestampMicros(value), Schema::LocalTimestampMicros) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::LocalTimestampNanos(value) => Value::Number(Number::from(*value)),
 
-        (Value::LocalTimestampNanos(value), Schema::LocalTimestampNanos) => {
-            Ok(JsonValue::Number(serde_json::Number::from(*value)))
-        }
+        AvroValue::Duration(duration) => Value::String(format!("{:?}", duration)),
 
-        (Value::Decimal(value), Schema::Decimal(_)) => {
-            Ok(JsonValue::String(format!("{:?}", value)))
-        }
+        AvroValue::Decimal(decimal) => Value::String(format!("{:?}", decimal)),
 
-        _ => {
-            anyhow::bail!(
-                "Unsupported Avro value/schema combination: value={:?}, schema={:?}",
-                value,
-                schema
-            )
-        }
+        AvroValue::Uuid(uuid) => Value::String(uuid.to_string()),
+
+        AvroValue::BigDecimal(value) => Value::String(format!("{:?}", value)),
     }
 }
