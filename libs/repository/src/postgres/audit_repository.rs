@@ -2,8 +2,7 @@ use anyhow::Result;
 
 use async_trait::async_trait;
 
-use sqlx::query;
-use sqlx::query_as;
+use sqlx::{query, query_as};
 
 use uuid::Uuid;
 
@@ -16,38 +15,26 @@ impl AuditRepository for PostgresRepository {
     async fn create(&self, event: AuditEvent) -> Result<AuditEvent> {
         query(
             r#"
-
             INSERT INTO audit_events
-
             (
-
                 id,
-
+                tenant_id,
                 username,
-
                 action,
-
                 created_at
-
             )
-
             VALUES
-
             (
-
                 $1,
-
                 $2,
-
                 $3,
-
-                $4
-
+                $4,
+                $5
             )
-
             "#,
         )
         .bind(event.id)
+        .bind(&event.tenant_id)
         .bind(&event.user)
         .bind(&event.action)
         .bind(event.created_at)
@@ -57,53 +44,43 @@ impl AuditRepository for PostgresRepository {
         Ok(event)
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<AuditEvent>> {
+    async fn find_by_id(&self, tenant_id: &str, id: Uuid) -> Result<Option<AuditEvent>> {
         let event = query_as::<_, AuditEvent>(
             r#"
-
-                SELECT
-
-                    id,
-
-                    username AS user,
-
-                    action,
-
-                    created_at
-
-                FROM audit_events
-
-                WHERE id = $1
-
-                "#,
+            SELECT
+                id,
+                tenant_id,
+                username AS user,
+                action,
+                created_at
+            FROM audit_events
+            WHERE id = $1
+              AND tenant_id = $2
+            "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(&self.pool)
         .await?;
 
         Ok(event)
     }
 
-    async fn find_all(&self) -> Result<Vec<AuditEvent>> {
+    async fn find_all(&self, tenant_id: &str) -> Result<Vec<AuditEvent>> {
         let events = query_as::<_, AuditEvent>(
             r#"
-
-                SELECT
-
-                    id,
-
-                    username AS user,
-
-                    action,
-
-                    created_at
-
-                FROM audit_events
-
-                ORDER BY created_at DESC
-
-                "#,
+            SELECT
+                id,
+                tenant_id,
+                username AS user,
+                action,
+                created_at
+            FROM audit_events
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC
+            "#,
         )
+        .bind(tenant_id)
         .fetch_all(&self.pool)
         .await?;
 

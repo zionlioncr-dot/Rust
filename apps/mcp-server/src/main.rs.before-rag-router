@@ -55,15 +55,6 @@ struct LimitParams {
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
-struct TenantLimitParams {
-    #[schemars(description = "Tenant identifier")]
-    tenant_id: String,
-
-    #[schemars(description = "Maximum number of records to return")]
-    limit: Option<i64>,
-}
-
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct RagSearchParams {
     #[schemars(description = "Natural-language query to search semantically")]
     query: String,
@@ -74,9 +65,6 @@ struct RagSearchParams {
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 struct EventParams {
-    #[schemars(description = "Tenant identifier")]
-    tenant_id: String,
-
     #[schemars(description = "UUID of the audit event")]
     id: String,
 }
@@ -113,40 +101,6 @@ impl McpServer {
         }
     }
 
-    async fn postgres_health(&self) -> bool {
-        match create_pool(self.config.max_db_connections).await {
-            Ok(pool) => health_check(&pool).await.is_ok(),
-            Err(error) => {
-                error!(%error, "PostgreSQL health check failed");
-                false
-            }
-        }
-    }
-
-    async fn kafka_health(&self) -> bool {
-        match KafkaConsumer::new(
-            &self.config.kafka_brokers,
-            "mcp-health-check",
-            &self.config.schema_registry_url,
-        ) {
-            Ok(_) => true,
-            Err(error) => {
-                error!(%error, "Kafka health check failed");
-                false
-            }
-        }
-    }
-
-    async fn schema_registry_health(&self) -> bool {
-        self.schema_registry
-            .get_latest_schema("AuditCreated-value")
-            .await
-            .is_ok()
-    }
-}
-
-#[tool_router]
-impl McpServer {
     #[tool(
         name = "rag.search",
         description = "Search platform documentation and knowledge semantically using PostgreSQL pgvector"
@@ -204,6 +158,40 @@ impl McpServer {
         })
     }
 
+    async fn postgres_health(&self) -> bool {
+        match create_pool(self.config.max_db_connections).await {
+            Ok(pool) => health_check(&pool).await.is_ok(),
+            Err(error) => {
+                error!(%error, "PostgreSQL health check failed");
+                false
+            }
+        }
+    }
+
+    async fn kafka_health(&self) -> bool {
+        match KafkaConsumer::new(
+            &self.config.kafka_brokers,
+            "mcp-health-check",
+            &self.config.schema_registry_url,
+        ) {
+            Ok(_) => true,
+            Err(error) => {
+                error!(%error, "Kafka health check failed");
+                false
+            }
+        }
+    }
+
+    async fn schema_registry_health(&self) -> bool {
+        self.schema_registry
+            .get_latest_schema("AuditCreated-value")
+            .await
+            .is_ok()
+    }
+}
+
+#[tool_router]
+impl McpServer {
     #[tool(
         name = "system.health",
         description = "Check the health of PostgreSQL, Redpanda/Kafka and Schema Registry"
@@ -249,26 +237,16 @@ impl McpServer {
 
     #[tool(
         name = "audit.list_events",
-        description = "List audit events stored in PostgreSQL for a specific tenant"
+        description = "List audit events stored in PostgreSQL"
     )]
-    async fn audit_list_events(&self, Parameters(params): Parameters<TenantLimitParams>) -> String {
-        let tenant_id = params.tenant_id.trim();
-
-        if tenant_id.is_empty() {
-            return json!({
-                "error": "tenant_id cannot be empty"
-            })
-            .to_string();
-        }
-
+    async fn audit_list_events(&self, Parameters(params): Parameters<LimitParams>) -> String {
         let limit = params.limit.unwrap_or(20).clamp(1, 100);
 
-        let events = match self.repository.find_all(tenant_id).await {
+        let events = match self.repository.find_all().await {
             Ok(events) => events,
             Err(error) => {
                 return json!({
-                    "error": error.to_string(),
-                    "tenant_id": tenant_id
+                    "error": error.to_string()
                 })
                 .to_string();
             }
@@ -276,12 +254,7 @@ impl McpServer {
 
         let events: Vec<_> = events.into_iter().take(limit as usize).collect();
 
-        serde_json::to_string_pretty(&json!({
-            "tenant_id": tenant_id,
-            "count": events.len(),
-            "events": events
-        }))
-        .unwrap_or_else(|error| {
+        serde_json::to_string_pretty(&events).unwrap_or_else(|error| {
             json!({
                 "error": error.to_string()
             })
@@ -291,18 +264,9 @@ impl McpServer {
 
     #[tool(
         name = "audit.get_event",
-        description = "Get an audit event from PostgreSQL by UUID within a specific tenant"
+        description = "Get an audit event from PostgreSQL by UUID"
     )]
     async fn audit_get_event(&self, Parameters(params): Parameters<EventParams>) -> String {
-        let tenant_id = params.tenant_id.trim();
-
-        if tenant_id.is_empty() {
-            return json!({
-                "error": "tenant_id cannot be empty"
-            })
-            .to_string();
-        }
-
         let id = match uuid::Uuid::parse_str(&params.id) {
             Ok(id) => id,
             Err(error) => {
@@ -313,7 +277,7 @@ impl McpServer {
             }
         };
 
-        match self.repository.find_by_id(tenant_id, id).await {
+        match self.repository.find_by_id(id).await {
             Ok(Some(event)) => serde_json::to_string_pretty(&event).unwrap_or_else(|error| {
                 json!({
                     "error": error.to_string()
@@ -323,15 +287,12 @@ impl McpServer {
 
             Ok(None) => json!({
                 "error": "Audit event not found",
-                "tenant_id": tenant_id,
                 "id": params.id
             })
             .to_string(),
 
             Err(error) => json!({
-                "error": error.to_string(),
-                "tenant_id": tenant_id,
-                "id": params.id
+                "error": error.to_string()
             })
             .to_string(),
         }
@@ -431,7 +392,7 @@ impl McpServer {
 #[tool_handler(
     name = "financial-intelligence-platform-mcp",
     version = "0.1.0",
-    instructions = "MCP server for the Financial Intelligence Platform. Provides controlled access to tenant-scoped audit events, transactional outbox state, Kafka/Redpanda connectivity, Avro schemas, and semantic RAG search over platform documentation."
+    instructions = "MCP server for the Financial Intelligence Platform. Provides controlled access to audit events, transactional outbox state, Kafka/Redpanda connectivity, Avro schemas, and semantic RAG search over platform documentation."
 )]
 impl rmcp::ServerHandler for McpServer {}
 

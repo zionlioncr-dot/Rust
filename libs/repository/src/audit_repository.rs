@@ -8,7 +8,7 @@ use domain::audit_event::AuditEvent;
 pub trait AuditRepository: Send + Sync {
     async fn create(&self, event: AuditEvent) -> Result<AuditEvent>;
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<AuditEvent>>;
+    async fn find_by_id(&self, tenant_id: &str, id: Uuid) -> Result<Option<AuditEvent>>;
 
-    async fn find_all(&self) -> Result<Vec<AuditEvent>>;
+    async fn find_all(&self, tenant_id: &str) -> Result<Vec<AuditEvent>>;
 }

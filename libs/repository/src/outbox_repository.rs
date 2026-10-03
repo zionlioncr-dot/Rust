@@ -1,8 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use uuid::Uuid;
-
 use domain::outbox_event::OutboxEvent;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait OutboxRepository: Send + Sync {

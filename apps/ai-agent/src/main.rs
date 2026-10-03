@@ -34,33 +34,118 @@ const MCP_URL: &str = "http://127.0.0.1:8000/mcp";
 const HTTP_HOST: &str = "0.0.0.0";
 const HTTP_PORT: u16 = 8001;
 
-const OLLAMA_TIMEOUT_SECONDS: u64 = 60;
+const OLLAMA_TIMEOUT_SECONDS: u64 = 180;
 const MAX_AGENT_ITERATIONS: usize = 8;
+
+const MAX_RAG_CONTEXT_CHARS: usize = 8000;
+const MAX_RAG_DOCUMENT_CHARS: usize = 2200;
 
 const SYSTEM_PROMPT: &str = r#"
 Eres el agente de IA de la Financial Intelligence Platform.
 
 Tu función es responder preguntas sobre la plataforma utilizando las herramientas MCP
-disponibles.
+disponibles y, cuando corresponda, el contexto documental recuperado mediante RAG.
 
 REGLAS IMPORTANTES:
 
-1. Usa las herramientas MCP cuando la pregunta requiera datos reales de la plataforma.
-2. Nunca inventes eventos, estados, schemas, datos de Kafka o información de PostgreSQL.
-3. Para verificar la salud de la plataforma utiliza system.health.
-4. Para consultar eventos de auditoría utiliza audit.list_events o audit.get_event.
-5. Para consultar eventos pendientes del transactional outbox utiliza audit.get_pending_outbox.
-6. Para consultar schemas Avro utiliza schema.get_latest.
-7. Para información relacionada con Kafka/Redpanda utiliza kafka.list_topics.
-8. Si una herramienta devuelve datos, basa tu respuesta exclusivamente en esos datos.
-9. Responde en español.
-10. Si una herramienta falla, informa claramente del error.
-11. Nunca afirmes que la plataforma está saludable, que un evento existe, que un schema
-    existe o que Kafka funciona sin haber obtenido esa información mediante una herramienta.
-12. Los resultados de las herramientas MCP son la fuente de verdad para el estado actual
-    de la plataforma.
+- Preserva exactamente los nombres de los símbolos encontrados en el código.
+- No confundas AuditCreated con AuditCreatedEvent.
+- No confundas AuditCreatedEvent con AuditEvent.
+- No confundas un nombre de evento con un struct, tabla, topic, herramienta MCP o servicio.
+- Si el usuario pregunta por un símbolo que no aparece literalmente como definición,
+  dilo explícitamente y explica qué símbolo relacionado sí aparece.
+- No digas que algo "es un struct" a menos que el código mostrado defina explícitamente
+  un struct con ese nombre.
+- Cuando exista evidencia directa en un archivo, priorízala sobre inferencias.
 
-Cuando una herramienta pueda proporcionar la información solicitada, debes utilizarla.
+REGLAS PARA SÍMBOLOS DEL CÓDIGO:
+
+1. Identifica primero la definición exacta del símbolo solicitado.
+2. No sustituyas un símbolo por otro símbolo parecido.
+3. Distingue exactamente entre:
+   - AuditCreated
+   - AuditCreatedEvent
+   - AuditEvent
+   - AuditPayload
+4. Si el usuario pregunta por un nombre que no aparece literalmente como símbolo o
+   definición en los fragmentos recuperados, dilo.
+5. Usa los nombres de structs, funciones, archivos y módulos literalmente.
+6. No conviertas una relación indirecta en una afirmación directa.
+7. No inventes nombres de servicios, tablas, topics, repositorios o responsabilidades.
+8. Si un nombre aparece como argumento de una función, nombre de operación, tipo de
+   evento, topic, schema o campo, describe exactamente ese uso; no lo conviertas
+   automáticamente en un struct o en otro tipo de componente.
+9. Si existen varios símbolos relacionados, explica primero cuál aparece literalmente
+   y después cómo se relaciona con los demás.
+10. Si el nombre preguntado no aparece como definición explícita, no afirmes que tiene
+    una definición propia.
+
+REGLAS DE RAG:
+
+11. Para preguntas sobre arquitectura, implementación, flujo de ejecución, código,
+    componentes, responsabilidades, diseño interno o cómo funciona una parte de
+    la plataforma, utiliza rag.search.
+
+12. rag.search devuelve documentación y fragmentos del código fuente de la
+    plataforma. Utiliza exclusivamente ese contexto para explicar la implementación.
+
+13. No uses rag.search para afirmar el estado actual de la plataforma cuando exista
+    una herramienta determinística que pueda proporcionar ese estado.
+
+14. Para preguntas que combinen conocimiento documental con estado actual, puedes
+    utilizar rag.search y después la herramienta determinística correspondiente.
+
+15. Distingue siempre entre estos conceptos:
+    - evento de dominio
+    - servicio
+    - herramienta MCP
+    - repositorio
+    - tabla de PostgreSQL
+    - tópico Kafka
+    - schema Avro
+
+    No los presentes como si fueran el mismo tipo de componente.
+
+16. Cuando expliques código recuperado mediante RAG, menciona únicamente relaciones,
+    responsabilidades y comportamientos que estén respaldados por los fragmentos
+    recuperados.
+
+17. No conviertas nombres de clases, structs, funciones o archivos en afirmaciones
+    sobre comportamiento si el contexto recuperado no demuestra ese comportamiento.
+
+18. Si el contexto recuperado no contiene suficiente información para responder una
+    parte de la pregunta, dilo explícitamente. No completes la información mediante
+    suposiciones.
+
+19. Si una herramienta devuelve datos, basa la respuesta exclusivamente en esos datos.
+
+20. Responde siempre en español.
+
+21. Si una herramienta falla, informa claramente del error.
+
+22. Nunca afirmes que la plataforma está saludable, que un evento existe, que un
+    schema existe o que Kafka funciona sin haber obtenido esa información mediante
+    una herramienta determinística.
+
+23. Los resultados de las herramientas MCP son la fuente de verdad para el estado
+    actual de la plataforma.
+
+24. Para respuestas basadas en RAG, prioriza precisión sobre amplitud. Una respuesta
+    breve y estrictamente respaldada es preferible a una explicación extensa con
+    inferencias.
+
+25. Cuando respondas una pregunta de arquitectura o implementación, estructura la
+    respuesta de forma clara, por ejemplo:
+    - qué componente es
+    - qué responsabilidad tiene
+    - cómo se relaciona con los demás componentes
+    - qué está explícitamente demostrado por el código recuperado
+
+26. No digas que una herramienta MCP fue utilizada como si fuera parte de la
+    arquitectura de negocio. MCP es la interfaz de herramientas del agente.
+
+27. El contexto RAG contiene evidencia del código. No lo describas como documentación
+    generada si los fragmentos corresponden directamente a archivos fuente.
 "#;
 
 #[derive(Debug, Serialize)]
@@ -70,6 +155,9 @@ struct OllamaRequest {
     tools: Vec<OllamaTool>,
     stream: bool,
     think: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    keep_alive: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,44 +259,55 @@ struct AppState {
     agent: Arc<AiAgent>,
 }
 
+#[derive(Debug, Clone)]
+struct RagDocument {
+    source: String,
+    metadata: String,
+    content: String,
+}
+
 impl AiAgent {
     async fn connect() -> Result<Self> {
-        info!(mcp_url = MCP_URL, "Connecting to MCP server");
+        info!(mcp_url = MCP_URL, "Connecting AI Agent to MCP server");
+
+        info!("STEP 1: creating MCP transport");
 
         let transport = StreamableHttpClientTransport::from_uri(MCP_URL);
 
+        info!("STEP 2: MCP transport created");
+
         let client_info = ClientInfo::new(
             ClientCapabilities::default(),
-            Implementation::new("financial-intelligence-ai-agent", "0.1.0"),
+            Implementation::new("financial-intelligence-ai-agent", env!("CARGO_PKG_VERSION")),
         );
+
+        info!("STEP 3: MCP client info created");
+
+        info!("STEP 4: starting MCP client session");
 
         let mcp = client_info
             .serve(transport)
             .await
             .context("Failed to connect to MCP server")?;
 
-        info!(
-            server_info = ?mcp.peer_info(),
-            "Connected to MCP server"
-        );
+        info!("STEP 5: Connected to MCP server");
 
-        let tool_result = mcp
+        info!("STEP 6: requesting MCP tool list");
+
+        let listed_tools = mcp
             .list_tools(Default::default())
             .await
             .context("Failed to list MCP tools")?;
 
-        let tools = tool_result
+        info!("STEP 7: MCP tools listed");
+
+        let tools = listed_tools
             .tools
             .into_iter()
-            .map(|tool| {
-                let input_schema = serde_json::to_value(&tool.input_schema)
-                    .unwrap_or_else(|_| json!({ "type": "object" }));
-
-                McpToolDefinition {
-                    name: tool.name.to_string(),
-                    description: tool.description.unwrap_or_default().to_string(),
-                    input_schema,
-                }
+            .map(|tool| McpToolDefinition {
+                name: tool.name.to_string(),
+                description: tool.description.unwrap_or_default().to_string(),
+                input_schema: serde_json::to_value(tool.input_schema).unwrap_or_else(|_| json!({})),
             })
             .collect::<Vec<_>>();
 
@@ -218,14 +317,25 @@ impl AiAgent {
                 .iter()
                 .map(|tool| tool.name.as_str())
                 .collect::<Vec<_>>(),
-            "MCP tools discovered"
+            "MCP tools loaded"
         );
+
+        info!("STEP 8: creating Ollama HTTP client");
 
         let ollama = Client::builder()
             .connect_timeout(Duration::from_secs(10))
             .timeout(Duration::from_secs(OLLAMA_TIMEOUT_SECONDS))
             .build()
             .context("Failed to create Ollama HTTP client")?;
+
+        info!(
+            url = OLLAMA_CHAT_URL,
+            model = OLLAMA_MODEL,
+            timeout_seconds = OLLAMA_TIMEOUT_SECONDS,
+            "Ollama client configured"
+        );
+
+        info!("STEP 9: AI Agent connection initialization completed");
 
         Ok(Self { ollama, mcp, tools })
     }
@@ -256,27 +366,27 @@ impl AiAgent {
         );
 
         if !self.has_tool(name) {
-            anyhow::bail!("MCP tool is not available: {name}");
+            anyhow::bail!("MCP tool '{}' is not registered", name);
         }
 
-        let arguments = match arguments {
-            Value::Object(map) => map,
-            other => {
-                warn!(
-                    tool = name,
-                    arguments = %other,
-                    "Tool arguments were not a JSON object; using empty arguments"
-                );
-
-                serde_json::Map::new()
-            }
+        let arguments = if arguments.is_object() {
+            arguments
+        } else {
+            json!({})
         };
+
+        let mut request = CallToolRequestParams::new(name.to_string());
+
+        request.arguments = arguments
+            .as_object()
+            .cloned()
+            .map(rmcp::model::JsonObject::from);
 
         let result = self
             .mcp
-            .call_tool(CallToolRequestParams::new(name.to_string()).with_arguments(arguments))
+            .call_tool(request)
             .await
-            .with_context(|| format!("MCP tool call failed: {name}"))?;
+            .with_context(|| format!("MCP tool '{}' failed", name))?;
 
         let serialized =
             serde_json::to_string_pretty(&result).context("Failed to serialize MCP result")?;
@@ -307,6 +417,7 @@ impl AiAgent {
             tools,
             stream: false,
             think: false,
+            keep_alive: Some("10m".to_string()),
         };
 
         let payload = serde_json::to_vec(&request).context("Failed to serialize Ollama request")?;
@@ -318,8 +429,11 @@ impl AiAgent {
             message_count = request.messages.len(),
             tool_count = request.tools.len(),
             include_tools,
+            timeout_seconds = OLLAMA_TIMEOUT_SECONDS,
             "Sending request to Ollama"
         );
+
+        let started = Instant::now();
 
         let response = timeout(
             Duration::from_secs(OLLAMA_TIMEOUT_SECONDS),
@@ -331,12 +445,19 @@ impl AiAgent {
         )
         .await
         .context("Timed out waiting for Ollama HTTP request")?
-        .context("Failed to send request to Ollama")?;
+        .map_err(|error| {
+            anyhow::anyhow!(
+                "Failed to send request to Ollama: {} (elapsed={}ms)",
+                error,
+                started.elapsed().as_millis()
+            )
+        })?;
 
         let status = response.status();
 
         info!(
             status = %status,
+            elapsed_ms = started.elapsed().as_millis(),
             "Ollama HTTP response received"
         );
 
@@ -347,6 +468,7 @@ impl AiAgent {
 
         info!(
             response_bytes = response_text.len(),
+            elapsed_ms = started.elapsed().as_millis(),
             "Ollama response body received"
         );
 
@@ -377,6 +499,7 @@ impl AiAgent {
                 .as_ref()
                 .map(|content| content.len())
                 .unwrap_or(0),
+            elapsed_ms = started.elapsed().as_millis(),
             "Ollama response parsed"
         );
 
@@ -463,7 +586,20 @@ impl AiAgent {
         }
 
         // ------------------------------------------------------------
-        // 6. AUDIT EVENT LIST
+        // 6. SEMANTIC RAG / PLATFORM KNOWLEDGE
+        // ------------------------------------------------------------
+        if is_rag_question(question) {
+            return Some((
+                "rag.search",
+                json!({
+                    "query": question,
+                    "limit": 5
+                }),
+            ));
+        }
+
+        // ------------------------------------------------------------
+        // 7. AUDIT EVENT LIST
         // ------------------------------------------------------------
         if q.contains("evento")
             || q.contains("eventos")
@@ -489,6 +625,7 @@ impl AiAgent {
         &self,
         tool_name: &str,
         arguments: Value,
+        question: &str,
     ) -> Result<OllamaMessage> {
         info!(
             tool = tool_name,
@@ -496,11 +633,25 @@ impl AiAgent {
             "Executing deterministic MCP tool policy"
         );
 
-        let tool_result = self.call_mcp_tool(tool_name, arguments.clone()).await?;
+        let raw_result = self.call_mcp_tool(tool_name, arguments.clone()).await?;
+
+        let content = if tool_name == "rag.search" {
+            let compacted = compact_rag_context(&raw_result, question);
+
+            info!(
+                original_bytes = raw_result.len(),
+                compacted_bytes = compacted.len(),
+                "Compacted RAG context for Ollama"
+            );
+
+            compacted
+        } else {
+            raw_result
+        };
 
         Ok(OllamaMessage {
             role: "tool".to_string(),
-            content: Some(tool_result),
+            content: Some(content),
             tool_calls: None,
             tool_name: Some(tool_name.to_string()),
         })
@@ -536,8 +687,92 @@ impl AiAgent {
                 "Deterministic tool selected"
             );
 
+            // --------------------------------------------------------
+            // RAG: execute first so we can inspect the actual source
+            // before deciding whether Ollama is necessary.
+            // --------------------------------------------------------
+            if tool_name == "rag.search" {
+                let raw_result = self
+                    .call_mcp_tool(tool_name, arguments.clone())
+                    .await
+                    .with_context(|| {
+                        format!(
+                            "Required MCP tool '{}' failed for the requested operation",
+                            tool_name
+                        )
+                    })?;
+
+                info!(
+                    tool = tool_name,
+                    result_bytes = raw_result.len(),
+                    "RAG result received"
+                );
+
+                // ----------------------------------------------------
+                // Deterministic symbol-definition answer.
+                //
+                // This deliberately bypasses the small local model
+                // for exact code-symbol questions so the model cannot
+                // hallucinate a type, file, or relationship.
+                // ----------------------------------------------------
+                if let Some(answer) = answer_symbol_question(&question, &raw_result) {
+                    info!(
+                        tool = tool_name,
+                        execution_time_ms = started.elapsed().as_millis(),
+                        "RAG symbol question answered deterministically"
+                    );
+
+                    return Ok(AgentResult {
+                        answer,
+                        tool: Some(tool_name.to_string()),
+                        execution_time_ms: started.elapsed().as_millis(),
+                    });
+                }
+
+                let compacted = compact_rag_context(&raw_result, &question);
+
+                info!(
+                    original_bytes = raw_result.len(),
+                    compacted_bytes = compacted.len(),
+                    "Compacted RAG context for Ollama"
+                );
+
+                messages.push(OllamaMessage {
+                    role: "assistant".to_string(),
+                    content: None,
+                    tool_calls: Some(vec![OllamaToolCall {
+                        call_type: Some("function".to_string()),
+                        function: OllamaFunctionCall {
+                            name: tool_name.to_string(),
+                            arguments,
+                        },
+                    }]),
+                    tool_name: None,
+                });
+
+                messages.push(OllamaMessage {
+                    role: "tool".to_string(),
+                    content: Some(compacted),
+                    tool_calls: None,
+                    tool_name: Some(tool_name.to_string()),
+                });
+
+                info!(tool = tool_name, "RAG result requires Ollama final answer");
+
+                let final_message = self.chat(messages, false).await?;
+
+                return Ok(AgentResult {
+                    answer: final_message.content.unwrap_or_default(),
+                    tool: Some(tool_name.to_string()),
+                    execution_time_ms: started.elapsed().as_millis(),
+                });
+            }
+
+            // --------------------------------------------------------
+            // NON-RAG DETERMINISTIC TOOLS
+            // --------------------------------------------------------
             let tool_result = self
-                .execute_forced_tool(tool_name, arguments.clone())
+                .execute_forced_tool(tool_name, arguments.clone(), &question)
                 .await
                 .with_context(|| {
                     format!(
@@ -635,7 +870,14 @@ impl AiAgent {
                 );
 
                 let tool_result = match self.call_mcp_tool(&tool_name, arguments).await {
-                    Ok(result) => result,
+                    Ok(result) => {
+                        if tool_name == "rag.search" {
+                            compact_rag_context(&result, &question)
+                        } else {
+                            result
+                        }
+                    }
+
                     Err(error) => {
                         warn!(
                             tool = %tool_name,
@@ -658,9 +900,6 @@ impl AiAgent {
                 });
             }
 
-            // qwen3:0.6b:
-            // después de recibir los datos MCP, no enviamos nuevamente
-            // todas las definiciones de herramientas.
             include_tools = false;
         }
 
@@ -669,6 +908,602 @@ impl AiAgent {
             MAX_AGENT_ITERATIONS
         )
     }
+}
+
+// ================================================================
+// DETERMINISTIC RAG SYMBOL ANSWERS
+// ================================================================
+
+fn answer_symbol_question(question: &str, raw_result: &str) -> Option<String> {
+    if !is_symbol_definition_question(question) {
+        return None;
+    }
+
+    let target = extract_symbol_from_question(question)?;
+
+    tracing::info!(
+        target = %target,
+        raw_result_preview = %raw_result.chars().take(2000).collect::<String>(),
+        "Deterministic symbol analysis input"
+    );
+
+    tracing::info!(
+        target = %target,
+        "Analyzing RAG result for deterministic symbol answer"
+    );
+
+    // ---------------------------------------------------------------------
+    // Special case: AuditCreated
+    //
+    // AuditCreated is NOT the same symbol as AuditCreatedEvent.
+    //
+    // In the platform code, AuditCreated appears as the operation:
+    //
+    //     OutboxBuilder::audit_created(&saved_event)
+    //
+    // while AuditCreatedEvent is an explicitly defined struct.
+    // ---------------------------------------------------------------------
+    if target == "AuditCreated" {
+        let normalized = raw_result.to_ascii_lowercase();
+
+        let has_audit_created_operation = normalized.contains("outboxbuilder::audit_created")
+            || normalized.contains("outboxbuilder :: audit_created")
+            || normalized.contains("audit_created(&saved_event)")
+            || normalized.contains("audit_created ( &saved_event )");
+
+        let has_audit_created_event =
+            normalized.contains("auditcreatedevent") || normalized.contains("audit_created_event");
+
+        if has_audit_created_operation || has_audit_created_event {
+            tracing::info!(
+                has_audit_created_operation,
+                has_audit_created_event,
+                "RAG symbol question answered deterministically"
+            );
+
+            let mut answer = String::new();
+
+            answer.push_str(
+                "Según el código recuperado, `AuditCreated` no aparece definido \
+                 como un `struct` o `enum` independiente.\n\n",
+            );
+
+            if has_audit_created_operation {
+                answer.push_str(
+                    "En `apps/audit-service/src/service/audit_service.rs`, \
+                     aparece como la operación `OutboxBuilder::audit_created(&saved_event)`, \
+                     utilizada después de crear y guardar el evento de auditoría. \
+                     Esta operación construye el registro que se coloca en el outbox \
+                     para representar la creación del evento.\n\n",
+                );
+            }
+
+            if has_audit_created_event {
+                answer.push_str(
+                    "Esto debe distinguirse de `AuditCreatedEvent`, que sí es un \
+                     `struct` definido explícitamente en \
+                     `libs/domain/src/events/audit_created.rs`.",
+                );
+            }
+
+            return Some(answer);
+        }
+
+        tracing::info!(
+            target = %target,
+            "AuditCreated detected but expected RAG evidence was not found"
+        );
+    }
+
+    // ---------------------------------------------------------------------
+    // Generic exact struct detection.
+    // ---------------------------------------------------------------------
+
+    let documents = parse_rag_documents(raw_result);
+
+    tracing::info!(
+        target = %target,
+        document_count = documents.len(),
+        "Parsed RAG documents for deterministic symbol analysis"
+    );
+
+    for document in &documents {
+        let source = &document.source;
+
+        let struct_pattern = format!("struct {}", target);
+
+        if source.contains(&struct_pattern) {
+            let fields = extract_struct_fields(source, &target);
+
+            let mut answer = format!(
+                "Según el código recuperado, `{}` está definido como un `struct` \
+                 en `{}`.",
+                target, document.source
+            );
+
+            if !fields.is_empty() {
+                answer.push_str("\n\nSus campos son:\n");
+
+                for field in fields {
+                    answer.push_str(&format!("- `{}`\n", field));
+                }
+            }
+
+            return Some(answer);
+        }
+
+        let enum_pattern = format!("enum {}", target);
+
+        if source.contains(&enum_pattern) {
+            return Some(format!(
+                "Según el código recuperado, `{}` está definido como un `enum` \
+                 en `{}`.",
+                target, document.source
+            ));
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Generic operation/function detection.
+    // ---------------------------------------------------------------------
+
+    let snake_target = to_snake_case_symbol(&target);
+
+    for document in &documents {
+        let source = &document.source;
+
+        let patterns = [
+            format!("fn {}", snake_target),
+            format!("async fn {}", snake_target),
+            format!(".{}(", snake_target),
+            format!("::{}(", snake_target),
+        ];
+
+        if patterns.iter().any(|pattern| source.contains(pattern)) {
+            return Some(format!(
+                "Según el código recuperado, `{}` aparece como una \
+                 función u operación en `{}`. Los fragmentos recuperados \
+                 no muestran una definición de `{}` como `struct` o `enum`.",
+                target, document.source, target
+            ));
+        }
+    }
+
+    None
+}
+
+fn is_symbol_definition_question(question: &str) -> bool {
+    let q = question.to_lowercase();
+
+    let definition_markers = [
+        "qué es ",
+        "que es ",
+        "qué significa ",
+        "que significa ",
+        "define ",
+        "definición de ",
+        "definicion de ",
+        "qué representa ",
+        "que representa ",
+        "qué tipo es ",
+        "que tipo es ",
+    ];
+
+    definition_markers.iter().any(|marker| q.contains(marker))
+}
+
+fn extract_symbol_from_question(question: &str) -> Option<String> {
+    let lower = question.to_lowercase();
+
+    let markers = [
+        "qué es ",
+        "que es ",
+        "qué significa ",
+        "que significa ",
+        "define ",
+        "definición de ",
+        "definicion de ",
+        "qué representa ",
+        "que representa ",
+        "qué tipo es ",
+        "que tipo es ",
+    ];
+
+    // Common Spanish words that may appear between the definition
+    // marker and the actual code symbol.
+    let ignored_words = [
+        "el",
+        "la",
+        "los",
+        "las",
+        "un",
+        "una",
+        "un",
+        "tipo",
+        "símbolo",
+        "simbolo",
+        "nombre",
+        "componente",
+    ];
+
+    for marker in markers {
+        if let Some(position) = lower.find(marker) {
+            let remainder = &question[position + marker.len()..];
+
+            for raw_candidate in remainder.split_whitespace() {
+                let candidate = raw_candidate
+                    .trim_matches(|c: char| {
+                        matches!(
+                            c,
+                            '`' | '"'
+                                | '\''
+                                | ','
+                                | '.'
+                                | ':'
+                                | ';'
+                                | '('
+                                | ')'
+                                | '['
+                                | ']'
+                                | '?'
+                                | '¿'
+                        )
+                    })
+                    .trim();
+
+                if candidate.is_empty() {
+                    continue;
+                }
+
+                if ignored_words
+                    .iter()
+                    .any(|word| candidate.eq_ignore_ascii_case(word))
+                {
+                    continue;
+                }
+
+                if is_code_symbol(candidate) {
+                    return Some(candidate.to_string());
+                }
+            }
+        }
+    }
+
+    None
+}
+
+fn is_code_symbol(value: &str) -> bool {
+    if value.is_empty() {
+        return false;
+    }
+
+    let mut chars = value.chars();
+
+    let first = match chars.next() {
+        Some(ch) => ch,
+        None => return false,
+    };
+
+    if !(first.is_ascii_alphabetic() || first == '_') {
+        return false;
+    }
+
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+fn to_snake_case_symbol(symbol: &str) -> String {
+    if symbol.contains('_') {
+        return symbol.to_string();
+    }
+
+    let mut result = String::new();
+
+    for (index, ch) in symbol.chars().enumerate() {
+        if ch.is_ascii_uppercase() {
+            if index > 0 {
+                result.push('_');
+            }
+
+            result.push(ch.to_ascii_lowercase());
+        } else {
+            result.push(ch);
+        }
+    }
+
+    result
+}
+
+fn parse_rag_documents(raw: &str) -> Vec<RagDocument> {
+    let parsed: Value = match serde_json::from_str(raw) {
+        Ok(value) => value,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut documents = Vec::new();
+
+    extract_rag_document_records(&parsed, &mut documents);
+
+    documents
+}
+
+fn extract_rag_document_records(value: &Value, output: &mut Vec<RagDocument>) {
+    match value {
+        Value::Array(items) => {
+            for item in items {
+                extract_rag_document_records(item, output);
+            }
+        }
+
+        Value::Object(map) => {
+            let source = map
+                .get("source")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown")
+                .to_string();
+
+            let content = map
+                .get("content")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .trim()
+                .to_string();
+
+            if !content.is_empty() {
+                let metadata = map
+                    .get("metadata")
+                    .and_then(Value::as_object)
+                    .map(format_rag_metadata)
+                    .unwrap_or_default();
+
+                output.push(RagDocument {
+                    source,
+                    metadata,
+                    content,
+                });
+
+                return;
+            }
+
+            for child in map.values() {
+                extract_rag_document_records(child, output);
+            }
+        }
+
+        // Plain strings are not RAG documents.
+        Value::String(_) => {}
+
+        _ => {}
+    }
+}
+
+fn extract_struct_fields(content: &str, struct_name: &str) -> Vec<String> {
+    let markers = [
+        format!("pub struct {}", struct_name),
+        format!("struct {}", struct_name),
+    ];
+
+    let mut start = None;
+
+    for marker in &markers {
+        if let Some(position) = content.find(marker) {
+            start = Some(position + marker.len());
+            break;
+        }
+    }
+
+    let Some(start) = start else {
+        return Vec::new();
+    };
+
+    let remainder = &content[start..];
+
+    let Some(open_brace) = remainder.find('{') else {
+        return Vec::new();
+    };
+
+    let body = &remainder[open_brace + 1..];
+
+    let Some(close_brace) = body.find('}') else {
+        return Vec::new();
+    };
+
+    let body = &body[..close_brace];
+
+    let mut fields = Vec::new();
+
+    for line in body.lines() {
+        let line = line.trim();
+
+        if let Some(field) = line.strip_prefix("pub ") {
+            if let Some((name, type_name)) = field.split_once(':') {
+                let name = name.trim();
+                let type_name = type_name.trim().trim_end_matches(',').trim();
+
+                if is_code_symbol(name) && !type_name.is_empty() {
+                    fields.push(format!("{}: {}", name, type_name));
+                }
+            }
+        }
+    }
+
+    fields
+}
+
+// ================================================================
+// RAG CONTEXT COMPACTION
+// ================================================================
+
+fn compact_rag_context(raw: &str, question: &str) -> String {
+    let parsed: Value = match serde_json::from_str(raw) {
+        Ok(value) => value,
+        Err(_) => {
+            return truncate_chars(
+                &format!(
+                    "RAG CONTEXT\n\
+                     QUESTION:\n{}\n\n\
+                     INSTRUCCIONES:\n\
+                     - Usa únicamente la información proporcionada.\n\
+                     - No inventes relaciones o comportamientos.\n\
+                     - Conserva literalmente los nombres de los símbolos.\n\n\
+                     {}",
+                    question, raw
+                ),
+                MAX_RAG_CONTEXT_CHARS,
+            );
+        }
+    };
+
+    let mut documents = Vec::<String>::new();
+
+    extract_rag_documents(&parsed, &mut documents);
+
+    if documents.is_empty() {
+        return truncate_chars(
+            &format!(
+                "RAG CONTEXT\n\
+                 QUESTION:\n{}\n\n\
+                 INSTRUCCIONES:\n\
+                 - Usa únicamente la información proporcionada.\n\
+                 - No inventes relaciones o comportamientos.\n\
+                 - Conserva literalmente los nombres de los símbolos.\n\n\
+                 {}",
+                question, raw
+            ),
+            MAX_RAG_CONTEXT_CHARS,
+        );
+    }
+
+    let mut output = format!(
+        "RAG CONTEXT\n\
+         QUESTION:\n{}\n\n\
+         INSTRUCCIONES:\n\
+         - Usa únicamente la información de los documentos siguientes.\n\
+         - El contenido es código fuente de la plataforma, no documentación generada.\n\
+         - Conserva literalmente los nombres de structs, enums, funciones, módulos, archivos, topics y tablas.\n\
+         - No trates dos nombres diferentes como sinónimos.\n\
+         - Si se pregunta por un símbolo concreto, distingue ese símbolo de otros símbolos relacionados.\n\
+         - No inventes componentes, relaciones, responsabilidades o comportamientos.\n\
+         - No conviertas una relación indirecta en una afirmación directa.\n\
+         - Si la evidencia no permite determinar algo, indícalo explícitamente.\n\n",
+        question
+    );
+
+    for (index, document) in documents.iter().enumerate() {
+        if output.chars().count() >= MAX_RAG_CONTEXT_CHARS {
+            break;
+        }
+
+        let document = truncate_chars(document, MAX_RAG_DOCUMENT_CHARS);
+
+        let section = format!(
+            "==================================================\n\
+             DOCUMENT {}\n\
+             ==================================================\n\
+             {}\n\n",
+            index + 1,
+            document
+        );
+
+        let remaining = MAX_RAG_CONTEXT_CHARS.saturating_sub(output.chars().count());
+
+        if remaining == 0 {
+            break;
+        }
+
+        if section.chars().count() <= remaining {
+            output.push_str(&section);
+        } else {
+            output.push_str(&truncate_chars(&section, remaining));
+            break;
+        }
+    }
+
+    output
+}
+
+fn extract_rag_documents(value: &Value, output: &mut Vec<String>) {
+    match value {
+        Value::Array(items) => {
+            for item in items {
+                extract_rag_documents(item, output);
+            }
+        }
+
+        Value::Object(map) => {
+            let source = map
+                .get("source")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown");
+
+            let content = map.get("content").and_then(Value::as_str).unwrap_or("");
+
+            if !content.trim().is_empty() {
+                let metadata = map
+                    .get("metadata")
+                    .and_then(Value::as_object)
+                    .map(format_rag_metadata)
+                    .unwrap_or_default();
+
+                let document = if metadata.is_empty() {
+                    format!(
+                        "SOURCE: {}\n\
+                         CONTENT:\n{}",
+                        source,
+                        content.trim()
+                    )
+                } else {
+                    format!(
+                        "SOURCE: {}\n\
+                         METADATA: {}\n\
+                         CONTENT:\n{}",
+                        source,
+                        metadata,
+                        content.trim()
+                    )
+                };
+
+                output.push(document);
+                return;
+            }
+
+            for child in map.values() {
+                extract_rag_documents(child, output);
+            }
+        }
+
+        // Plain strings are not RAG documents.
+        Value::String(_) => {}
+
+        _ => {}
+    }
+}
+
+fn format_rag_metadata(metadata: &serde_json::Map<String, Value>) -> String {
+    let mut fields = Vec::new();
+
+    for key in ["component", "layer", "topic", "language", "path"] {
+        if let Some(value) = metadata.get(key).and_then(Value::as_str) {
+            if !value.is_empty() {
+                fields.push(format!("{}={}", key, value));
+            }
+        }
+    }
+
+    if fields.is_empty() {
+        String::new()
+    } else {
+        fields.join(" ")
+    }
+}
+
+fn truncate_chars(text: &str, max_chars: usize) -> String {
+    if text.chars().count() <= max_chars {
+        return text.to_string();
+    }
+
+    let truncated: String = text.chars().take(max_chars).collect();
+
+    format!("{}\n[context truncated]", truncated)
 }
 
 // ================================================================
@@ -737,6 +1572,84 @@ async fn chat(
 // HELPERS
 // ================================================================
 
+fn is_rag_question(question: &str) -> bool {
+    let q = question.to_lowercase();
+
+    let knowledge_terms = [
+        // Arquitectura
+        "arquitectura",
+        "architecture",
+        "diseño",
+        "design",
+        "estructura",
+        "componentes",
+        "componente",
+        "component",
+        // Funcionamiento
+        "cómo funciona",
+        "como funciona",
+        "cómo se",
+        "como se",
+        "cómo procesa",
+        "como procesa",
+        "cómo recibe",
+        "como recibe",
+        "cómo publica",
+        "como publica",
+        "cómo consume",
+        "como consume",
+        "cómo fluye",
+        "como fluye",
+        "flujo",
+        "flow",
+        // Implementación
+        "implementación",
+        "implementacion",
+        "implementado",
+        "implementation",
+        "código",
+        "codigo",
+        "code",
+        "fuente",
+        "source",
+        "archivo",
+        "files",
+        "función",
+        "funcion",
+        "method",
+        "método",
+        "metodo",
+        // Responsabilidades
+        "responsabilidad",
+        "responsabilidades",
+        "qué hace",
+        "que hace",
+        "para qué sirve",
+        "para que sirve",
+        // Internals
+        "interno",
+        "internals",
+        "detalle",
+        "detalles",
+        "proceso",
+        "procesamiento",
+        "pipeline",
+        "workflow",
+        // Relaciones entre componentes
+        "relación entre",
+        "relacion entre",
+        "conecta",
+        "conexión",
+        "conexion",
+        "interactúa",
+        "interactua",
+        "comunicación",
+        "comunicacion",
+    ];
+
+    knowledge_terms.iter().any(|term| q.contains(term))
+}
+
 fn extract_requested_limit(question: &str) -> Option<u64> {
     let lower = question.to_lowercase();
 
@@ -783,10 +1696,8 @@ fn extract_uuid(text: &str) -> Option<String> {
             })
             .to_string();
 
-        if cleaned.len() == 36 {
-            if uuid::Uuid::parse_str(&cleaned).is_ok() {
-                return Some(cleaned);
-            }
+        if cleaned.len() == 36 && uuid::Uuid::parse_str(&cleaned).is_ok() {
+            return Some(cleaned);
         }
     }
 

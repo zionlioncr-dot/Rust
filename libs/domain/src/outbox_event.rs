@@ -8,6 +8,8 @@ use uuid::Uuid;
 pub struct OutboxEvent {
     pub id: Uuid,
 
+    pub tenant_id: String,
+
     pub aggregate_type: String,
 
     pub aggregate_id: Uuid,

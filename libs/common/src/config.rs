@@ -20,6 +20,10 @@ pub struct AppConfig {
     pub polling_interval: u64,
 
     pub schema_registry_url: String,
+
+    pub ollama_base_url: String,
+
+    pub ollama_embedding_model: String,
 }
 
 impl AppConfig {
@@ -58,6 +62,12 @@ impl AppConfig {
             .and_then(|v| v.parse().ok())
             .unwrap_or(5);
 
+        let ollama_base_url =
+            env::var("OLLAMA_BASE_URL").unwrap_or_else(|_| "http://127.0.0.1:11435".to_string());
+
+        let ollama_embedding_model =
+            env::var("OLLAMA_EMBEDDING_MODEL").unwrap_or_else(|_| "nomic-embed-text".to_string());
+
         Self {
             database_url,
             kafka_brokers,
@@ -66,6 +76,8 @@ impl AppConfig {
             max_db_connections,
             server_port,
             polling_interval,
+            ollama_base_url,
+            ollama_embedding_model,
         }
     }
 }

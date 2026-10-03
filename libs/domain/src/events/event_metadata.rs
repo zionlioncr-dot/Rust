@@ -16,4 +16,6 @@ pub struct EventMetadata {
     pub source: String,
 
     pub timestamp: DateTime<Utc>,
+
+    pub tenant_id: String,
 }

@@ -86,6 +86,9 @@ pub fn extract_http_context(headers: &HeaderMap) -> Context {
     global::get_text_map_propagator(|propagator| propagator.extract(&HeaderExtractor(headers)))
 }
 
+#[derive(Clone)]
+pub struct IncomingTraceContext(pub Context);
+
 /// Inyecta el contexto actual de tracing/OpenTelemetry
 /// en headers HTTP.
 ///

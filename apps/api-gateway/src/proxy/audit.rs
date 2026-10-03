@@ -1,16 +1,17 @@
 use axum::{
     body::Body,
     extract::{Path, Request, State},
-    http::header::HeaderName,
+    http::header::{HeaderName, HeaderValue},
     response::{IntoResponse, Response},
 };
 use reqwest::Client;
 
-use crate::config::Config;
+use crate::{config::Config, middleware::auth::Claims};
 
 #[derive(Clone)]
 pub struct ProxyState {
     pub client: Client,
+
     pub config: Config,
 }
 
@@ -18,6 +19,7 @@ impl ProxyState {
     pub fn new(config: Config) -> Self {
         Self {
             client: Client::new(),
+
             config,
         }
     }
@@ -28,7 +30,8 @@ impl ProxyState {
     skip(state, request),
     fields(
         upstream = tracing::field::Empty,
-        status = tracing::field::Empty
+        status = tracing::field::Empty,
+        tenant_id = tracing::field::Empty
     )
 )]
 pub async fn proxy_audit(
@@ -57,11 +60,30 @@ pub async fn proxy_audit(
     fields(
         http.method = %request.method(),
         http.url = tracing::field::Empty,
-        http.status_code = tracing::field::Empty
+        http.status_code = tracing::field::Empty,
+        tenant_id = tracing::field::Empty
     )
 )]
 async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Response {
     let method = request.method().clone();
+
+    let tenant_id = match request.extensions().get::<Claims>() {
+        Some(claims) if !claims.tenant_id.trim().is_empty() => claims.tenant_id.clone(),
+
+        Some(_) => {
+            return gateway_error(
+                401,
+                "unauthorized",
+                "Authenticated request has no tenant_id",
+            );
+        }
+
+        None => {
+            return gateway_error(401, "unauthorized", "Authenticated claims are missing");
+        }
+    };
+
+    tracing::Span::current().record("tenant_id", tracing::field::display(&tenant_id));
 
     let query = request
         .uri()
@@ -81,8 +103,13 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
     let mut headers = request.headers().clone();
 
     /*
-     * IMPORTANT:
+     * Never trust X-Tenant-Id supplied by the external client.
      *
+     * The tenant context comes exclusively from the validated JWT.
+     */
+    headers.remove("x-tenant-id");
+
+    /*
      * Do not simply forward an incoming traceparent.
      *
      * The current Gateway span is the immediate
@@ -92,6 +119,18 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
      * context and overwrites traceparent/tracestate.
      */
     telemetry::tracing::inject_current_context(&mut headers);
+
+    let tenant_header = match HeaderValue::from_str(&tenant_id) {
+        Ok(value) => value,
+
+        Err(_) => {
+            tracing::error!("Invalid tenant_id for HTTP header");
+
+            return gateway_error(500, "internal_error", "Invalid tenant context");
+        }
+    };
+
+    headers.insert(HeaderName::from_static("x-tenant-id"), tenant_header);
 
     let body = request.into_body();
 
@@ -119,6 +158,7 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
     tracing::info!(
         method = %method,
         url = %url,
+        tenant_id = %tenant_id,
         "Forwarding request to audit-service"
     );
 

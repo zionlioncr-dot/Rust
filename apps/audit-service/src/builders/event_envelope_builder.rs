@@ -6,6 +6,8 @@ use serde::Serialize;
 
 use uuid::Uuid;
 
+use common::tenant::TenantContext;
+
 use domain::events::{
     event_envelope::EventEnvelope, event_metadata::EventMetadata, event_version::EventVersion,
 };
@@ -19,6 +21,7 @@ impl EventEnvelopeBuilder {
         event_type: &str,
         source: &str,
         correlation_id: Option<Uuid>,
+        tenant_context: &TenantContext,
         payload: &T,
     ) -> Result<EventEnvelope>
     where
@@ -41,6 +44,8 @@ impl EventEnvelopeBuilder {
                 source: source.to_string(),
 
                 timestamp: Utc::now(),
+
+                tenant_id: tenant_context.tenant_id().to_string(),
             },
 
             version: EventVersion::default(),

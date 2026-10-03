@@ -1,64 +1,43 @@
 use anyhow::Result;
-
 use async_trait::async_trait;
-
 use sqlx::{query, query_as};
-
 use uuid::Uuid;
 
-use domain::outbox_event::OutboxEvent;
-
 use crate::{outbox_repository::OutboxRepository, postgres::repository::PostgresRepository};
+
+use domain::outbox_event::OutboxEvent;
 
 #[async_trait]
 impl OutboxRepository for PostgresRepository {
     async fn save(&self, event: OutboxEvent) -> Result<()> {
         query(
             r#"
-
             INSERT INTO outbox_events
-
             (
-
                 id,
-
+                tenant_id,
                 aggregate_type,
-
                 aggregate_id,
-
                 event_type,
-
                 payload,
-
                 created_at,
-
                 published
-
             )
-
             VALUES
-
             (
-
                 $1,
-
                 $2,
-
                 $3,
-
                 $4,
-
                 $5,
-
                 $6,
-
-                $7
-
+                $7,
+                $8
             )
-
             "#,
         )
         .bind(event.id)
+        .bind(&event.tenant_id)
         .bind(event.aggregate_type)
         .bind(event.aggregate_id)
         .bind(event.event_type)
@@ -74,32 +53,20 @@ impl OutboxRepository for PostgresRepository {
     async fn find_unpublished(&self, limit: i64) -> Result<Vec<OutboxEvent>> {
         let events = query_as::<_, OutboxEvent>(
             r#"
-
-                SELECT
-
-                    id,
-
-                    aggregate_type,
-
-                    aggregate_id,
-
-                    event_type,
-
-                    payload,
-
-                    created_at,
-
-                    published
-
-                FROM outbox_events
-
-                WHERE published = false
-
-                ORDER BY created_at
-
-                LIMIT $1
-
-                "#,
+            SELECT
+                id,
+                tenant_id,
+                aggregate_type,
+                aggregate_id,
+                event_type,
+                payload,
+                created_at,
+                published
+            FROM outbox_events
+            WHERE published = false
+            ORDER BY created_at
+            LIMIT $1
+            "#,
         )
         .bind(limit)
         .fetch_all(&self.pool)
@@ -111,13 +78,9 @@ impl OutboxRepository for PostgresRepository {
     async fn mark_as_published(&self, id: Uuid) -> Result<()> {
         query(
             r#"
-
             UPDATE outbox_events
-
             SET published = true
-
             WHERE id = $1
-
             "#,
         )
         .bind(id)

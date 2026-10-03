@@ -12,19 +12,27 @@ use crate::config::Config;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
+
     pub iss: String,
+
     pub aud: String,
+
     pub exp: usize,
+
     pub iat: usize,
 
     #[serde(default)]
     pub scopes: Vec<String>,
+
+    pub tenant_id: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct AuthConfig {
     pub jwt_secret: String,
+
     pub jwt_issuer: String,
+
     pub jwt_audience: String,
 }
 
@@ -32,7 +40,9 @@ impl AuthConfig {
     pub fn from_config(config: &Config) -> Self {
         Self {
             jwt_secret: config.jwt_secret.clone(),
+
             jwt_issuer: config.jwt_issuer.clone(),
+
             jwt_audience: config.jwt_audience.clone(),
         }
     }
@@ -68,6 +78,7 @@ pub async fn authenticate(mut request: Request, next: Next) -> Response {
     let mut validation = Validation::new(Algorithm::HS256);
 
     validation.set_issuer(&[config.jwt_issuer.as_str()]);
+
     validation.set_audience(&[config.jwt_audience.as_str()]);
 
     let token_data = match decode::<Claims>(
@@ -88,6 +99,15 @@ pub async fn authenticate(mut request: Request, next: Next) -> Response {
     };
 
     let claims = token_data.claims;
+
+    if claims.tenant_id.trim().is_empty() {
+        tracing::warn!(
+            subject = %claims.sub,
+            "JWT is missing tenant_id"
+        );
+
+        return unauthorized("JWT tenant_id is required");
+    }
 
     request.extensions_mut().insert(claims);
 

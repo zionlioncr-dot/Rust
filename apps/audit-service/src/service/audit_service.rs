@@ -4,6 +4,8 @@ use anyhow::Result;
 use chrono::Utc;
 use uuid::Uuid;
 
+use common::tenant::TenantContext;
+
 use domain::audit_event::AuditEvent;
 
 use repository::{audit_repository::AuditRepository, outbox_repository::OutboxRepository};
@@ -19,19 +21,26 @@ pub struct AuditService {
 impl AuditService {
     pub fn new(
         audit_repository: Arc<dyn AuditRepository>,
-
         outbox_repository: Arc<dyn OutboxRepository>,
     ) -> Self {
         Self {
             audit_repository,
-
             outbox_repository,
         }
     }
 
-    pub async fn create(&self, user: String, action: String) -> Result<AuditEvent> {
+    pub async fn create(
+        &self,
+        tenant_context: TenantContext,
+        user: String,
+        action: String,
+    ) -> Result<AuditEvent> {
+        let tenant_id = tenant_context.tenant_id().to_string();
+
         let event = AuditEvent {
             id: Uuid::new_v4(),
+
+            tenant_id,
 
             user,
 
@@ -42,14 +51,16 @@ impl AuditService {
 
         let saved_event = self.audit_repository.create(event).await?;
 
-        let outbox = OutboxBuilder::audit_created(&saved_event)?;
+        let outbox = OutboxBuilder::audit_created(&saved_event, &tenant_context)?;
 
         self.outbox_repository.save(outbox).await?;
 
         Ok(saved_event)
     }
 
-    pub async fn list(&self) -> Result<Vec<AuditEvent>> {
-        self.audit_repository.find_all().await
+    pub async fn list(&self, tenant_context: TenantContext) -> Result<Vec<AuditEvent>> {
+        self.audit_repository
+            .find_all(tenant_context.tenant_id())
+            .await
     }
 }

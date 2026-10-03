@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use tracing::{error, info};
+use tracing::{error, info, info_span, Instrument};
 
 use common::{config::AppConfig, database::create_pool};
 
@@ -57,37 +57,73 @@ impl OutboxWorker {
                     .and_then(|metadata| metadata.get("traceparent"))
                     .and_then(serde_json::Value::as_str);
 
-                match self
-                    .publisher
-                    .publish_with_schema(&self.config.kafka_topic, &subject, &payload, traceparent)
+                let trace_context = telemetry::tracing::extract_traceparent_context(traceparent);
+
+                let publisher = &self.publisher;
+                let repository = &self.repository;
+                let topic = &self.config.kafka_topic;
+
+                let event_id = event.id;
+                let event_type = event.event_type.clone();
+
+                let result = telemetry::tracing::run_with_context(trace_context, async move {
+                    let span = info_span!(
+                        "outbox.publish",
+                        event_id = %event_id,
+                        event_type = %event_type,
+                        subject = %subject,
+                        traceparent = ?traceparent,
+                    );
+
+                    async move {
+                        let result = publisher
+                            .publish_with_schema(topic, &subject, &payload, traceparent)
+                            .await;
+
+                        match result {
+                            Ok(_) => {
+                                repository.mark_as_published(event_id).await?;
+
+                                outbox_metrics::published();
+
+                                info!(
+                                    event_id = %event_id,
+                                    event_type = %event_type,
+                                    subject = %subject,
+                                    traceparent = ?traceparent,
+                                    "Event published successfully with Avro schema"
+                                );
+
+                                Ok::<(), anyhow::Error>(())
+                            }
+
+                            Err(err) => {
+                                outbox_metrics::failed();
+
+                                error!(
+                                    event_id = %event_id,
+                                    event_type = %event_type,
+                                    subject = %subject,
+                                    traceparent = ?traceparent,
+                                    error = %err,
+                                    "Failed to publish event with Avro schema"
+                                );
+
+                                Err(err)
+                            }
+                        }
+                    }
+                    .instrument(span)
                     .await
-                {
-                    Ok(_) => {
-                        self.repository.mark_as_published(event.id).await?;
+                })
+                .await;
 
-                        outbox_metrics::published();
-
-                        info!(
-                            event_id = %event.id,
-                            event_type = %event.event_type,
-                            subject = %subject,
-                            traceparent = ?traceparent,
-                            "Event published successfully with Avro schema"
-                        );
-                    }
-
-                    Err(err) => {
-                        outbox_metrics::failed();
-
-                        error!(
-                            event_id = %event.id,
-                            event_type = %event.event_type,
-                            subject = %subject,
-                            traceparent = ?traceparent,
-                            error = %err,
-                            "Failed to publish event with Avro schema"
-                        );
-                    }
+                if let Err(err) = result {
+                    error!(
+                        event_id = %event_id,
+                        error = %err,
+                        "Outbox event processing failed"
+                    );
                 }
             }
 

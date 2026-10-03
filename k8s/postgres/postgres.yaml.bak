@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: pgvector/pgvector:pg16
+          image: postgres:16
           imagePullPolicy: IfNotPresent
 
           ports:

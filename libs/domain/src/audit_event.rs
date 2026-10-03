@@ -7,6 +7,8 @@ use uuid::Uuid;
 pub struct AuditEvent {
     pub id: Uuid,
 
+    pub tenant_id: String,
+
     pub user: String,
 
     pub action: String,
