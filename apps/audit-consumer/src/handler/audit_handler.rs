@@ -30,9 +30,11 @@ impl EventHandler for AuditHandler {
         envelope: EventEnvelope,
     ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + '_>> {
         Box::pin(async move {
+            let tenant_id = envelope.metadata.tenant_id.clone();
+
             let event: AuditCreatedEvent = serde_json::from_value(envelope.payload)?;
 
-            self.service.process(event).await
+            self.service.process(event, tenant_id).await
         })
     }
 }

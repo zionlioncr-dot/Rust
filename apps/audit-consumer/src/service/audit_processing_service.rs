@@ -25,10 +25,11 @@ impl AuditProcessingService {
         fields(
             event_id = %event.id,
             user = %event.user,
-            action = %event.action
+            action = %event.action,
+            tenant_id = %tenant_id
         )
     )]
-    pub async fn process(&self, event: AuditCreatedEvent) -> Result<()> {
+    pub async fn process(&self, event: AuditCreatedEvent, tenant_id: String) -> Result<()> {
         //
         // Domain validation
         //
@@ -50,6 +51,7 @@ impl AuditProcessingService {
         if self.idempotency.already_processed(event.id).await? {
             warn!(
                 event_id = %event.id,
+                tenant_id = %tenant_id,
                 "Duplicate event ignored"
             );
 
@@ -64,6 +66,7 @@ impl AuditProcessingService {
             event_id = %event.id,
             user = %event.user,
             action = %event.action,
+            tenant_id = %tenant_id,
             "Audit Event Processed"
         );
 

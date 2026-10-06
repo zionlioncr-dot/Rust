@@ -37,7 +37,8 @@ impl EventDispatcher {
         skip(self, envelope),
         fields(
             event_type = %envelope.event_type,
-            event_id = %envelope.metadata.event_id
+            event_id = %envelope.metadata.event_id,
+            tenant_id = %envelope.metadata.tenant_id
         )
     )]
     pub async fn dispatch(&self, envelope: EventEnvelope) -> Result<()> {
