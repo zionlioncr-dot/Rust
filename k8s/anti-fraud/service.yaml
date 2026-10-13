@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: anti-fraud
+  namespace: financial-platform
+  labels:
+    app: anti-fraud
+spec:
+  selector:
+    app: anti-fraud
+  ports:
+    - name: http
+      port: 3002
+      targetPort: http
+      protocol: TCP
+  type: ClusterIP

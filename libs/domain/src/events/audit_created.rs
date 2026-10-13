@@ -12,5 +12,8 @@ pub struct AuditCreatedEvent {
 
     pub action: String,
 
+    #[serde(default)]
+    pub client_ip: Option<String>,
+
     pub created_at: DateTime<Utc>,
 }

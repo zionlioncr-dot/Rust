@@ -307,11 +307,17 @@ impl KafkaProducer {
                 let mut record = Vec::new();
 
                 for field in &record_schema.fields {
-                    let value = object
-                        .get(&field.name)
-                        .with_context(|| format!("Missing required field '{}'", field.name))?;
-
-                    let avro_value = Self::json_to_avro(&field.schema, value)?;
+                    let avro_value = match object.get(&field.name) {
+                        Some(value) => Self::json_to_avro(&field.schema, value)?,
+                        None => match &field.default {
+                            Some(default_value) => {
+                                Self::json_to_avro(&field.schema, default_value)?
+                            }
+                            None => {
+                                anyhow::bail!("Missing required field '{}'", field.name);
+                            }
+                        },
+                    };
 
                     record.push((field.name.clone(), avro_value));
                 }
@@ -360,9 +366,9 @@ impl KafkaProducer {
             // Union
             // ------------------------------------------------------------
             Schema::Union(union_schema) => {
-                for variant in union_schema.variants() {
+                for (index, variant) in union_schema.variants().iter().enumerate() {
                     if let Ok(value) = Self::json_to_avro(variant, json) {
-                        return Ok(value);
+                        return Ok(Value::Union(index as u32, Box::new(value)));
                     }
                 }
 
@@ -383,5 +389,74 @@ impl KafkaProducer {
                 )
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn record_uses_null_default_when_optional_field_is_missing() {
+        let schema = Schema::parse_str(
+            r#"{
+                "type": "record",
+                "name": "AuditPayload",
+                "fields": [
+                    {"name": "action", "type": "string"},
+                    {
+                        "name": "client_ip",
+                        "type": ["null", "string"],
+                        "default": null
+                    }
+                ]
+            }"#,
+        )
+        .expect("schema should be valid");
+
+        let json = json!({"action": "login"});
+
+        let result = KafkaProducer::json_to_avro(&schema, &json);
+
+        assert!(
+            result.is_ok(),
+            "missing optional field should use its default: {:?}",
+            result.err()
+        );
+
+        let value = result.expect("conversion should succeed");
+
+        match value {
+            Value::Record(fields) => {
+                assert!(fields.iter().any(|(name, value)| name == "client_ip"
+                    && value == &Value::Union(0, Box::new(Value::Null))));
+            }
+            other => panic!("expected Avro record, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn record_still_rejects_missing_required_field() {
+        let schema = Schema::parse_str(
+            r#"{
+                "type": "record",
+                "name": "AuditPayloadRequired",
+                "fields": [
+                    {"name": "action", "type": "string"}
+                ]
+            }"#,
+        )
+        .expect("schema should be valid");
+
+        let json = json!({});
+
+        let result = KafkaProducer::json_to_avro(&schema, &json);
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().to_string().contains("action"),
+            "error should identify the missing required field"
+        );
     }
 }

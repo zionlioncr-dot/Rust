@@ -30,6 +30,8 @@ impl OutboxBuilder {
 
             action: audit.action.clone(),
 
+            client_ip: audit.client_ip.clone(),
+
             created_at: audit.created_at,
         };
 

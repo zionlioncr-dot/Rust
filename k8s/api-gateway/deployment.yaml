@@ -28,11 +28,24 @@ spec:
               protocol: TCP
 
           env:
+            - name: BANK_IP_ALLOWLIST_NEGATIVE_TTL_SECS
+              value: "15"
+            - name: BANK_IP_ALLOWLIST_POSITIVE_TTL_SECS
+              value: "60"
+            - name: REDIS_URL
+              value: "redis://redis:6379/"
+            - name: MAX_DB_CONNECTIONS
+              value: "5"
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/financial"
             - name: SERVER_ADDR
               value: "0.0.0.0:8088"
 
             - name: AUDIT_SERVICE_URL
               value: "http://audit-service:3000"
+
+            - name: ANTI_FRAUD_SERVICE_URL
+              value: "http://anti-fraud:3002"
 
             - name: JWT_SECRET
               valueFrom:

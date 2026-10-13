@@ -21,6 +21,7 @@ impl AuditRepository for PostgresRepository {
                 tenant_id,
                 username,
                 action,
+                client_ip,
                 created_at
             )
             VALUES
@@ -29,7 +30,8 @@ impl AuditRepository for PostgresRepository {
                 $2,
                 $3,
                 $4,
-                $5
+                $5,
+                $6
             )
             "#,
         )
@@ -37,6 +39,7 @@ impl AuditRepository for PostgresRepository {
         .bind(&event.tenant_id)
         .bind(&event.user)
         .bind(&event.action)
+        .bind(&event.client_ip)
         .bind(event.created_at)
         .execute(&self.pool)
         .await?;
@@ -52,6 +55,7 @@ impl AuditRepository for PostgresRepository {
                 tenant_id,
                 username AS user,
                 action,
+                client_ip,
                 created_at
             FROM audit_events
             WHERE id = $1
@@ -74,6 +78,7 @@ impl AuditRepository for PostgresRepository {
                 tenant_id,
                 username AS user,
                 action,
+                client_ip,
                 created_at
             FROM audit_events
             WHERE tenant_id = $1

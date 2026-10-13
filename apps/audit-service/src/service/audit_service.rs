@@ -34,6 +34,7 @@ impl AuditService {
         tenant_context: TenantContext,
         user: String,
         action: String,
+        client_ip: Option<String>,
     ) -> Result<AuditEvent> {
         let tenant_id = tenant_context.tenant_id().to_string();
 
@@ -45,6 +46,8 @@ impl AuditService {
             user,
 
             action,
+
+            client_ip,
 
             created_at: Utc::now(),
         };

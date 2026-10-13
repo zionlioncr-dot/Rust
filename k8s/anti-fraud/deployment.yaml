@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anti-fraud
+  namespace: financial-platform
+  labels:
+    app: anti-fraud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anti-fraud
+  template:
+    metadata:
+      labels:
+        app: anti-fraud
+    spec:
+      containers:
+        - name: anti-fraud
+          image: anti-fraud:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 3002
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/financial"
+
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+
+            - name: KAFKA_TOPIC
+              value: "audit-events"
+
+            - name: SCHEMA_REGISTRY_URL
+              value: "http://redpanda:8081"
+
+            - name: FRAUD_CONSUMER_GROUP
+              value: "fraud-group"
+
+            - name: FRAUD_PORT
+              value: "3002"
+
+            - name: RUST_LOG
+              value: "info"
+
+            - name: OTEL_SERVICE_NAME
+              value: "anti-fraud"
+
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

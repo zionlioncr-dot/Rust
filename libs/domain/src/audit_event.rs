@@ -13,5 +13,7 @@ pub struct AuditEvent {
 
     pub action: String,
 
+    pub client_ip: Option<String>,
+
     pub created_at: DateTime<Utc>,
 }

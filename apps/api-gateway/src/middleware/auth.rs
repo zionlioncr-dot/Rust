@@ -1,5 +1,5 @@
 use axum::{
-    extract::Request,
+    extract::{Request, State},
     http::{header::AUTHORIZATION, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
@@ -7,7 +7,7 @@ use axum::{
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::config::Config;
+use crate::{config::Config, proxy::audit::ProxyState};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -48,7 +48,11 @@ impl AuthConfig {
     }
 }
 
-pub async fn authenticate(mut request: Request, next: Next) -> Response {
+pub async fn authenticate(
+    State(state): State<ProxyState>,
+    mut request: Request,
+    next: Next,
+) -> Response {
     let authorization = match request.headers().get(AUTHORIZATION) {
         Some(value) => value,
 
@@ -107,6 +111,49 @@ pub async fn authenticate(mut request: Request, next: Next) -> Response {
         );
 
         return unauthorized("JWT tenant_id is required");
+    }
+
+    // PostgreSQL is the source of truth for M2M client revocation.
+    // Do not cache positive authorization decisions: disabling a client
+    // must invalidate its existing JWTs on the next protected request.
+    let client_status = sqlx::query_as::<_, (bool, String)>(
+        r#"
+        SELECT enabled, tenant_id
+        FROM bank_m2m_clients
+        WHERE client_id = $1
+        "#,
+    )
+    .bind(claims.sub.trim())
+    .fetch_optional(&state.pool)
+    .await;
+
+    match client_status {
+        Ok(Some((true, client_tenant_id)))
+            if client_tenant_id.trim() == claims.tenant_id.trim() => {}
+        Ok(_) => {
+            tracing::warn!(
+                subject = %claims.sub,
+                tenant_id = %claims.tenant_id,
+                "JWT rejected because M2M client is disabled, missing, or tenant mismatched"
+            );
+            return unauthorized("M2M client is disabled or no longer valid");
+        }
+        Err(error) => {
+            tracing::error!(
+                error = %error,
+                subject = %claims.sub,
+                "Unable to verify M2M client status"
+            );
+
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                axum::Json(serde_json::json!({
+                    "error": "temporarily_unavailable",
+                    "message": "Client authorization status is temporarily unavailable"
+                })),
+            )
+                .into_response();
+        }
     }
 
     request.extensions_mut().insert(claims);

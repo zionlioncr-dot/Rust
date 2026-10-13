@@ -13,6 +13,7 @@ dotenvy.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
+sqlx.workspace = true
 
 axum = "0.7"
 
@@ -31,3 +32,11 @@ reqwest = { version = "0.12", features = ["json"] }
 jsonwebtoken = "9"
 
 telemetry = { path = "../../libs/telemetry" }
+
+common = { path = "../../libs/common" }
+
+repository = { path = "../../libs/repository" }
+
+redis.workspace = true
+sha2 = "0.10"
+subtle = "2.6"

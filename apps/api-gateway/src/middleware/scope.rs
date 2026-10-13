@@ -13,6 +13,24 @@ pub async fn authorize_scope(request: Request, next: Next) -> Response {
         }
     };
 
+    authorize(request, next, required_scope).await
+}
+
+pub async fn authorize_fraud_scope(request: Request, next: Next) -> Response {
+    let required_scope = match *request.method() {
+        Method::GET => "fraud:read",
+
+        Method::POST | Method::PUT | Method::PATCH | Method::DELETE => "fraud:write",
+
+        _ => {
+            return forbidden("HTTP method is not allowed for fraud API");
+        }
+    };
+
+    authorize(request, next, required_scope).await
+}
+
+async fn authorize(request: Request, next: Next, required_scope: &'static str) -> Response {
     let claims = match request.extensions().get::<Claims>() {
         Some(claims) => claims,
 

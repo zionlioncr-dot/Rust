@@ -14,6 +14,8 @@ use crate::state::AppState;
 pub struct CreateAuditRequest {
     pub user: String,
     pub action: String,
+    #[serde(default)]
+    pub client_ip: Option<String>,
 }
 
 #[tracing::instrument(
@@ -43,9 +45,20 @@ pub async fn create_audit(
         tracing::field::display(tenant_context.tenant_id()),
     );
 
+    let client_ip = match request.client_ip {
+        Some(value) => {
+            let value = value.trim();
+            if value.parse::<std::net::IpAddr>().is_err() {
+                return Err(StatusCode::BAD_REQUEST);
+            }
+            Some(value.to_string())
+        }
+        None => None,
+    };
+
     let event = state
         .audit_service
-        .create(tenant_context, request.user, request.action)
+        .create(tenant_context, request.user, request.action, client_ip)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

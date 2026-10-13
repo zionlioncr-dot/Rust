@@ -4,35 +4,57 @@ use axum::{
     http::header::{HeaderName, HeaderValue},
     response::{IntoResponse, Response},
 };
+use redis::aio::ConnectionManager;
 use reqwest::Client;
+use sqlx::PgPool;
+
+use repository::PostgresBankIpAllowlistRepository;
 
 use crate::{config::Config, middleware::auth::Claims};
 
 #[derive(Clone)]
 pub struct ProxyState {
     pub client: Client,
-
     pub config: Config,
+    pub bank_ip_allowlist_repository: PostgresBankIpAllowlistRepository,
+    pub(crate) pool: PgPool,
 }
 
 impl ProxyState {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, pool: PgPool, redis: Option<ConnectionManager>) -> Self {
+        let repository = PostgresBankIpAllowlistRepository::new(pool.clone());
+
+        let bank_ip_allowlist_repository = match redis {
+            Some(connection) => repository.with_cache(
+                connection,
+                config.bank_ip_allowlist_positive_ttl_secs,
+                config.bank_ip_allowlist_negative_ttl_secs,
+            ),
+            None => repository,
+        };
+
         Self {
             client: Client::new(),
-
+            bank_ip_allowlist_repository,
             config,
+            pool,
         }
+    }
+
+    /// Verifies that PostgreSQL is available using the existing connection pool.
+    pub async fn check_readiness(&self) -> anyhow::Result<()> {
+        common::database::health_check(&self.pool).await
     }
 }
 
 #[tracing::instrument(
-    name = "audit.proxy",
-    skip(state, request),
-    fields(
-        upstream = tracing::field::Empty,
-        status = tracing::field::Empty,
-        tenant_id = tracing::field::Empty
-    )
+name = "audit.proxy",
+skip(state, request),
+fields(
+upstream = tracing::field::Empty,
+status = tracing::field::Empty,
+tenant_id = tracing::field::Empty
+)
 )]
 pub async fn proxy_audit(
     State(state): State<ProxyState>,
@@ -47,7 +69,6 @@ pub async fn proxy_audit(
                 format!("/audit/{}", path)
             }
         }
-
         None => "/audit".to_string(),
     };
 
@@ -55,21 +76,20 @@ pub async fn proxy_audit(
 }
 
 #[tracing::instrument(
-    name = "audit.upstream",
-    skip(state, request),
-    fields(
-        http.method = %request.method(),
-        http.url = tracing::field::Empty,
-        http.status_code = tracing::field::Empty,
-        tenant_id = tracing::field::Empty
-    )
+name = "audit.upstream",
+skip(state, request),
+fields(
+http.method = %request.method(),
+http.url = tracing::field::Empty,
+http.status_code = tracing::field::Empty,
+tenant_id = tracing::field::Empty
+)
 )]
 async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Response {
     let method = request.method().clone();
 
     let tenant_id = match request.extensions().get::<Claims>() {
         Some(claims) if !claims.tenant_id.trim().is_empty() => claims.tenant_id.clone(),
-
         Some(_) => {
             return gateway_error(
                 401,
@@ -77,7 +97,6 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
                 "Authenticated request has no tenant_id",
             );
         }
-
         None => {
             return gateway_error(401, "unauthorized", "Authenticated claims are missing");
         }
@@ -102,30 +121,14 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
 
     let mut headers = request.headers().clone();
 
-    /*
-     * Never trust X-Tenant-Id supplied by the external client.
-     *
-     * The tenant context comes exclusively from the validated JWT.
-     */
     headers.remove("x-tenant-id");
 
-    /*
-     * Do not simply forward an incoming traceparent.
-     *
-     * The current Gateway span is the immediate
-     * parent of the outgoing HTTP operation.
-     *
-     * OpenTelemetry therefore injects the current
-     * context and overwrites traceparent/tracestate.
-     */
     telemetry::tracing::inject_current_context(&mut headers);
 
     let tenant_header = match HeaderValue::from_str(&tenant_id) {
         Ok(value) => value,
-
         Err(_) => {
             tracing::error!("Invalid tenant_id for HTTP header");
-
             return gateway_error(500, "internal_error", "Invalid tenant context");
         }
     };
@@ -136,13 +139,11 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
 
     let body_bytes = match axum::body::to_bytes(body, 10 * 1024 * 1024).await {
         Ok(bytes) => bytes,
-
         Err(error) => {
             tracing::error!(
                 error = %error,
                 "Failed to read request body"
             );
-
             return gateway_error(400, "bad_request", "Unable to read request body");
         }
     };
@@ -164,14 +165,12 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
 
     let upstream_response = match upstream_request.body(body_bytes).send().await {
         Ok(response) => response,
-
         Err(error) => {
             tracing::error!(
                 error = %error,
                 url = %url,
                 "Audit service unavailable"
             );
-
             return gateway_error(502, "bad_gateway", "Audit service unavailable");
         }
     };
@@ -184,13 +183,11 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
 
     let response_body = match upstream_response.bytes().await {
         Ok(body) => body,
-
         Err(error) => {
             tracing::error!(
                 error = %error,
                 "Failed to read audit-service response"
             );
-
             return gateway_error(502, "bad_gateway", "Invalid upstream response");
         }
     };
@@ -205,13 +202,11 @@ async fn proxy(state: ProxyState, request: Request, upstream_path: &str) -> Resp
 
     match builder.body(Body::from(response_body)) {
         Ok(response) => response,
-
         Err(error) => {
             tracing::error!(
                 error = %error,
                 "Failed to build gateway response"
             );
-
             gateway_error(500, "internal_error", "Failed to build gateway response")
         }
     }

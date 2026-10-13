@@ -5,6 +5,7 @@ members = [
     "apps/api-gateway",
     "apps/audit-service",
     "apps/audit-consumer",
+    "apps/anti-fraud",
     "apps/outbox-worker",
     "apps/mcp-server",
     "apps/ai-agent",
@@ -89,3 +90,5 @@ http = "1"
 once_cell = "1.21"
 
 prometheus = "0.13"
+
+redis = { version = "0.32", features = ["tokio-comp", "connection-manager"] }
