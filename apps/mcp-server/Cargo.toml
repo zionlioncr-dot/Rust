@@ -30,3 +30,4 @@ rmcp = { version = "3.2.0", features = [
     "schemars",
     "transport-streamable-http-server"
 ] }
+sqlx.workspace = true

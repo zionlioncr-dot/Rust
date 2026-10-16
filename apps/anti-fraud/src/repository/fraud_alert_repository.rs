@@ -6,7 +6,13 @@ use crate::domain::fraud_alert::FraudAlert;
 
 #[async_trait]
 pub trait FraudAlertRepository: Send + Sync {
-    async fn create(&self, alert: &FraudAlert) -> Result<()>;
+    async fn create(&self, alert: &FraudAlert) -> Result<bool>;
+
+    async fn consolidate_failed_login_burst(
+        &self,
+        alert: &FraudAlert,
+        occurred_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<Option<Uuid>>;
 
     async fn find_by_id(&self, tenant_id: &str, id: Uuid) -> Result<Option<FraudAlert>>;
 

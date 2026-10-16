@@ -46,7 +46,12 @@ impl FraudRule for FailedLoginBurstRule {
 
         let attempt_count = self
             .state_store
-            .record_failed_login(&event.tenant_id, &event.user, event.created_at)
+            .record_failed_login(
+                &event.tenant_id,
+                &event.user,
+                event.event_id,
+                event.created_at,
+            )
             .await?;
 
         let risk_level = Self::risk_level(attempt_count);
@@ -95,7 +100,8 @@ mod tests {
             &self,
             _tenant_id: &str,
             _username: &str,
-            _now: DateTime<Utc>,
+            _event_id: Uuid,
+            _occurred_at: DateTime<Utc>,
         ) -> Result<i32> {
             let mut counts = self.counts.lock().unwrap();
 

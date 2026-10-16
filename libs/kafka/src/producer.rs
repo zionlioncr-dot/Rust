@@ -459,4 +459,177 @@ mod tests {
             "error should identify the missing required field"
         );
     }
+
+    #[test]
+    fn real_financial_transaction_envelope_matches_aml_avro_schema() {
+        use chrono::{DateTime, Utc};
+        use domain::{
+            events::{
+                event_envelope::EventEnvelope, event_metadata::EventMetadata,
+                event_types::FINANCIAL_TRANSACTION_CREATED, event_version::EventVersion,
+            },
+            financial_transaction::FinancialTransaction,
+        };
+        use rust_decimal::Decimal;
+        use serde_json::json;
+        use std::str::FromStr;
+        use uuid::Uuid;
+
+        let transaction_id = Uuid::parse_str("00000000-0000-4000-8000-000000000003").unwrap();
+        let tenant_id = "tenant-aml-integration-test".to_string();
+
+        let transaction = FinancialTransaction {
+            id: transaction_id,
+            tenant_id: tenant_id.clone(),
+            external_transaction_id: Some("bank-tx-001".to_string()),
+            amount: Decimal::from_str("12345678901234567890.12345678").unwrap(),
+            currency: "CRC".to_string(),
+            source_account_id: "account-source".to_string(),
+            destination_account_id: "account-destination".to_string(),
+            counterparty: Some("counterparty-test".to_string()),
+            country_code: "CR".to_string(),
+            channel: "bank_transfer".to_string(),
+            client_ip: Some("192.0.2.10".to_string()),
+            occurred_at: DateTime::parse_from_rfc3339("2026-10-14T11:59:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+            created_at: DateTime::parse_from_rfc3339("2026-10-14T12:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        };
+
+        let envelope = EventEnvelope {
+            metadata: EventMetadata {
+                event_id: Uuid::parse_str("00000000-0000-4000-8000-000000000002").unwrap(),
+                correlation_id: transaction_id,
+                trace_id: String::new(),
+                traceparent: None,
+                source: "financial-transaction-service".to_string(),
+                timestamp: Utc::now(),
+                tenant_id: tenant_id.clone(),
+            },
+            version: EventVersion::default(),
+            event_type: FINANCIAL_TRANSACTION_CREATED.to_string(),
+            payload: json!({
+                "transaction": transaction,
+            }),
+        };
+
+        let event_json =
+            serde_json::to_value(&envelope).expect("real event envelope should serialize");
+
+        assert_eq!(event_json["metadata"]["tenant_id"], tenant_id);
+        assert_eq!(event_json["payload"]["transaction"]["tenant_id"], tenant_id);
+        assert_eq!(
+            event_json["payload"]["transaction"]["amount"].as_str(),
+            Some("12345678901234567890.12345678")
+        );
+        assert_eq!(
+            event_json["payload"]["transaction"]["client_ip"].as_str(),
+            Some("192.0.2.10")
+        );
+        assert_eq!(
+            event_json["payload"]["transaction"]["external_transaction_id"].as_str(),
+            Some("bank-tx-001")
+        );
+
+        let schema_text = include_str!("../../../schemas/financial-transaction-created-v1.avsc");
+        let schema = Schema::parse_str(schema_text).expect("AML Avro schema should be valid");
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event_json)
+            .expect("serialized real event should match AML Avro schema");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("real financial transaction event should encode as Avro");
+
+        assert!(!encoded.is_empty());
+    }
+
+    #[test]
+    fn financial_transaction_schema_accepts_decimal_string_and_optional_fields() {
+        let schema_text = include_str!("../../../schemas/financial-transaction-created-v1.avsc");
+        let schema = Schema::parse_str(schema_text)
+            .expect("financial transaction Avro schema should be valid");
+
+        let event = json!({
+            "event_type": "FinancialTransactionCreated",
+            "metadata": {
+                "correlation_id": "00000000-0000-4000-8000-000000000001",
+                "event_id": "00000000-0000-4000-8000-000000000002",
+                "source": "financial-transaction-service",
+                "timestamp": "2026-10-14T12:00:00Z",
+                "trace_id": "",
+                "tenant_id": "tenant-test"
+            },
+            "payload": {
+                "transaction": {
+                    "id": "00000000-0000-4000-8000-000000000003",
+                    "tenant_id": "tenant-test",
+                    "external_transaction_id": null,
+                    "amount": "12345678901234567890.12345678",
+                    "currency": "CRC",
+                    "source_account_id": "account-source",
+                    "destination_account_id": "account-destination",
+                    "counterparty": null,
+                    "country_code": "CR",
+                    "channel": "bank_transfer",
+                    "client_ip": "192.0.2.10",
+                    "occurred_at": "2026-10-14T11:59:00Z",
+                    "created_at": "2026-10-14T12:00:00Z"
+                }
+            },
+            "version": {
+                "major": 1,
+                "minor": 0,
+                "patch": 0
+            }
+        });
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event)
+            .expect("event JSON should match the AML Avro schema");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("event should encode as Avro binary");
+
+        assert!(!encoded.is_empty());
+
+        let event_without_optional_values = json!({
+            "event_type": "FinancialTransactionCreated",
+            "metadata": {
+                "correlation_id": "00000000-0000-4000-8000-000000000001",
+                "event_id": "00000000-0000-4000-8000-000000000002",
+                "source": "financial-transaction-service",
+                "timestamp": "2026-10-14T12:00:00Z",
+                "trace_id": "",
+                "tenant_id": "tenant-test"
+            },
+            "payload": {
+                "transaction": {
+                    "id": "00000000-0000-4000-8000-000000000003",
+                    "tenant_id": "tenant-test",
+                    "amount": "10.25",
+                    "currency": "CRC",
+                    "source_account_id": "account-source",
+                    "destination_account_id": "account-destination",
+                    "country_code": "CR",
+                    "channel": "bank_transfer",
+                    "occurred_at": "2026-10-14T11:59:00Z",
+                    "created_at": "2026-10-14T12:00:00Z"
+                }
+            },
+            "version": {
+                "major": 1,
+                "minor": 0,
+                "patch": 0
+            }
+        });
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event_without_optional_values)
+            .expect("optional fields with schema defaults may be omitted");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("event with optional fields omitted should encode");
+
+        assert!(!encoded.is_empty());
+    }
 }

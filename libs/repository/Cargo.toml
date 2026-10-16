@@ -16,3 +16,5 @@ anyhow.workspace = true
 async-trait.workspace = true
 redis.workspace = true
 tracing.workspace = true
+
+rust_decimal.workspace = true

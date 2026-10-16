@@ -13,7 +13,7 @@ use crate::{
         bank_ip_allowlist::bank_ip_allowlist,
         logging::logging,
         request_id::request_id,
-        scope::{authorize_fraud_scope, authorize_scope},
+        scope::{authorize_fraud_scope, authorize_scope, authorize_transactions_scope},
         trace_context::propagate_incoming_context,
     },
     proxy::{
@@ -35,6 +35,17 @@ pub fn build_router(config: Config, pool: PgPool, redis: Option<ConnectionManage
         .route("/audit", any(proxy_audit))
         .route("/audit/{path}", any(proxy_audit))
         .route_layer(middleware::from_fn(authorize_scope))
+        .route_layer(middleware::from_fn_with_state(
+            proxy_state.clone(),
+            authenticate,
+        ));
+
+    let protected_transaction_routes = Router::new()
+        .route(
+            "/transactions",
+            post(routes::transactions::create_transaction),
+        )
+        .route_layer(middleware::from_fn(authorize_transactions_scope))
         .route_layer(middleware::from_fn_with_state(
             proxy_state.clone(),
             authenticate,
@@ -67,6 +78,7 @@ pub fn build_router(config: Config, pool: PgPool, redis: Option<ConnectionManage
     public_routes
         .merge(protected_audit_routes)
         .merge(protected_fraud_routes)
+        .merge(protected_transaction_routes)
         .with_state(proxy_state)
         .layer(middleware::from_fn(logging))
         .layer(middleware::from_fn(propagate_incoming_context))

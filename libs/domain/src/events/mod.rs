@@ -21,3 +21,7 @@ pub use event_metadata::*;
 pub use event_version::*;
 
 pub use event_types::*;
+
+pub mod financial_transaction_created;
+
+pub use financial_transaction_created::*;

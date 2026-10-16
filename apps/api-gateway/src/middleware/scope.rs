@@ -30,6 +30,15 @@ pub async fn authorize_fraud_scope(request: Request, next: Next) -> Response {
     authorize(request, next, required_scope).await
 }
 
+pub async fn authorize_transactions_scope(request: Request, next: Next) -> Response {
+    let required_scope = match *request.method() {
+        Method::POST => "transactions:write",
+        Method::GET => "transactions:read",
+        _ => return forbidden("HTTP method is not allowed for transactions API"),
+    };
+    authorize(request, next, required_scope).await
+}
+
 async fn authorize(request: Request, next: Next, required_scope: &'static str) -> Response {
     let claims = match request.extensions().get::<Claims>() {
         Some(claims) => claims,

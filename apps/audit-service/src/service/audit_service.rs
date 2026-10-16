@@ -5,27 +5,27 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use common::tenant::TenantContext;
-
 use domain::audit_event::AuditEvent;
-
-use repository::{audit_repository::AuditRepository, outbox_repository::OutboxRepository};
+use repository::{
+    audit_outbox_transaction_repository::AuditOutboxTransactionRepository,
+    audit_repository::AuditRepository,
+};
 
 use crate::builders::outbox_builder::OutboxBuilder;
 
 pub struct AuditService {
     audit_repository: Arc<dyn AuditRepository>,
-
-    outbox_repository: Arc<dyn OutboxRepository>,
+    transaction_repository: Arc<dyn AuditOutboxTransactionRepository>,
 }
 
 impl AuditService {
     pub fn new(
         audit_repository: Arc<dyn AuditRepository>,
-        outbox_repository: Arc<dyn OutboxRepository>,
+        transaction_repository: Arc<dyn AuditOutboxTransactionRepository>,
     ) -> Self {
         Self {
             audit_repository,
-            outbox_repository,
+            transaction_repository,
         }
     }
 
@@ -36,29 +36,21 @@ impl AuditService {
         action: String,
         client_ip: Option<String>,
     ) -> Result<AuditEvent> {
-        let tenant_id = tenant_context.tenant_id().to_string();
-
         let event = AuditEvent {
             id: Uuid::new_v4(),
-
-            tenant_id,
-
+            tenant_id: tenant_context.tenant_id().to_string(),
             user,
-
             action,
-
             client_ip,
-
             created_at: Utc::now(),
         };
 
-        let saved_event = self.audit_repository.create(event).await?;
+        // Construir el payload antes de abrir la transacción.
+        let outbox_event = OutboxBuilder::audit_created(&event, &tenant_context)?;
 
-        let outbox = OutboxBuilder::audit_created(&saved_event, &tenant_context)?;
-
-        self.outbox_repository.save(outbox).await?;
-
-        Ok(saved_event)
+        self.transaction_repository
+            .create_with_outbox(event, outbox_event)
+            .await
     }
 
     pub async fn list(&self, tenant_context: TenantContext) -> Result<Vec<AuditEvent>> {

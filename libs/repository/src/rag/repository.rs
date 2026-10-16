@@ -137,13 +137,15 @@ impl RagRepository {
         let limit = limit.clamp(1, 20);
 
         /*
-         * The current corpus contains only 65 documents.
-         *
-         * Searching the complete corpus avoids losing highly relevant
-         * technical files before the lexical reranker gets a chance
-         * to inspect them.
+         * Keep the hybrid reranker useful as the corpus grows.
+         * Retrieve every document for small corpora, capped at 500
+         * candidates to bound reranking cost for larger corpora.
          */
-        let candidate_limit = 65_i64;
+        let corpus_size = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM rag_documents")
+            .fetch_one(&self.pool)
+            .await?;
+
+        let candidate_limit = corpus_size.clamp(1, 500);
 
         let embedding_string = format_vector(embedding);
 
@@ -205,6 +207,73 @@ impl RagRepository {
             .into_iter()
             .map(|candidate| RagSearchResult::from(candidate.row))
             .collect())
+    }
+
+    /// Busca únicamente fragmentos regulatorios verificados y vigentes
+    /// para la jurisdicción y fecha indicadas.
+    ///
+    /// Los filtros se aplican en PostgreSQL antes del ranking vectorial:
+    /// los documentos técnicos o no verificados no pueden ser evidencia.
+    pub async fn search_regulatory(
+        &self,
+        embedding: &[f32],
+        jurisdiction: &str,
+        as_of: chrono::NaiveDate,
+        limit: i64,
+    ) -> Result<Vec<RagSearchResult>> {
+        if embedding.len() != 768 {
+            bail!(
+                "invalid embedding dimension: expected 768, got {}",
+                embedding.len()
+            );
+        }
+
+        if jurisdiction.trim().is_empty() {
+            bail!("regulatory jurisdiction cannot be empty");
+        }
+
+        let limit = limit.clamp(1, 10);
+        let embedding = format_vector(embedding);
+        let as_of = as_of.format("%Y-%m-%d").to_string();
+
+        let results = sqlx::query_as::<_, RagSearchRow>(
+            r#"
+            SELECT
+                id,
+                source,
+                content,
+                metadata,
+                1 - (embedding <=> $1::vector) AS similarity
+            FROM rag_documents
+            WHERE metadata->>'document_type' = 'regulation'
+              AND UPPER(COALESCE(metadata->>'jurisdiction', '')) = UPPER($2)
+              AND metadata->>'verified' = 'true'
+              AND COALESCE(metadata->>'regulation_code', '') <> ''
+              AND COALESCE(metadata->>'article', '') <> ''
+              AND COALESCE(metadata->>'source_url', '') LIKE 'https://%'
+              AND COALESCE(metadata->>'effective_from', '')
+                    ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+              AND metadata->>'effective_from' <= $3
+              AND (
+                    NULLIF(metadata->>'effective_to', '') IS NULL
+                    OR (
+                        metadata->>'effective_to'
+                            ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                        AND metadata->>'effective_to' >= $3
+                    )
+              )
+            ORDER BY embedding <=> $1::vector
+            LIMIT $4
+            "#,
+        )
+        .bind(embedding)
+        .bind(jurisdiction.trim())
+        .bind(as_of)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(results.into_iter().map(RagSearchResult::from).collect())
     }
 
     pub async fn count(&self) -> Result<i64> {

@@ -5,7 +5,8 @@ use anyhow::Result;
 use common::{config::AppConfig, database::create_pool};
 
 use repository::{
-    PostgresRepository, audit_repository::AuditRepository, outbox_repository::OutboxRepository,
+    PostgresRepository, audit_outbox_transaction_repository::AuditOutboxTransactionRepository,
+    audit_repository::AuditRepository, outbox_repository::OutboxRepository,
 };
 
 use crate::{
@@ -31,10 +32,11 @@ impl ApplicationContainer {
         let audit_repository: Arc<dyn AuditRepository> = postgres.clone();
 
         let outbox_repository: Arc<dyn OutboxRepository> = postgres.clone();
+        let transaction_repository: Arc<dyn AuditOutboxTransactionRepository> = postgres.clone();
 
         let audit_service = Arc::new(AuditService::new(
             audit_repository.clone(),
-            outbox_repository.clone(),
+            transaction_repository,
         ));
 
         Ok(Self {

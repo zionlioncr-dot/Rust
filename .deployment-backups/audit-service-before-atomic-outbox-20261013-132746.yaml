@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "9"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"audit-service"},"name":"audit-service","namespace":"financial-platform"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"audit-service"}},"template":{"metadata":{"labels":{"app":"audit-service"}},"spec":{"containers":[{"env":[{"name":"DATABASE_URL","value":"postgres://postgres:postgres@postgres:5432/financial"},{"name":"KAFKA_BROKERS","value":"redpanda:9092"},{"name":"KAFKA_TOPIC","value":"audit-events"},{"name":"SCHEMA_REGISTRY_URL","value":"http://redpanda:8081"},{"name":"PORT","value":"3000"},{"name":"OTEL_SERVICE_NAME","value":"audit-service"},{"name":"OTEL_EXPORTER_OTLP_ENDPOINT","value":"http://jaeger:4317"},{"name":"RUST_LOG","value":"info"}],"image":"audit-service:local","imagePullPolicy":"Never","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/health","port":3000,"scheme":"HTTP"},"initialDelaySeconds":30,"periodSeconds":20,"timeoutSeconds":3},"name":"audit-service","ports":[{"containerPort":3000,"name":"http","protocol":"TCP"}],"readinessProbe":{"failureThreshold":6,"httpGet":{"path":"/health","port":3000,"scheme":"HTTP"},"initialDelaySeconds":10,"periodSeconds":10,"timeoutSeconds":3},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}}]}}}}
+  creationTimestamp: "2026-09-17T00:14:19Z"
+  generation: 11
+  labels:
+    app: audit-service
+  name: audit-service
+  namespace: financial-platform
+  resourceVersion: "1354857"
+  uid: 028ce1e2-5269-43ca-b87c-c55e84720398
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: audit-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-10-10T21:21:08-06:00"
+      creationTimestamp: null
+      labels:
+        app: audit-service
+    spec:
+      containers:
+      - env:
+        - name: DATABASE_URL
+          value: postgres://postgres:postgres@postgres:5432/financial
+        - name: KAFKA_BROKERS
+          value: redpanda:9092
+        - name: KAFKA_TOPIC
+          value: audit-events
+        - name: SCHEMA_REGISTRY_URL
+          value: http://redpanda:8081
+        - name: PORT
+          value: "3000"
+        - name: OTEL_SERVICE_NAME
+          value: audit-service
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://jaeger:4317
+        - name: RUST_LOG
+          value: info
+        image: audit-service:local
+        imagePullPolicy: Never
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: audit-service
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-09-17T00:14:19Z"
+    lastUpdateTime: "2026-10-11T03:21:28Z"
+    message: ReplicaSet "audit-service-65496d568d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2026-10-13T18:10:01Z"
+    lastUpdateTime: "2026-10-13T18:10:01Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 11
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

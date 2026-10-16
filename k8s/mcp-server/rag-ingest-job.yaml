@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rag-ingest-regulations
+  namespace: financial-platform
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 7200
+  template:
+    metadata:
+      labels:
+        app: rag-ingest-regulations
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: rag-ingest
+          image: rag-ingest:local
+          imagePullPolicy: Never
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_DB
+            - name: OLLAMA_BASE_URL
+              value: "http://ollama:11434"
+            - name: OLLAMA_EMBEDDING_MODEL
+              value: "nomic-embed-text"
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+            - name: SCHEMA_REGISTRY_URL
+              value: "http://redpanda:8081"
+            - name: MAX_DB_CONNECTIONS
+              value: "3"
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+              exec /usr/local/bin/rag_ingest
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi

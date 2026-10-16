@@ -24,3 +24,9 @@ rdkafka = "0.36"
 reqwest.workspace = true
 
 apache-avro = "0.19"
+
+[dev-dependencies]
+domain = { path = "../domain" }
+chrono.workspace = true
+uuid.workspace = true
+rust_decimal.workspace = true

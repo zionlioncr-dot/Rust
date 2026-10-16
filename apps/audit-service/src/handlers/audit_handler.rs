@@ -45,16 +45,7 @@ pub async fn create_audit(
         tracing::field::display(tenant_context.tenant_id()),
     );
 
-    let client_ip = match request.client_ip {
-        Some(value) => {
-            let value = value.trim();
-            if value.parse::<std::net::IpAddr>().is_err() {
-                return Err(StatusCode::BAD_REQUEST);
-            }
-            Some(value.to_string())
-        }
-        None => None,
-    };
+    let client_ip = validate_client_ip(request.client_ip).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     let event = state
         .audit_service
@@ -86,4 +77,71 @@ pub async fn list_audit(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(events))
+}
+
+fn validate_client_ip(client_ip: Option<String>) -> Result<Option<String>, ()> {
+    match client_ip {
+        Some(value) => {
+            let value = value.trim();
+
+            value.parse::<std::net::IpAddr>().map_err(|_| ())?;
+
+            Ok(Some(value.to_string()))
+        }
+        None => Ok(None),
+    }
+}
+
+#[cfg(test)]
+mod client_ip_tests {
+    use super::validate_client_ip;
+
+    #[test]
+    fn accepts_ipv4() {
+        assert_eq!(
+            validate_client_ip(Some("203.0.113.25".to_string())),
+            Ok(Some("203.0.113.25".to_string()))
+        );
+    }
+
+    #[test]
+    fn accepts_ipv6() {
+        assert_eq!(
+            validate_client_ip(Some("2001:db8::1".to_string())),
+            Ok(Some("2001:db8::1".to_string()))
+        );
+    }
+
+    #[test]
+    fn trims_whitespace_around_valid_ip() {
+        assert_eq!(
+            validate_client_ip(Some("  203.0.113.25  ".to_string())),
+            Ok(Some("203.0.113.25".to_string()))
+        );
+    }
+
+    #[test]
+    fn accepts_missing_ip() {
+        assert_eq!(validate_client_ip(None), Ok(None));
+    }
+
+    #[test]
+    fn rejects_empty_ip() {
+        assert!(validate_client_ip(Some(String::new())).is_err());
+    }
+
+    #[test]
+    fn rejects_whitespace_only_ip() {
+        assert!(validate_client_ip(Some("   ".to_string())).is_err());
+    }
+
+    #[test]
+    fn rejects_invalid_ip() {
+        assert!(validate_client_ip(Some("999.999.999.999".to_string())).is_err());
+    }
+
+    #[test]
+    fn rejects_hostname_instead_of_ip() {
+        assert!(validate_client_ip(Some("example.com".to_string())).is_err());
+    }
 }

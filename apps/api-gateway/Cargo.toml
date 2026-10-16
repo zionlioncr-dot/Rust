@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+domain = { path = "../../libs/domain" }
+rust_decimal.workspace = true
+chrono.workspace = true
 
 tokio.workspace = true
 anyhow.workspace = true

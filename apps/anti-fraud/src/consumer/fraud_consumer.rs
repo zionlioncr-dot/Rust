@@ -166,6 +166,46 @@ impl FraudConsumer {
                         return Ok(());
                     }
 
+                    if decision
+                        .triggered_rules
+                        .iter()
+                        .any(|rule| rule == "failed_login_burst")
+                    {
+                        let alert = crate::domain::fraud_alert::FraudAlert::new(
+                            &fraud_event,
+                            decision.risk_level,
+                            decision.triggered_rules.clone(),
+                            decision.evidence.clone(),
+                        );
+
+                        let alert_id = alert_repository
+                            .consolidate_failed_login_burst(&alert, fraud_event.created_at)
+                            .await
+                            .context("failed to consolidate failed-login alert")?;
+
+                        match alert_id {
+                            Some(alert_id) => {
+                                tracing::info!(
+                                    tenant_id = %fraud_event.tenant_id,
+                                    username = %fraud_event.user,
+                                    event_id = %fraud_event.event_id,
+                                    alert_id = %alert_id,
+                                    risk_level = ?decision.risk_level,
+                                    "ANTI_FRAUD_ALERT: failed-login burst consolidated"
+                                );
+                            }
+                            None => {
+                                tracing::info!(
+                                    tenant_id = %fraud_event.tenant_id,
+                                    event_id = %fraud_event.event_id,
+                                    "ANTI_FRAUD_ALERT: duplicate failed-login event ignored"
+                                );
+                            }
+                        }
+
+                        return Ok(());
+                    }
+
                     if let Some(existing_alert) = alert_repository
                         .find_by_event_id(&fraud_event.tenant_id, fraud_event.event_id)
                         .await
@@ -190,10 +230,20 @@ impl FraudConsumer {
 
                     let alert_id = alert.id;
 
-                    alert_repository
+                    let inserted = alert_repository
                         .create(&alert)
                         .await
                         .context("failed to persist fraud alert")?;
+
+                    if !inserted {
+                        tracing::info!(
+                            tenant_id = %alert.tenant_id,
+                            event_id = %alert.event_id,
+                            "ANTI_FRAUD_ALERT: concurrent duplicate alert ignored"
+                        );
+
+                        return Ok(());
+                    }
 
                     tracing::info!(
                         tenant_id = %alert.tenant_id,

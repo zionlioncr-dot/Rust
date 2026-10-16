@@ -49,7 +49,16 @@ impl OutboxWorker {
             for event in events {
                 let payload = serde_json::to_string(&event.payload)?;
 
-                let subject = format!("{}-value", event.event_type);
+                let (topic, subject) = match event.event_type.as_str() {
+                    "FINANCIAL_TRANSACTION_CREATED" | "FinancialTransactionCreated" => (
+                        "financial-transactions",
+                        "FinancialTransactionCreated-value".to_string(),
+                    ),
+                    _ => (
+                        self.config.kafka_topic.as_str(),
+                        format!("{}-value", event.event_type),
+                    ),
+                };
 
                 let traceparent = event
                     .payload
@@ -61,8 +70,6 @@ impl OutboxWorker {
 
                 let publisher = &self.publisher;
                 let repository = &self.repository;
-                let topic = &self.config.kafka_topic;
-
                 let event_id = event.id;
                 let event_type = event.event_type.clone();
 

@@ -1,0 +1,217 @@
+from pathlib import Path
+import json
+import re
+import uuid
+from collections import Counter
+
+ROOT = Path("tools/regulatory-corpus")
+EXTRACTED = ROOT / "extracted"
+MANIFEST = ROOT / "manifest"
+MANIFEST.mkdir(parents=True, exist_ok=True)
+
+NAMESPACE = uuid.UUID("e24b1d8d-0d30-5a8f-8d9f-3c9e1d27a6d1")
+
+SOURCES = {
+    "conassif-12-21-v07.txt": {
+        "code": "CONASSIF 12-21",
+        "version": "v07",
+        "start_page": 22,
+        "end_page": 67,
+        "url": "https://www.sugef.fi.cr/normativa/normativa_transversal/documentos/CONASSIF%2012-21%20%28v07%2010%20de%20noviembre%20de%202022%29.pdf",
+    },
+    "sugef-11-18-v11.txt": {
+        "code": "SUGEF 11-18",
+        "version": "v11",
+        "start_page": 8,
+        "end_page": 59,
+        "url": "https://www.sugef.fi.cr/normativa/normativa_vigente/SUGEF%2011-18%20%28v11%2023%20de%20octubre%20de%202023%29.pdf",
+    },
+    "sugef-13-19-v6.txt": {
+        "code": "SUGEF 13-19",
+        "version": "v6",
+        "start_page": 10,
+        "end_page": 59,
+        "url": "https://www.sugef.fi.cr/normativa/normativa_vigente/SUGEF%2013-19%20%28v6%2024%20de%20mayo%202024%29.pdf",
+    },
+}
+
+PAGE_RE = re.compile(r"^===== PAGINA PDF (\d+) =====$")
+HEADING_RE = re.compile(
+    r"^\s*(?:\[[^\]]+\]\s*)?"
+    r"(?:Acuerdo\s+CONASSIF\s+12-21\s+)?"
+    r"Art[ií]culo\s+(\d+)\s*[.)]\s*(.*)$",
+    re.IGNORECASE,
+)
+
+
+def parse_pages(path):
+    pages = {}
+    page_no = None
+    buffer = []
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = PAGE_RE.match(line.strip())
+        if match:
+            if page_no is not None:
+                pages[page_no] = buffer
+            page_no = int(match.group(1))
+            buffer = []
+        elif page_no is not None:
+            buffer.append(line.rstrip())
+
+    if page_no is not None:
+        pages[page_no] = buffer
+
+    return pages
+
+
+all_records = []
+
+for filename, spec in SOURCES.items():
+    path = EXTRACTED / filename
+    if not path.exists():
+        raise SystemExit("Falta el archivo extraído: %s" % path)
+
+    pages = parse_pages(path)
+    body_pages = {
+        n: lines
+        for n, lines in pages.items()
+        if spec["start_page"] <= n <= spec["end_page"]
+    }
+
+    headings = []
+    for page_no in sorted(body_pages):
+        for line_no, line in enumerate(body_pages[page_no]):
+            match = HEADING_RE.match(line)
+            if match:
+                title = re.sub(
+                    r"\s+", " ", match.group(2)
+                ).strip(" \t.;:")
+                headings.append({
+                    "article": match.group(1),
+                    "title": title,
+                    "page": page_no,
+                    "line": line_no,
+                })
+
+    if not headings:
+        raise SystemExit(
+            "No se detectaron encabezados en %s; no se generó manifiesto."
+            % filename
+        )
+
+    records = []
+
+    for index, heading in enumerate(headings):
+        following = (
+            headings[index + 1]
+            if index + 1 < len(headings)
+            else None
+        )
+
+        start_page = heading["page"]
+        end_page = following["page"] if following else spec["end_page"]
+        content_lines = []
+
+        for page_no in range(start_page, end_page + 1):
+            if page_no not in body_pages:
+                continue
+
+            page_lines = body_pages[page_no]
+            start_line = heading["line"] if page_no == start_page else 0
+            stop_line = (
+                following["line"]
+                if following and page_no == end_page
+                else len(page_lines)
+            )
+            content_lines.extend(page_lines[start_line:stop_line])
+
+        content = "\n".join(content_lines).strip()
+        content = re.sub(r"\n{3,}", "\n\n", content)
+
+        if len(content) < 80:
+            continue
+
+        article = heading["article"]
+        title = heading["title"] or ("Artículo %s" % article)
+
+        # UUID determinista para que la siguiente ejecución sea idempotente.
+        stable_key = "%s|%s|%s|%s|%s" % (
+            spec["code"], spec["version"], article, start_page, content
+        )
+        document_id = str(uuid.uuid5(NAMESPACE, stable_key))
+
+        records.append({
+            "id": document_id,
+            "source": "%s — %s" % (spec["code"], spec["version"]),
+            "content": content,
+            "metadata": {
+                "document_type": "regulation",
+                "jurisdiction": "CR",
+                "verified": False,
+                "verification_status": "pending_legal_review",
+                "regulation_code": spec["code"],
+                "article": article,
+                "title": title,
+                "document_version": spec["version"],
+                "effective_from": None,
+                "effective_to": None,
+                "source_url": spec["url"],
+                "source_file": filename,
+                "page_start": start_page,
+                "page_end": end_page,
+                "extraction_method": "pdf_text_by_page_v1",
+            },
+            "embedding": None,
+        })
+
+    output = MANIFEST / (path.stem + ".jsonl")
+    with output.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(
+                json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+                + "\n"
+            )
+
+    counts = Counter(r["metadata"]["article"] for r in records)
+    duplicates = sorted(k for k, count in counts.items() if count > 1)
+
+    print("\n%s (%s)" % (spec["code"], spec["version"]))
+    print("  Fragmentos:", len(records))
+    print("  Artículos duplicados detectados:", duplicates or "ninguno")
+    print("  Manifiesto:", output)
+
+    for record in records[:3]:
+        meta = record["metadata"]
+        print(
+            "  Art. %s | p. %s-%s | %s"
+            % (
+                meta["article"],
+                meta["page_start"],
+                meta["page_end"],
+                meta["title"][:90],
+            )
+        )
+
+    all_records.extend(records)
+
+combined = MANIFEST / "regulatory-corpus.jsonl"
+with combined.open("w", encoding="utf-8") as handle:
+    for record in all_records:
+        handle.write(
+            json.dumps(record, ensure_ascii=False, separators=(",", ":"))
+            + "\n"
+        )
+
+# Comprobaciones estructurales del manifiesto.
+assert all(r["metadata"]["verified"] is False for r in all_records)
+assert all(r["embedding"] is None for r in all_records)
+assert all(r["metadata"]["source_url"].startswith("https://")
+           for r in all_records)
+assert len({r["id"] for r in all_records}) == len(all_records)
+
+print("\nTOTAL:", len(all_records), "fragmentos")
+print("Manifiesto combinado:", combined)
+print("Validación estructural: OK")
+print("Embeddings generados: no")
+print("Inserciones en PostgreSQL: ninguna")

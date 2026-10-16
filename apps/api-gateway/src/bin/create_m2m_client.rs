@@ -3,7 +3,14 @@ use sha2::{Digest, Sha256};
 use sqlx::postgres::PgPoolOptions;
 use uuid::Uuid;
 
-const ALLOWED_SCOPES: &[&str] = &["audit:read", "audit:write", "fraud:read", "fraud:write"];
+const ALLOWED_SCOPES: &[&str] = &[
+    "audit:read",
+    "audit:write",
+    "fraud:read",
+    "fraud:write",
+    "transactions:read",
+    "transactions:write",
+];
 
 #[tokio::main]
 async fn main() -> Result<()> {

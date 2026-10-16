@@ -1,443 +1,312 @@
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{collections::HashSet, fs, time::Duration};
 
 use anyhow::{Context, Result, bail};
 use common::{config::AppConfig, database::create_pool};
 use repository::{RagDocument, RagRepository};
 use reqwest::Client;
-use serde::Serialize;
-use serde_json::json;
+use serde::Deserialize;
+use serde_json::Value;
+use sqlx::PgPool;
 use uuid::Uuid;
 
-const CHUNK_LINES: usize = 80;
-const OVERLAP_LINES: usize = 15;
+const MANIFEST_PATH: &str = "tools/regulatory-corpus/manifest/regulatory-corpus.jsonl";
 const EMBEDDING_DIMENSION: usize = 768;
+const EXPECTED_TOTAL: usize = 129;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize)]
+struct CorpusRecord {
+    id: Uuid,
+    source: String,
+    content: String,
+    metadata: Value,
+}
+
+#[derive(Debug, serde::Serialize)]
 struct EmbedRequest<'a> {
     model: &'a str,
     input: &'a str,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct EmbedResponse {
     embeddings: Vec<Vec<f32>>,
 }
 
-#[derive(Clone)]
-struct OllamaEmbeddingClient {
+struct EmbeddingClient {
     client: Client,
     base_url: String,
     model: String,
 }
 
-impl OllamaEmbeddingClient {
-    fn new(base_url: impl Into<String>, model: impl Into<String>) -> Result<Self> {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(120))
-            .build()
-            .context("Failed to create Ollama HTTP client")?;
-
+impl EmbeddingClient {
+    fn new(base_url: &str, model: &str) -> Result<Self> {
         Ok(Self {
-            client,
-            base_url: base_url.into().trim_end_matches('/').to_string(),
-            model: model.into(),
+            client: Client::builder()
+                .timeout(Duration::from_secs(120))
+                .build()
+                .context("No se pudo crear el cliente HTTP de Ollama")?,
+            base_url: base_url.trim_end_matches('/').to_string(),
+            model: model.to_string(),
         })
     }
 
-    async fn embed(&self, input: &str) -> Result<Vec<f32>> {
-        let input = input.trim();
-
-        if input.is_empty() {
-            bail!("Cannot generate an embedding for empty input");
+    async fn embed(&self, content: &str) -> Result<Vec<f32>> {
+        if content.trim().is_empty() {
+            bail!("No se puede generar un embedding para contenido vacío");
         }
-
-        let url = format!("{}/api/embed", self.base_url);
-
-        let request = EmbedRequest {
-            model: &self.model,
-            input,
-        };
 
         let response = self
             .client
-            .post(&url)
-            .json(&request)
+            .post(format!("{}/api/embed", self.base_url))
+            .json(&EmbedRequest {
+                model: &self.model,
+                input: content,
+            })
             .send()
             .await
-            .with_context(|| format!("Failed to send embedding request to {}", url))?;
+            .context("Error al solicitar el embedding a Ollama")?;
 
         let status = response.status();
-
-        let body = response
-            .text()
-            .await
-            .context("Failed to read Ollama embedding response")?;
+        let body = response.text().await?;
 
         if !status.is_success() {
+            bail!("Ollama respondió HTTP {}: {}", status, body);
+        }
+
+        let parsed: EmbedResponse =
+            serde_json::from_str(&body).context("Respuesta de embedding inválida")?;
+
+        if parsed.embeddings.len() != 1 {
             bail!(
-                "Ollama embedding request failed with HTTP {}: {}",
-                status,
-                body
+                "Se esperaba un embedding y Ollama devolvió {}",
+                parsed.embeddings.len()
             );
         }
 
-        let parsed: EmbedResponse = serde_json::from_str(&body)
-            .with_context(|| format!("Failed to parse Ollama embedding response: {}", body))?;
-
-        let embedding = parsed
-            .embeddings
-            .into_iter()
-            .next()
-            .context("Ollama returned no embedding")?;
+        let embedding = parsed.embeddings.into_iter().next().unwrap();
 
         if embedding.len() != EMBEDDING_DIMENSION {
             bail!(
-                "Unexpected embedding dimension: expected {}, got {}",
+                "Dimensión incorrecta: esperada {}, recibida {}",
                 EMBEDDING_DIMENSION,
                 embedding.len()
             );
+        }
+
+        if embedding.iter().any(|v| !v.is_finite()) {
+            bail!("Ollama devolvió valores no finitos en el embedding");
         }
 
         Ok(embedding)
     }
 }
 
-#[derive(Debug, Clone)]
-struct CorpusFile {
-    path: &'static str,
-    component: &'static str,
-    layer: &'static str,
-    topic: &'static str,
-}
+fn read_and_validate_manifest() -> Result<Vec<CorpusRecord>> {
+    let contents = fs::read_to_string(MANIFEST_PATH)
+        .with_context(|| format!("No se pudo leer {}", MANIFEST_PATH))?;
 
-const CORPUS: &[CorpusFile] = &[
-    CorpusFile {
-        path: "README.md",
-        component: "platform",
-        layer: "documentation",
-        topic: "architecture",
-    },
-    CorpusFile {
-        path: "apps/audit-service/src/service/audit_service.rs",
-        component: "audit-service",
-        layer: "service",
-        topic: "audit-created",
-    },
-    CorpusFile {
-        path: "apps/audit-service/src/builders/event_envelope_builder.rs",
-        component: "audit-service",
-        layer: "builder",
-        topic: "event-envelope",
-    },
-    CorpusFile {
-        path: "apps/audit-service/src/builders/outbox_builder.rs",
-        component: "audit-service",
-        layer: "builder",
-        topic: "audit-created",
-    },
-    CorpusFile {
-        path: "apps/outbox-worker/src/worker/outbox_worker.rs",
-        component: "outbox-worker",
-        layer: "worker",
-        topic: "outbox",
-    },
-    CorpusFile {
-        path: "apps/outbox-worker/src/publisher/kafka_publisher.rs",
-        component: "outbox-worker",
-        layer: "publisher",
-        topic: "kafka",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/consumer/audit_consumer.rs",
-        component: "audit-consumer",
-        layer: "consumer",
-        topic: "kafka",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/consumer/worker.rs",
-        component: "audit-consumer",
-        layer: "worker",
-        topic: "dispatch",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/dispatcher/event_dispatcher.rs",
-        component: "audit-consumer",
-        layer: "dispatcher",
-        topic: "events",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/handler/audit_handler.rs",
-        component: "audit-consumer",
-        layer: "handler",
-        topic: "audit-created",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/service/audit_processing_service.rs",
-        component: "audit-consumer",
-        layer: "service",
-        topic: "audit-processing",
-    },
-    CorpusFile {
-        path: "apps/audit-consumer/src/service/idempotency_service.rs",
-        component: "audit-consumer",
-        layer: "service",
-        topic: "idempotency",
-    },
-    CorpusFile {
-        path: "libs/domain/src/events/audit_created.rs",
-        component: "domain",
-        layer: "event",
-        topic: "audit-created",
-    },
-    CorpusFile {
-        path: "libs/domain/src/events/event_envelope.rs",
-        component: "domain",
-        layer: "event",
-        topic: "event-envelope",
-    },
-    CorpusFile {
-        path: "libs/domain/src/events/event_metadata.rs",
-        component: "domain",
-        layer: "event",
-        topic: "event-metadata",
-    },
-    CorpusFile {
-        path: "libs/domain/src/events/event_version.rs",
-        component: "domain",
-        layer: "event",
-        topic: "event-version",
-    },
-    CorpusFile {
-        path: "libs/repository/src/postgres/outbox_repository.rs",
-        component: "repository",
-        layer: "postgres",
-        topic: "outbox",
-    },
-    CorpusFile {
-        path: "libs/repository/src/postgres/audit_repository.rs",
-        component: "repository",
-        layer: "postgres",
-        topic: "audit",
-    },
-    CorpusFile {
-        path: "libs/kafka/src/producer.rs",
-        component: "kafka",
-        layer: "producer",
-        topic: "avro",
-    },
-    CorpusFile {
-        path: "libs/kafka/src/consumer.rs",
-        component: "kafka",
-        layer: "consumer",
-        topic: "avro",
-    },
-    CorpusFile {
-        path: "libs/kafka/src/schema_registry.rs",
-        component: "kafka",
-        layer: "schema-registry",
-        topic: "avro",
-    },
-    CorpusFile {
-        path: "migrations/0001_create_audit_events.sql",
-        component: "database",
-        layer: "migration",
-        topic: "audit-events",
-    },
-    CorpusFile {
-        path: "migrations/0002_create_outbox_events.sql",
-        component: "database",
-        layer: "migration",
-        topic: "outbox",
-    },
-    CorpusFile {
-        path: "migrations/0004_processed_events.sql",
-        component: "database",
-        layer: "migration",
-        topic: "idempotency",
-    },
-    CorpusFile {
-        path: "migrations/0008_create_rag_documents.sql",
-        component: "database",
-        layer: "migration",
-        topic: "rag",
-    },
-    CorpusFile {
-        path: "k8s/audit-service/audit-service.yaml",
-        component: "kubernetes",
-        layer: "deployment",
-        topic: "audit-service",
-    },
-    CorpusFile {
-        path: "k8s/outbox-worker/outbox-worker.yaml",
-        component: "kubernetes",
-        layer: "deployment",
-        topic: "outbox-worker",
-    },
-    CorpusFile {
-        path: "k8s/audit-consumer/audit-consumer.yaml",
-        component: "kubernetes",
-        layer: "deployment",
-        topic: "audit-consumer",
-    },
-    CorpusFile {
-        path: "k8s/ollama/ollama.yaml",
-        component: "kubernetes",
-        layer: "deployment",
-        topic: "ollama",
-    },
-];
+    let mut records = Vec::new();
+    let mut ids = HashSet::new();
+    let mut counts = std::collections::BTreeMap::<String, usize>::new();
 
-fn repository_root() -> Result<PathBuf> {
-    env::current_dir().context("Failed to determine current working directory")
-}
-
-fn read_file(root: &Path, corpus_file: &CorpusFile) -> Result<String> {
-    let path = root.join(corpus_file.path);
-
-    fs::read_to_string(&path)
-        .with_context(|| format!("Failed to read corpus file {}", corpus_file.path))
-}
-
-fn chunk_lines(content: &str) -> Vec<String> {
-    let lines: Vec<&str> = content.lines().collect();
-
-    if lines.is_empty() {
-        return Vec::new();
-    }
-
-    let mut chunks = Vec::new();
-    let mut start = 0;
-
-    while start < lines.len() {
-        let end = (start + CHUNK_LINES).min(lines.len());
-
-        let chunk = lines[start..end].join("\n");
-
-        if !chunk.trim().is_empty() {
-            chunks.push(chunk);
+    for (index, line) in contents.lines().enumerate() {
+        if line.trim().is_empty() {
+            continue;
         }
 
-        if end == lines.len() {
-            break;
+        let record: CorpusRecord = serde_json::from_str(line)
+            .with_context(|| format!("JSON inválido en línea {}", index + 1))?;
+
+        let metadata = &record.metadata;
+        let code = metadata
+            .get("regulation_code")
+            .and_then(Value::as_str)
+            .context("Falta metadata.regulation_code")?;
+
+        if metadata.get("document_type").and_then(Value::as_str) != Some("regulation") {
+            bail!("Registro {} no identificado como regulación", index + 1);
         }
 
-        start = end.saturating_sub(OVERLAP_LINES);
+        if metadata.get("jurisdiction").and_then(Value::as_str) != Some("CR") {
+            bail!("Jurisdicción incorrecta en el registro {}", index + 1);
+        }
+
+        if metadata.get("verified").and_then(Value::as_bool) != Some(false) {
+            bail!(
+                "El registro {} debe permanecer con verified=false",
+                index + 1
+            );
+        }
+
+        if !metadata.get("effective_from").map_or(false, Value::is_null)
+            || !metadata.get("effective_to").map_or(false, Value::is_null)
+        {
+            bail!(
+                "El registro {} tiene fechas de vigencia no nulas; requiere revisión",
+                index + 1
+            );
+        }
+
+        let source_url = metadata
+            .get("source_url")
+            .and_then(Value::as_str)
+            .context("Falta metadata.source_url")?;
+
+        if !source_url.starts_with("https://") || record.source != source_url {
+            bail!(
+                "URL de fuente inválida o inconsistente en el registro {}",
+                index + 1
+            );
+        }
+
+        if record.content.trim().is_empty() {
+            bail!("Contenido vacío en el registro {}", index + 1);
+        }
+
+        if !ids.insert(record.id) {
+            bail!("UUID duplicado en el manifiesto: {}", record.id);
+        }
+
+        *counts.entry(code.to_string()).or_default() += 1;
+        records.push(record);
     }
 
-    chunks
-}
-
-fn deterministic_id(source: &str, chunk_index: usize) -> Uuid {
-    let key = format!("rag://{}#{}", source, chunk_index);
-
-    Uuid::new_v5(&Uuid::NAMESPACE_URL, key.as_bytes())
-}
-
-async fn ingest_file(
-    root: &Path,
-    rag_repository: &RagRepository,
-    embedding_client: &OllamaEmbeddingClient,
-    corpus_file: &CorpusFile,
-) -> Result<usize> {
-    let content = read_file(root, corpus_file)?;
-
-    let chunks = chunk_lines(&content);
-
-    println!("SOURCE {} -> {} chunks", corpus_file.path, chunks.len());
-
-    for (chunk_index, chunk) in chunks.iter().enumerate() {
-        println!("  embedding chunk {}/{}", chunk_index + 1, chunks.len());
-
-        let embedding = embedding_client.embed(chunk).await.with_context(|| {
-            format!("Failed to embed {} chunk {}", corpus_file.path, chunk_index)
-        })?;
-
-        let id = deterministic_id(corpus_file.path, chunk_index);
-
-        let metadata = json!({
-            "path": corpus_file.path,
-            "component": corpus_file.component,
-            "layer": corpus_file.layer,
-            "topic": corpus_file.topic,
-            "chunk_index": chunk_index,
-            "chunk_lines": CHUNK_LINES,
-            "overlap_lines": OVERLAP_LINES
-        });
-
-        let document = RagDocument {
-            id,
-            source: corpus_file.path.to_string(),
-            content: chunk.clone(),
-            metadata,
-            embedding,
-        };
-
-        rag_repository
-            .insert_document(&document)
-            .await
-            .with_context(|| {
-                format!("Failed to store {} chunk {}", corpus_file.path, chunk_index)
-            })?;
+    if records.len() != EXPECTED_TOTAL {
+        bail!(
+            "Se esperaban {} fragmentos; el manifiesto contiene {}",
+            EXPECTED_TOTAL,
+            records.len()
+        );
     }
 
-    Ok(chunks.len())
+    let expected = [
+        ("CONASSIF 12-21", 61usize),
+        ("SUGEF 11-18", 25usize),
+        ("SUGEF 13-19", 43usize),
+    ];
+
+    for (code, count) in expected {
+        let actual = counts.get(code).copied().unwrap_or(0);
+        if actual != count {
+            bail!(
+                "Conteo incorrecto para {}: esperado {}, recibido {}",
+                code,
+                count,
+                actual
+            );
+        }
+    }
+
+    if counts.len() != expected.len() {
+        bail!("El manifiesto contiene regulaciones no previstas");
+    }
+
+    println!("Manifiesto validado: {} fragmentos", records.len());
+    for (code, count) in counts {
+        println!("  {}: {}", code, count);
+    }
+
+    Ok(records)
+}
+
+async fn remove_technical_documents(pool: &PgPool) -> Result<u64> {
+    // El indexador técnico anterior almacenaba metadata.path.
+    // Se eliminan solo documentos con esa marca que no sean regulaciones.
+    let result = sqlx::query(
+        r#"
+        DELETE FROM rag_documents
+        WHERE metadata ? 'path'
+          AND metadata->>'document_type' IS DISTINCT FROM 'regulation'
+        "#,
+    )
+    .execute(pool)
+    .await
+    .context("No se pudieron eliminar los documentos técnicos anteriores")?;
+
+    Ok(result.rows_affected())
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    println!("========================================");
-    println!(" RAG INGEST");
-    println!("========================================");
+    println!("=== INGESTA DEL CORPUS REGULATORIO DE COSTA RICA ===");
 
+    // Validar todo el manifiesto antes de contactar PostgreSQL u Ollama.
+    let records = read_and_validate_manifest()?;
     let config = AppConfig::load();
 
-    println!("DATABASE_URL={}", config.database_url);
-
-    println!("OLLAMA_BASE_URL={}", config.ollama_base_url);
-
-    println!("OLLAMA_EMBEDDING_MODEL={}", config.ollama_embedding_model);
-
-    let root = repository_root()?;
-
-    println!("Repository root: {}", root.display());
+    println!("Modelo de embeddings: {}", config.ollama_embedding_model);
+    println!("Ollama: {}", config.ollama_base_url);
 
     let pool = create_pool(config.max_db_connections)
         .await
-        .context("Failed to create PostgreSQL pool")?;
+        .context("No se pudo conectar a PostgreSQL")?;
 
-    println!("PostgreSQL connection established");
-
-    let rag_repository = RagRepository::new(pool);
-
+    let repository = RagRepository::new(pool.clone());
     let embedding_client =
-        OllamaEmbeddingClient::new(&config.ollama_base_url, &config.ollama_embedding_model)?;
+        EmbeddingClient::new(&config.ollama_base_url, &config.ollama_embedding_model)?;
 
-    println!("Embedding model ready: {}", config.ollama_embedding_model);
+    let mut inserted = 0usize;
 
-    let mut total_chunks = 0usize;
+    // No borrar documentación anterior hasta que todos los documentos
+    // regulatorios hayan sido generados y guardados correctamente.
+    for (index, record) in records.iter().enumerate() {
+        println!(
+            "[{}/{}] {} artículo {} — {}",
+            index + 1,
+            records.len(),
+            record.metadata["regulation_code"],
+            record.metadata["article"],
+            record.metadata["title"]
+        );
 
-    for corpus_file in CORPUS {
-        let count = ingest_file(&root, &rag_repository, &embedding_client, corpus_file).await?;
+        let embedding = embedding_client
+            .embed(&record.content)
+            .await
+            .with_context(|| format!("Falló el embedding del documento {}", record.id))?;
 
-        total_chunks += count;
+        let document = RagDocument {
+            id: record.id,
+            source: record.source.clone(),
+            content: record.content.clone(),
+            metadata: record.metadata.clone(),
+            embedding,
+        };
+
+        repository
+            .insert_document(&document)
+            .await
+            .with_context(|| format!("Falló el upsert del documento {}", record.id))?;
+
+        inserted += 1;
     }
 
-    let stored = rag_repository
-        .count()
-        .await
-        .context("Failed to count RAG documents")?;
+    // Verificación mínima antes de la limpieza.
+    for record in &records {
+        let exists: bool =
+            sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM rag_documents WHERE id = $1)")
+                .bind(record.id)
+                .fetch_one(&pool)
+                .await?;
 
-    println!("========================================");
-    println!(" RAG INGEST COMPLETE");
-    println!("========================================");
-    println!("Chunks processed: {}", total_chunks);
-    println!("Documents stored: {}", stored);
+        if !exists {
+            bail!(
+                "Falta el documento {} en PostgreSQL; no se limpiará el corpus técnico",
+                record.id
+            );
+        }
+    }
 
+    let deleted = remove_technical_documents(&pool).await?;
+
+    println!("=== INGESTA COMPLETADA ===");
+    println!("Documentos regulatorios procesados: {}", inserted);
+    println!("Documentos técnicos eliminados: {}", deleted);
+    println!("Verificación legal: pendiente");
+    println!("verified=true: ninguno");
+    println!("Fechas de vigencia establecidas: ninguna");
+
+    pool.close().await;
     Ok(())
 }
