@@ -1,514 +1,222 @@
 # Financial Intelligence Platform
 
-A production-oriented financial intelligence platform built around **Rust microservices, PostgreSQL, Kafka/Redpanda, Apache Avro, Schema Registry, Kubernetes, OpenTelemetry, Jaeger, Prometheus, MCP and Ollama**.
+A production-oriented financial intelligence platform built around **Rust microservices, PostgreSQL, Kafka/Redpanda, Apache Avro, Schema Registry, Kubernetes, OpenTelemetry, Jaeger, Prometheus, MCP, and Ollama**.
 
-The platform is designed around asynchronous event processing, transactional consistency, schema evolution, distributed tracing, idempotent consumers and AI-assisted operational intelligence.
+The platform is designed around asynchronous event processing, transactional consistency, schema evolution, distributed tracing, idempotent consumers, and AI-assisted operational intelligence.
+
+> **Status note:** This README consolidates the latest project documentation and known updates as of October 16, 2026. Historical successful checks do not guarantee that the current code, migrations, or Kubernetes workloads are healthy. Items marked pending require current verification.
 
 ---
 
 ## Architecture
 
 ```text
-                         ┌──────────────────────┐
-                         │      Client / API     │
-                         └──────────┬───────────┘
-                                    │
-                                    │ JWT / HTTP
-                                    ▼
-                         ┌──────────────────────┐
-                         │     API Gateway      │
-                         │      :8088           │
-                         │                      │
-                         │ JWT / scopes         │
-                         │ request-id           │
-                         │ trace propagation    │
-                         └──────────┬───────────┘
-                                    │
-                                    │ HTTP
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Audit Service     │
-                         │      :3000           │
-                         └──────────┬───────────┘
-                                    │
-                                    │ PostgreSQL
-                                    ▼
-                         ┌──────────────────────┐
-                         │      PostgreSQL      │
-                         │                      │
-                         │ audit_events         │
-                         │ outbox_events        │
-                         │ processed_events     │
-                         │ dead_letter_events   │
-                         └──────────┬───────────┘
-                                    │
-                                    │ Transactional Outbox
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Outbox Worker     │
-                         └──────────┬───────────┘
-                                    │
-                                    │ Avro
-                                    │ traceparent
-                                    ▼
-                 ┌────────────────────────────────────┐
-                 │          Redpanda / Kafka          │
-                 │                                    │
-                 │          audit-events              │
-                 └────────────────┬───────────────────┘
-                                  │
-                                  │ Kafka Consumer
-                                  ▼
-                         ┌──────────────────────┐
-                         │    Audit Consumer    │
-                         │                      │
-                         │ validation           │
-                         │ version routing      │
-                         │ idempotency          │
-                         │ retry                 │
-                         │ dead-letter           │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Audit Processing     │
-                         └──────────────────────┘
+Client / API
+    |
+    | JWT / HTTP
+    v
+API Gateway (:8088)
+    | JWT, scopes, request ID, trace propagation
+    v
+Audit Service (:3000) -------------------- Financial Transactions
+    |                                                |
+    v                                                v
+PostgreSQL <--- transactional outbox ---> Outbox Worker
+    |                                                |
+    |                                                v
+    +------------------------------------------> Redpanda / Kafka
+                                                   |         |
+                                                   v         v
+                                            Audit Consumer  AML Service
+                                                   |         |
+                                                   v         +--> Deterministic AML rules
+                                               PostgreSQL    +--> Regulatory RAG
+                                                             +--> Ollama embeddings
+                                                             +--> PostgreSQL/pgvector
+                                                             +--> Idempotent AML alerts
 
+Anti-Fraud consumes audit events and persists fraud state/alerts in PostgreSQL.
 
-                 ┌────────────────────────────────────┐
-                 │          Schema Registry            │
-                 │                                    │
-                 │          AuditCreated-value        │
-                 └────────────────────────────────────┘
-
-
-                         Observability
-                 ┌────────────────────────────────────┐
-                 │                                    │
-                 │ OpenTelemetry                      │
-                 │        │                           │
-                 │        ▼                           │
-                 │      Jaeger                        │
-                 │                                    │
-                 │ Prometheus                         │
-                 │        │                           │
-                 │        ▼                           │
-                 │     Metrics                        │
-                 └────────────────────────────────────┘
-
-
-                         AI / MCP Layer
-                 ┌────────────────────────────────────┐
-                 │          MCP Server                 │
-                 │                                    │
-                 │ audit.get_event                    │
-                 │ audit.list_events                  │
-                 │ audit.get_pending_outbox           │
-                 │ kafka.list_topics                  │
-                 │ schema.get_latest                  │
-                 │ system.health                      │
-                 └────────────────┬───────────────────┘
-                                  │
-                                  │ MCP
-                                  ▼
-                         ┌──────────────────────┐
-                         │      AI Agent        │
-                         │       Rust           │
-                         └──────────┬───────────┘
-                                    │
-                                    │ HTTP
-                                    ▼
-                         ┌──────────────────────┐
-                         │       Ollama         │
-                         │      Local LLM        │
-                         │                      │
-                         │      qwen3:0.6b      │
-                         └──────────────────────┘
+Schema Registry manages Avro event contracts.
+OpenTelemetry exports traces to Jaeger; Prometheus scrapes application metrics.
+The MCP Server exposes controlled operational tools to the Rust AI Agent, which uses Ollama for local inference.
 ```
 
----
+## Project goals
 
-# Project Goals
+- Event-driven architecture
+- Transactional Outbox Pattern
+- Kafka-compatible event streaming
+- Apache Avro serialization and schema evolution
+- Idempotent event processing
+- Retry and dead-letter handling
+- Distributed tracing and W3C Trace Context propagation
+- OpenTelemetry and Prometheus metrics
+- Kubernetes deployment
+- JWT authentication and scope-based authorization
+- MCP-based operational access
+- Local AI inference through Ollama
+- AI-assisted platform observability and analysis
+- Financial transaction monitoring, anti-fraud, and AML analysis
+- Regulatory RAG that distinguishes verified legal evidence from documents awaiting review
 
-The platform focuses on the following architectural capabilities:
+## Technology stack
 
-* Event-driven architecture
-* Transactional Outbox Pattern
-* Kafka-compatible event streaming
-* Apache Avro serialization
-* Schema Registry and schema evolution
-* Idempotent event processing
-* Retry and Dead Letter handling
-* Distributed tracing
-* W3C Trace Context propagation
-* OpenTelemetry
-* Prometheus metrics
-* Kubernetes deployment
-* JWT authentication and authorization scopes
-* MCP-based operational access
-* Local AI inference through Ollama
-* AI-assisted platform observability and analysis
+### Backend
 
----
+- Rust, Tokio, Axum, SQLx, PostgreSQL
+- `rdkafka`, Apache Avro, Reqwest, Serde, JSON Web Tokens
 
-# Technology Stack
+### Event infrastructure
 
-## Backend
+- Redpanda / Kafka protocol
+- Confluent-compatible Schema Registry
+- Transactional Outbox Pattern
 
-* Rust
-* Tokio
-* Axum
-* SQLx
-* PostgreSQL
-* rdkafka
-* Apache Avro
-* Reqwest
-* Serde
-* JSON Web Tokens
+### Observability
 
-## Event Infrastructure
+- OpenTelemetry, Jaeger, Prometheus
+- W3C Trace Context and `traceparent`
 
-* Redpanda
-* Kafka protocol
-* Apache Avro
-* Confluent-compatible Schema Registry
-* Transactional Outbox Pattern
+### Containers and infrastructure
 
-## Observability
+- Docker, Docker Compose, Kubernetes, kind
 
-* OpenTelemetry
-* Jaeger
-* Prometheus
-* W3C Trace Context
-* `traceparent`
+### AI
 
-## Container / Infrastructure
+- Ollama and local LLM inference
+- MCP and Rust MCP client/server (`rmcp`)
+- PostgreSQL/pgvector-backed regulatory retrieval
 
-* Docker
-* Docker Compose
-* Kubernetes
-* kind
-
-## AI
-
-* Ollama
-* Local LLM inference
-* MCP
-* Rust MCP client/server
-* `rmcp`
-
----
-
-# Workspace Structure
+## Workspace structure
 
 ```text
 financial-intelligence-platform/
-│
 ├── apps/
 │   ├── api-gateway/
-│   │
 │   ├── audit-service/
-│   │
 │   ├── audit-consumer/
-│   │
 │   ├── outbox-worker/
-│   │
+│   ├── anti-fraud/
+│   ├── aml-service/
 │   ├── mcp-server/
-│   │
 │   └── ai-agent/
-│
 ├── libs/
 │   ├── common/
 │   ├── domain/
 │   ├── event-bus/
+│   ├── health/
 │   ├── kafka/
-│   ├── metrics/
 │   ├── repository/
 │   └── telemetry/
-│
-├── deploy/
-│   ├── kubernetes/
-│   └── ...
-│
+├── deploy/kubernetes/
+├── migrations/
+├── schemas/
+├── tools/regulatory-corpus/
 ├── docker-compose.yml
 ├── Cargo.toml
 └── README.md
 ```
 
----
+## Core audit event flow
 
-# Core Event Flow
+1. The client sends an HTTP request to the API Gateway.
+2. The Gateway validates JWT claims and required scopes and propagates request/trace context.
+3. The Audit Service persists the audit event and an outbox event in one database transaction.
+4. The Outbox Worker publishes pending events to Redpanda using the registered Avro schema and trace context.
+5. The Audit Consumer decodes and validates the event, routes by version, applies idempotency, and handles retries/dead letters.
 
-An audit request follows this lifecycle:
+## Transactional Outbox
 
-```text
-HTTP Request
-    │
-    ▼
-API Gateway
-    │
-    │ JWT validation
-    │ scope validation
-    │ trace creation
-    ▼
-Audit Service
-    │
-    │ database transaction
-    ├───────────────┐
-    │               │
-    ▼               ▼
-audit_events    outbox_events
-                    │
-                    │ published = false
-                    ▼
-              Outbox Worker
-                    │
-                    │ Avro serialization
-                    │ Schema Registry
-                    │ traceparent
-                    ▼
-                 Redpanda
-                    │
-                    ▼
-              Audit Consumer
-                    │
-                    ├── decode Avro
-                    ├── validate schema
-                    ├── validate event
-                    ├── route version
-                    ├── idempotency
-                    ├── retry
-                    └── dead-letter
-                    │
-                    ▼
-              Audit Processing
+The Audit Service does not need Kafka to be available in order to commit an audit operation. It writes the business event and outbox record atomically:
+
+```sql
+BEGIN;
+INSERT INTO audit_events (...);
+INSERT INTO outbox_events (...);
+COMMIT;
 ```
 
----
+The Outbox Worker subsequently publishes the event to Redpanda. This establishes a reliable boundary between PostgreSQL state and asynchronous event publication.
 
-# Transactional Outbox
+The financial transaction repository follows the same principle: the `financial_transactions` row and its corresponding `outbox_events` row are inserted within the same SQL transaction. Preserve this atomicity in future changes.
 
-The Audit Service does not directly depend on Kafka availability to commit an audit operation.
+## Kafka / Redpanda
 
-Instead:
-
-```text
-BEGIN TRANSACTION
-
-INSERT audit event
-
-INSERT outbox event
-
-COMMIT
-```
-
-The Outbox Worker subsequently publishes the event to Redpanda.
-
-This provides a reliable boundary between PostgreSQL state and asynchronous event publication.
-
-Example:
-
-```text
-outbox_events
-
-id
-event_type
-payload
-published
-created_at
-```
-
-The worker retrieves unpublished events and publishes them using the registered Avro schema.
-
----
-
-# Kafka / Redpanda
-
-Primary event topic:
+Primary audit topic:
 
 ```text
 audit-events
 ```
 
-Kubernetes configuration:
+Kubernetes broker:
 
 ```text
 redpanda:9092
 ```
 
-The platform uses Kafka-compatible APIs through `rdkafka`.
+Financial transactions are published to the `financial-transactions` topic for the AML pipeline.
 
-The producer publishes events using Confluent-compatible Avro wire format:
+The platform uses Kafka-compatible APIs through `rdkafka`. The producer uses Confluent-compatible Avro wire format: a magic byte, schema ID, and Avro binary payload. The consumer resolves the schema ID through Schema Registry before decoding.
 
-```text
-Byte 0      = magic byte
-Bytes 1..5  = schema ID
-Bytes 5..   = Avro binary payload
-```
+## Schema Registry
 
-The consumer resolves the schema ID through Schema Registry before decoding the event.
-
----
-
-# Schema Registry
-
-Schema Registry is used to manage event contracts.
-
-Current event subject:
+The primary audit subject is:
 
 ```text
 AuditCreated-value
 ```
 
-Example logical schema:
+The logical `AuditCreated` schema contains event type, metadata (correlation ID, event ID, source, timestamp, trace ID), payload (action, creation timestamp, ID, user), and version information (major, minor, patch).
 
-```text
-AuditCreated
-├── event_type
-├── metadata
-│   ├── correlation_id
-│   ├── event_id
-│   ├── source
-│   ├── timestamp
-│   └── trace_id
-├── payload
-│   ├── action
-│   ├── created_at
-│   ├── id
-│   └── user
-└── version
-    ├── major
-    ├── minor
-    └── patch
-```
+Schema compatibility is configured through Schema Registry. The audit schema is intended to evolve backward-compatibly. The financial transaction Avro schema is maintained separately. New optional fields should use nullable unions and `default: null` where required for compatibility.
 
-Compatibility is configured through Schema Registry.
-
-The current platform uses backward-compatible schema evolution.
-
----
-
-# Audit Consumer
+## Audit Consumer, idempotency, retry, and dead letters
 
 The Audit Consumer performs:
 
 1. Kafka subscription
-2. Confluent Avro decoding
-3. Schema resolution
-4. EventEnvelope deserialization
-5. Event validation
-6. Version routing
-7. Idempotency checking
-8. Event dispatch
-9. Retry handling
-10. Dead-letter processing
-11. Distributed trace propagation
+2. Confluent Avro decoding and schema resolution
+3. `EventEnvelope` deserialization and event validation
+4. Version routing and event dispatch
+5. Idempotency checking
+6. Retry handling
+7. Dead-letter processing
+8. Distributed trace propagation
 
-The consumer uses:
+Idempotency is backed by PostgreSQL so duplicate Kafka deliveries do not repeat business effects. AML processing also uses a processed-event claim and inserts the corresponding alerts within a SQL transaction.
 
-```text
-KAFKA_BROKERS=redpanda:9092
-KAFKA_TOPIC=audit-events
-SCHEMA_REGISTRY_URL=http://redpanda:8081
-```
-
----
-
-# Idempotency
-
-Events are processed through an idempotency layer backed by PostgreSQL.
-
-This prevents duplicate Kafka deliveries from producing duplicate business processing.
-
-Conceptually:
+Intended failure flow:
 
 ```text
-Kafka Event
-    │
-    ▼
-event_id
-    │
-    ▼
-processed_events
-    │
-    ├── already processed ──► ignore
-    │
-    └── new event ──────────► process
+Event -> Process -> success: ACK/completed
+                 -> failure: Retry -> success: completed
+                                  -> retries exhausted: Dead Letter
 ```
 
----
+Retry, duplicate delivery, consumer restart, and dead-letter recovery scenarios should be verified end to end in the target environment.
 
-# Retry and Dead Letter Handling
+## Authentication and authorization
 
-The consumer includes:
-
-* Retry policy
-* Retry executor
-* Dead Letter Service
-* Persistent processing state
-
-Failures are therefore not treated as simple application crashes.
-
-The intended flow is:
-
-```text
-Event
- │
- ▼
-Process
- │
- ├── success ───────────────► ACK / completed
- │
- └── failure
-       │
-       ▼
-     Retry
-       │
-       ├── success ─────────► completed
-       │
-       └── retry exhausted
-              │
-              ▼
-          Dead Letter
-```
-
----
-
-# Authentication
-
-The API Gateway validates JWT tokens using:
+The API Gateway uses JWT validation with the following observed configuration:
 
 ```text
 Algorithm: HS256
-
-Issuer:
-financial-intelligence-platform
-
-Audience:
-financial-api
+Issuer:    financial-intelligence-platform
+Audience:  financial-api
 ```
 
-Authorization is scope-based.
-
-Current audit scopes:
+Audit scopes:
 
 ```text
 audit:read
 audit:write
 ```
 
-HTTP methods map to scopes:
+Typical mapping:
 
-```text
-GET
- └── audit:read
-
-POST
-PUT
-PATCH
-DELETE
- └── audit:write
-```
+- `GET` → `audit:read`
+- `POST`, `PUT`, `PATCH`, `DELETE` → `audit:write`
 
 Example claims:
 
@@ -519,128 +227,175 @@ Example claims:
   "aud": "financial-api",
   "iat": 0,
   "exp": 0,
-  "scopes": [
-    "audit:read",
-    "audit:write"
-  ]
+  "scopes": ["audit:read", "audit:write"],
+  "tenant_id": "tenant-id"
 }
 ```
 
-Authentication infrastructure is currently present at the Gateway level. A dedicated user/login/identity service is still a future component.
+The Gateway requires `tenant_id` in authenticated claims. The audit proxy removes an incoming `x-tenant-id` header and injects the tenant derived from the JWT claims. A dedicated user/login/identity service remains future work.
 
----
+**MCP security caveat:** a `tenant_id` supplied as a tool argument is not a trusted identity by itself. MCP tools must have a verified authentication and authorization boundary before they can be considered to enforce secure tenant isolation.
 
-# Distributed Tracing
+## Financial transactions and multi-tenancy
 
-The platform implements W3C Trace Context.
+The transaction creation route obtains `tenant_id` from authenticated JWT claims rather than trusting the request body.
 
-Example:
+The current transaction model includes:
 
-```text
-traceparent:
-00-9c3c3750c0821c53b1b1fd89336bdcdd-0ca4604a606a3a16-01
-```
+- `id`, `tenant_id`, optional `external_transaction_id`
+- `amount`, `currency`
+- `source_account_id`, `destination_account_id`
+- optional `counterparty`
+- `country_code`, `channel`, optional `client_ip`
+- `occurred_at`, `created_at`
 
-The propagation path is:
+The repository validates the tenant, aggregate identity, positive decimal amount, three-letter alphabetic currency, account IDs, country, and channel. The transaction and outbox event are committed atomically.
 
-```text
-API Gateway
-    │
-    ▼
-Audit Service
-    │
-    ▼
-PostgreSQL Outbox
-    │
-    ▼
-Outbox Worker
-    │
-    │ Kafka traceparent header
-    ▼
-Redpanda
-    │
-    ▼
-Audit Consumer
-    │
-    ▼
-OpenTelemetry Context
-    │
-    ▼
-Audit Dispatcher
-    │
-    ▼
-Audit Processing
-```
+### Pending transaction-contract improvements
 
-The current implementation has been verified with a real audit request.
+- Add explicit origin and destination geography without conflating a transaction's country with the tenant's regulatory jurisdiction.
+- Capture a bank-reported FX rate only when it is present in the source institution's payload. Never invent a rate or assume an implicit rate.
+- Define the meaning of original amount/currency, optional normalized amount, base currency, and conversion provenance/date.
+- Update the Rust model, HTTP request, Avro schema, database migration, repository queries, consumers, and tests together.
+- Preserve Avro backward compatibility for optional fields.
+- Test rollback so that a failed outbox insert cannot leave a transaction persisted without its corresponding event.
 
-Observed trace ID:
+## Anti-Fraud Service
 
-```text
-9c3c3750c0821c53b1b1fd89336bdcdd
-```
+The Anti-Fraud Service consumes audit events and applies deterministic rules. Capabilities observed in the project include:
 
-The same W3C `traceparent` was observed in:
+- Sensitive-action rule
+- `FailedLoginBurstRule`
+- PostgreSQL-backed fraud state
+- Tenant-aware processing and idempotent event handling
+- Optional `client_ip` on fraud events
 
-* Outbox Worker
-* Kafka message
-* Audit Consumer
+Documented `LOGIN_FAILED` burst severity thresholds:
 
-The consumer successfully extracted the context and processed the event under the propagated trace.
+- Low: 0–2
+- Medium: 3–4
+- High: 5–9
+- Critical: 10+
 
----
+These thresholds must be checked against current business requirements.
 
-# OpenTelemetry
+### Pending Anti-Fraud validation
 
-Services use OpenTelemetry for distributed tracing.
+- Repeat tenant-isolation tests with current data.
+- Test concurrency, duplicate messages, consumer restarts, and state recovery.
+- Keep bank-reported `client_ip` distinct from the network source IP used by the Gateway allowlist.
+- Verify current Kubernetes deployment and rule behavior.
 
-Example Kubernetes configuration:
+## AML Service
 
-```text
-OTEL_SERVICE_NAME=audit-consumer
-OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
-```
+The AML service consumes transactions from `financial-transactions` using consumer group `aml-group`. Its HTTP port defaults to `3003`.
 
-Jaeger receives OTLP traffic through:
+Observed code capabilities include:
+
+- Tenant validation in consumed events and positive-amount validation
+- High-value transaction rule
+- High-risk-country rule
+- Potential-structuring rule
+- PostgreSQL persistence for AML alerts
+- Idempotent processed-event records
+- Regulatory RAG enrichment
+
+Configuration observed during development:
 
 ```text
-4317  OTLP gRPC
-4318  OTLP HTTP
-16686 Jaeger UI
+AML_HIGH_VALUE_THRESHOLD=10000
+AML_STRUCTURING_MIN_TOTAL=10000
+AML_STRUCTURING_MIN_TRANSACTIONS=5
+AML_HIGH_RISK_COUNTRIES=...
 ```
 
-Expected services include:
+The minimum allowed value for `AML_STRUCTURING_MIN_TRANSACTIONS` is 2. AML event processing uses a SQL transaction to claim the event idempotently and insert alerts. Preserve this atomicity.
+
+**Deployment status must be rechecked.** Earlier checks reported that `cargo check -p aml-service` and three AML tests passed, but that does not prove the latest code, migrations, and Kubernetes deployment have all been validated.
+
+### High-priority AML work
+
+1. Do not compare amounts in different currencies against one numeric threshold without verifiable normalization.
+2. Do not sum amounts in different currencies for structuring rules. Group by currency or use amounts normalized to an explicit common base currency.
+3. Resolve regulatory jurisdiction from a trusted server-side tenant profile; do not infer it from transaction country or hardcode `CR` globally.
+4. Define behavior for transactions without a usable conversion. Do not emit a monetary structuring signal that depends on incomparable sums.
+5. Add tests for mixed currencies, missing conversions, bank-reported FX rates, tenant-specific jurisdiction, duplicate events, and tenant isolation.
+6. Apply and verify the AML migration and test health endpoints, Kafka consumption, and database persistence in the target environment.
+
+## Regulatory RAG and legal corpus
+
+`RegulatoryRag` obtains embeddings through Ollama and queries `RagRepository`. Regulatory search requires 768-dimensional embeddings and filters by:
+
+- Document type `regulation`
+- Matching jurisdiction
+- `verified=true`
+- Non-empty regulatory code and article
+- HTTPS source URL
+- Effective date range covering the analysis date
+
+Results include regulatory code, article, title, document version, effective dates, source URL, jurisdiction, similarity, and excerpt. When no current verified evidence is found, the status is `no_verified_current_evidence`. Retrieval errors can be represented as `retrieval_unavailable`.
+
+### Identified source PDFs
+
+- `tools/regulatory-corpus/downloads/conassif-12-21-v07.pdf`
+- `tools/regulatory-corpus/downloads/sugef-11-18-v11.pdf`
+- `tools/regulatory-corpus/downloads/sugef-13-19-v6.pdf`
+
+Manifest builder: `tools/regulatory-corpus/build_manifest.py`.
+
+Text extraction was inspected for `conassif-12-21-v07.pdf`; a search found 68 exact matches in plain-text mode.
+
+### Legal verification status
+
+Manifest records observed during inspection were marked:
 
 ```text
-api-gateway
-audit-service
-outbox-worker
-audit-consumer
+verified=false
+verification_status=pending_legal_review
+effective_from=null
+effective_to=null
 ```
 
----
+Some records had official URLs, but effective dates were unresolved. **Do not mark documents verified or invent effective dates merely to make RAG return results.** Verification must be based on official sources and appropriate legal review.
 
-# Prometheus
+### Pending RAG work
 
-The platform exposes application metrics for Prometheus scraping.
+- Improve PDF extraction for words split across lines, headers/footers, numbering, and article references.
+- Preserve traceability between excerpt, page, source document, and official URL.
+- Complete legal review of regulation code, article, jurisdiction, official URL, and effective period before marking a record verified.
+- Clearly distinguish candidates awaiting review from current verified evidence.
+- Test that pending, expired, or incomplete records are not presented as verified legal evidence.
+- Resolve jurisdiction from the tenant profile instead of using the hardcoded `CR` value.
 
-Example:
+## Tenant regulatory profile and jurisdiction
 
-```text
-/metrics
-```
+A trusted server-side source must define each tenant's regulatory attributes. Depending on business requirements, the profile may include:
 
-Prometheus is configured to scrape the platform services.
+- `tenant_id`
+- Primary regulatory jurisdiction
+- Base currency for aggregations and thresholds
+- Applicable AML threshold policy
+- Effective dates and profile status
+- Configuration provenance and audit metadata
 
-Metrics include consumer processing activity and application-level counters.
+Agree on the schema and constraints before creating the migration. A transaction's country is not a substitute for the tenant's legal jurisdiction. Organizations operating in multiple countries may need multiple jurisdictional profiles rather than a single jurisdiction column.
 
----
+## FX and currency normalization
 
-# MCP
+A monetary comparison is valid only when both amounts use the same currency and any conversion is traceable. The transaction contract should distinguish:
 
-The platform includes an MCP server providing controlled operational access to platform data.
+- `amount` and `currency`: the original amount and currency reported by the bank
+- Bank-reported exchange rate, if available
+- Source and target currencies for the rate
+- Rate timestamp, source, and type, when available
+- Optional normalized amount and `base_currency`
+- Normalization status and the reason conversion could not be performed
 
-The MCP server exposes tools including:
+Never invent exchange rates, assume an implicit rate, or sum amounts in different currencies. High-value and structuring rules must use comparable amounts or explicitly defined currency-specific policies. Conversion precision, rounding, reference date, and provenance must be defined.
+
+## MCP Server and AI Agent
+
+The MCP server initializes PostgreSQL/RAG repositories and an embedding client. Existing operational tools include:
 
 ```text
 audit.get_event
@@ -651,77 +406,72 @@ schema.get_latest
 system.health
 ```
 
-The MCP layer intentionally exposes controlled capabilities instead of giving the AI unrestricted access to PostgreSQL, Kafka or the Kubernetes cluster.
+The AI Agent uses MCP tools for operational data and Ollama for local LLM inference. The architecture keeps the LLM separate from the transactional core: the LLM does not directly own business state.
 
-This creates a useful separation:
+The agent has been tested with Ollama using `qwen3:0.6b`. Example operational questions include:
 
-```text
-AI
- │
- ▼
-MCP
- │
- ├── Audit
- ├── Outbox
- ├── Kafka
- ├── Schema Registry
- └── System Health
-```
+- How many pending events are in the outbox?
+- What is the latest Avro schema for `AuditCreated-value`?
+- Is the platform healthy?
 
----
+Deterministic tool selection is intended to reduce unnecessary LLM reasoning when a question maps directly to an MCP operation.
 
-# Ollama AI Layer
+### MCP security work pending
 
-The platform includes local LLM inference through Ollama.
+- Review authentication and authorization for every MCP tool.
+- Do not trust a caller-provided `tenant_id` without a verified identity boundary.
+- Add a regulatory lookup tool that resolves jurisdiction from the trusted tenant profile.
+- Prevent the agent from citing documents pending legal review as current legal authority.
+- Test cross-tenant access and rejection of unauthorized calls.
 
-Current AI Agent flow:
+## Distributed tracing
+
+The platform implements W3C Trace Context. The observed propagation path is:
 
 ```text
-User
- │
- ▼
-AI Agent
- │
- ▼
-MCP Server
- │
- ├── audit.get_event
- ├── audit.list_events
- ├── audit.get_pending_outbox
- ├── kafka.list_topics
- ├── schema.get_latest
- └── system.health
- │
- ▼
-Ollama
- │
- ▼
-Natural Language Response
+API Gateway -> Audit Service -> PostgreSQL Outbox -> Outbox Worker
+            -> Redpanda (Kafka traceparent header) -> Audit Consumer
+            -> OpenTelemetry Context -> Audit Dispatcher -> Audit Processing
 ```
 
-The AI Agent has already been tested with Ollama using:
+A real audit request previously demonstrated trace propagation. The same W3C `traceparent` was observed in the Outbox Worker, Kafka message, and Audit Consumer; the consumer extracted the context and processed the event under the propagated trace.
+
+### Known trace-envelope gap
+
+The Kafka header contains the propagated W3C context and the Audit Consumer extracts it successfully. However, the deserialized `EventEnvelope` was observed with:
 
 ```text
-qwen3:0.6b
+traceparent=None
 ```
 
-Example supported questions:
+Kafka-header propagation and OpenTelemetry context extraction worked in the observed test, but preserving `traceparent` consistently inside the event envelope remains an investigation item. This did not prevent propagation through the Kafka header in that test.
+
+Telemetry is considered functional. Do not change the telemetry library while addressing unrelated transaction, AML, or RAG work.
+
+## OpenTelemetry and Prometheus
+
+Example Kubernetes configuration:
 
 ```text
-¿Cuántos eventos pendientes hay en el outbox?
-
-¿Cuál es el último schema Avro de AuditCreated-value?
-
-¿Está saludable toda la plataforma?
+OTEL_SERVICE_NAME=audit-consumer
+OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
 ```
 
-The architecture also supports deterministic tool selection for operational questions, reducing unnecessary LLM reasoning when the requested operation maps directly to an MCP capability.
+Jaeger endpoints:
 
----
+```text
+4317   OTLP gRPC
+4318   OTLP HTTP
+16686  Jaeger UI
+```
 
-# Kubernetes
+Expected traced services include `api-gateway`, `audit-service`, `outbox-worker`, and `audit-consumer`.
 
-The platform runs on a local kind cluster:
+The platform exposes application metrics for Prometheus scraping, including consumer activity and application-level counters. `/metrics` is the documented metrics endpoint; verify the actual endpoint for each service before relying on it operationally.
+
+## Kubernetes
+
+Local kind cluster:
 
 ```text
 financial-cluster
@@ -733,37 +483,38 @@ Namespace:
 financial-platform
 ```
 
-Example:
+Inspect workloads:
 
 ```bash
-kubectl get pods -n financial-platform
+kubectl config current-context
+kubectl get nodes
+kubectl get pods -n financial-platform -o wide
+kubectl get deployments,services -n financial-platform
+kubectl get events -n financial-platform --sort-by=.lastTimestamp
 ```
 
-Core workloads include:
+Workloads observed across the project include `api-gateway`, `audit-service`, `audit-consumer`, `outbox-worker`, `anti-fraud`, `aml-service`, `postgres`, `redpanda`, `jaeger`, `prometheus`, `ollama`, and `redis`. Check the current state before assuming every service is deployed and healthy.
 
-```text
-api-gateway
-audit-service
-audit-consumer
-outbox-worker
-postgres
-redpanda
-jaeger
-prometheus
-```
-
-Images can be loaded into kind for local development:
+Example: load a local image into kind:
 
 ```bash
 kind load docker-image audit-consumer:local \
   --name financial-cluster
 ```
 
----
+Restart and verify a deployment:
 
-# Local Development
+```bash
+kubectl rollout restart deployment/audit-consumer \
+  -n financial-platform
+kubectl rollout status deployment/audit-consumer \
+  -n financial-platform
+kubectl logs -n financial-platform deployment/audit-consumer --timestamps
+```
 
-Build the entire workspace:
+## Local development
+
+Build the workspace:
 
 ```bash
 cargo build
@@ -781,64 +532,28 @@ Format:
 cargo fmt --all
 ```
 
+Check formatting without modifying files:
+
+```bash
+cargo fmt --all -- --check
+```
+
 Run tests:
 
 ```bash
 cargo test --workspace
 ```
 
----
-
-# Audit Consumer
-
-Build:
+AML-specific checks:
 
 ```bash
-cargo build --release -p audit-consumer
+cargo check -p aml-service
+cargo test -p aml-service
 ```
 
-Build Docker image:
+These commands validate the code; they do not deploy services or apply database migrations.
 
-```bash
-docker build \
-  --no-cache \
-  -f apps/audit-consumer/Dockerfile \
-  -t audit-consumer:local .
-```
-
-Load into kind:
-
-```bash
-kind load docker-image audit-consumer:local \
-  --name financial-cluster
-```
-
-Restart deployment:
-
-```bash
-kubectl rollout restart deployment/audit-consumer \
-  -n financial-platform
-```
-
-Check rollout:
-
-```bash
-kubectl rollout status deployment/audit-consumer \
-  -n financial-platform
-```
-
-View logs:
-
-```bash
-kubectl logs \
-  -n financial-platform \
-  deployment/audit-consumer \
-  --timestamps
-```
-
----
-
-# API Gateway
+## API Gateway
 
 Default local endpoint:
 
@@ -846,11 +561,7 @@ Default local endpoint:
 http://localhost:8088
 ```
 
-Audit endpoint:
-
-```text
-POST /audit
-```
+Audit endpoint: `POST /audit`.
 
 Example:
 
@@ -858,43 +569,19 @@ Example:
 curl -i -X POST http://localhost:8088/audit \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "user": "alejandro",
-    "action": "TEST_EVENT"
-  }'
+  -d '{"user":"example-user","action":"TEST_EVENT"}'
 ```
 
----
-
-# Health Checks
-
-Audit Consumer:
+The Gateway's `/health` and `/ready` endpoints returned successful responses in previous checks. Recheck against the current environment:
 
 ```bash
-curl http://localhost:3001/health
+curl -i http://localhost:8088/health
+curl -i http://localhost:8088/ready
 ```
 
-Expected:
+## PostgreSQL and migrations
 
-```json
-{
-  "status": "UP"
-}
-```
-
-Kubernetes:
-
-```bash
-kubectl get pods -n financial-platform
-```
-
----
-
-# PostgreSQL
-
-The platform uses PostgreSQL as the transactional source of truth.
-
-Important tables include:
+PostgreSQL is the transactional source of truth. Audit-related tables include:
 
 ```text
 audit_events
@@ -903,400 +590,195 @@ processed_events
 dead_letter_events
 ```
 
-The database is accessed from Kubernetes using:
+The financial transaction pipeline uses `financial_transactions` and `outbox_events`. AML processing uses its own processed-event and alert persistence.
 
-```text
-postgres:5432
-```
+Migrations identified during development:
 
-Example connectivity test:
+- `0016_fraud_event_idempotency.sql`
+- `0017_fraud_alert_event_associations.sql`
+- `0018_create_financial_transactions.sql`
+- `0019` — associated with AML integration; confirm its exact filename, contents, and whether it has been applied in each environment.
 
-```bash
-kubectl run pg-test \
-  -n financial-platform \
-  --rm -it \
-  --restart=Never \
-  --image=postgres:16 \
-  --env="PGPASSWORD=postgres" \
-  -- psql \
-    -h postgres \
-    -U postgres \
-    -d financial \
-    -c "SELECT 1;"
-```
+The next manually numbered migration should start at `0020`.
 
----
+Before applying migrations:
 
-# Redpanda
+1. Review the migration against the actual database schema.
+2. Confirm the project's migration tool and procedure.
+3. Apply it to a controlled database first.
+4. Verify columns, constraints, indexes, and data.
+5. Confirm rollback and recovery procedures.
+6. Do not claim a migration has run merely because its file exists.
 
-Check topics:
+## Redpanda and Schema Registry
+
+List topics:
 
 ```bash
-kubectl exec -n financial-platform deploy/redpanda -- \
-  rpk topic list
+kubectl exec -n financial-platform deploy/redpanda -- rpk topic list
 ```
 
-Expected topic:
+Topics:
 
 ```text
 audit-events
+financial-transactions
 ```
 
----
-
-# Schema Registry
-
-The platform uses the Redpanda Schema Registry endpoint inside Kubernetes:
+Schema Registry inside Kubernetes:
 
 ```text
 http://redpanda:8081
 ```
 
-The primary subject is:
+Primary audit subject: `AuditCreated-value`.
 
-```text
-AuditCreated-value
-```
+The locally configured URL `http://localhost:18081` was observed not to respond during an earlier check. Verify the current local port-forward or service configuration before using it.
 
----
+## Current validation status
 
-# Observability
+The following capabilities were exercised or reported as operational during previous development checks. This is historical evidence, not a guarantee of current health.
 
-The current observability architecture is:
+| Capability | Previously reported status |
+|---|---|
+| Rust workspace | Verified in prior checks; rerun against current revision |
+| Audit Service | Exercised |
+| API Gateway | Exercised |
+| JWT validation and scopes | Exercised |
+| PostgreSQL | Exercised |
+| Transactional Outbox | Exercised |
+| Redpanda/Kafka and Avro | Exercised |
+| Schema Registry | Exercised |
+| Audit Consumer | Exercised |
+| Idempotency, retry, dead-letter architecture | Implemented; revalidate end to end |
+| OpenTelemetry and Jaeger | Operational in prior checks |
+| Prometheus | Present in the environment |
+| W3C Trace Context and Kafka `traceparent` | Exercised; envelope field still needs investigation |
+| Kubernetes/kind | Used for local deployment; inspect current workloads |
+| MCP Server, AI Agent, Ollama | Exercised; authorization review remains |
+| Anti-Fraud | Implemented; repeat current integration checks |
+| AML | Code and some tests reported; revalidate deployment and end-to-end flow |
+| Regulatory corpus legal verification | Pending |
+| Tenant-specific regulatory jurisdiction | Pending |
+| Safe cross-currency AML aggregation | Pending |
+| Bank-reported FX contract | Pending |
+| MCP tenant authorization | Requires review |
 
-```text
-                    ┌──────────────┐
-                    │ Applications │
-                    └──────┬───────┘
-                           │
-                ┌──────────┴──────────┐
-                │                     │
-                ▼                     ▼
-        OpenTelemetry            Prometheus
-                │                     │
-                ▼                     ▼
-             Jaeger                Metrics
-```
+## Production readiness
 
-Tracing provides:
+The platform has many characteristics expected from a production-oriented distributed system: clear service boundaries, persistent transactional state, a transactional outbox, event-driven communication, schema governance, idempotent consumers, retry/dead-letter handling, Gateway authentication, scopes, distributed tracing, metrics, Kubernetes deployment, an AI operational interface, and local LLM inference.
 
-* Trace IDs
-* Span IDs
-* Parent-child relationships
-* W3C Trace Context
-* Cross-service propagation
-
-Metrics provide:
-
-* Consumer activity
-* Application counters
-* Prometheus-compatible metrics
-
----
-
-# Current Validation Status
-
-The following capabilities have been exercised successfully:
-
-| Capability                    | Status |
-| ----------------------------- | ------ |
-| Rust workspace                | ✅      |
-| Audit Service                 | ✅      |
-| API Gateway                   | ✅      |
-| JWT validation                | ✅      |
-| JWT scopes                    | ✅      |
-| PostgreSQL                    | ✅      |
-| Transactional Outbox          | ✅      |
-| Redpanda/Kafka                | ✅      |
-| Avro serialization            | ✅      |
-| Schema Registry               | ✅      |
-| Audit Consumer                | ✅      |
-| Idempotency architecture      | ✅      |
-| Retry architecture            | ✅      |
-| Dead Letter architecture      | ✅      |
-| OpenTelemetry                 | ✅      |
-| Jaeger                        | ✅      |
-| Prometheus                    | ✅      |
-| W3C Trace Context             | ✅      |
-| Kafka traceparent propagation | ✅      |
-| Kubernetes/kind               | ✅      |
-| MCP Server                    | ✅      |
-| AI Agent                      | ✅      |
-| Ollama                        | ✅      |
-
----
-
-# Current Known Gap
-
-One trace-related detail remains under investigation.
-
-The Kafka header contains the propagated W3C context:
-
-```text
-traceparent=Some(
-  "00-9c3c3750c0821c53b1b1fd89336bdcdd-0ca4604a606a3a16-01"
-)
-```
-
-The Audit Consumer successfully extracts that context.
-
-However, the deserialized `EventEnvelope` currently reports:
-
-```text
-traceparent=None
-```
-
-Therefore:
-
-```text
-Kafka traceparent header
-        │
-        └── working
-
-OpenTelemetry context extraction
-        │
-        └── working
-
-EventEnvelope.traceparent
-        │
-        └── requires investigation
-```
-
-This does not currently prevent distributed context propagation through the Kafka header, but preserving the traceparent consistently inside the event envelope remains an architectural cleanup item.
-
----
-
-# Production Readiness
-
-The platform currently has many characteristics expected from a production-oriented distributed system:
-
-* Strong service boundaries
-* Persistent transactional state
-* Transactional Outbox
-* Event-driven communication
-* Schema governance
-* Idempotent consumers
-* Retry handling
-* Dead Letter handling
-* Authentication
-* Authorization scopes
-* Distributed tracing
-* Metrics
-* Kubernetes deployment
-* AI operational interface
-* Controlled MCP tool access
-* Local LLM inference
-
-However, **production-ready** should not yet be interpreted as “ready to deploy to a critical production environment without further hardening.”
+However, **production-oriented does not mean ready for a critical production environment without further hardening**.
 
 Remaining areas include:
 
-* Dedicated identity/login service
-* Secret management
-* TLS/mTLS where appropriate
-* Production PostgreSQL topology and backups
-* Kafka/Redpanda replication strategy
-* Persistent storage strategy
-* Kubernetes resource requests/limits
-* PodDisruptionBudgets
-* NetworkPolicies
-* Production ingress
-* Rate limiting
-* Security scanning
-* Dependency vulnerability management
-* Load testing
-* Failure/integration testing
-* Disaster recovery
-* Alerting
-* SLO/SLI definitions
-* Log retention
-* Audit retention policies
-* Production-grade AI model sizing and evaluation
-* MCP authorization policies
-* End-to-end trace validation in Jaeger
+- Dedicated identity/login service
+- Production secret management
+- TLS/mTLS where appropriate
+- Production PostgreSQL topology and backups
+- Kafka/Redpanda replication strategy
+- Persistent storage strategy
+- Kubernetes resource requests/limits and PodDisruptionBudgets
+- NetworkPolicies and production ingress
+- Rate limiting
+- Security scanning and dependency vulnerability management
+- Load, failure, and integration testing
+- Disaster recovery and alerting
+- SLO/SLI definitions
+- Log and audit retention policies
+- Production-grade AI model sizing and evaluation
+- MCP authorization policies
+- End-to-end trace validation in Jaeger
 
----
+## Development philosophy
 
-# Architectural Maturity
+The project favors explicit service boundaries, strong typing, event contracts, asynchronous processing, observable systems, deterministic infrastructure access, failure isolation, idempotent operations, schema evolution, and AI as an operational interface rather than an uncontrolled infrastructure actor.
 
-The project has evolved beyond a conventional CRUD backend.
+The AI layer is deliberately separated from the transactional core. The LLM does not directly own business state; it invokes controlled tools through MCP.
 
-Its architecture can be summarized as:
+## Roadmap
 
-```text
-                    FINANCIAL INTELLIGENCE PLATFORM
+### Phase 1 — Core platform
 
-                         ┌──────────────┐
-                         │ API Gateway  │
-                         └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │ Audit Domain │
-                         └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │ PostgreSQL   │
-                         └──────┬───────┘
-                                │
-                         Transactional
-                            Outbox
-                                │
-                         ┌──────▼───────┐
-                         │ Outbox Worker│
-                         └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │ Redpanda     │
-                         └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │ Audit        │
-                         │ Consumer     │
-                         └──────┬───────┘
-                                │
-                    ┌───────────┴───────────┐
-                    │                       │
-             OpenTelemetry             PostgreSQL
-                    │                       │
-                 Jaeger              Idempotency /
-                                      DLQ / State
+- [x] Rust workspace
+- [x] Audit Service
+- [x] API Gateway
+- [x] PostgreSQL
+- [x] Transactional Outbox
+- [x] Redpanda
+- [x] Schema Registry
+- [x] Avro
+- [x] Audit Consumer
 
+### Phase 2 — Reliability
 
-                    AI Operational Plane
+- [x] Idempotency
+- [x] Retry architecture
+- [x] Dead-letter architecture
+- [x] Event version routing
+- [x] Schema validation
 
-                         ┌──────────────┐
-                         │   AI Agent   │
-                         └──────┬───────┘
-                                │
-                         ┌──────▼───────┐
-                         │     MCP      │
-                         └──────┬───────┘
-                                │
-                    ┌───────────┴───────────┐
-                    │                       │
-                 Platform               Ollama
-                 tools                    LLM
-```
+### Phase 3 — Observability
 
----
+- [x] OpenTelemetry
+- [x] Jaeger
+- [x] Prometheus integration
+- [x] Request IDs
+- [x] W3C Trace Context
+- [x] Kafka `traceparent` propagation
+- [ ] Resolve the `EventEnvelope.traceparent` persistence/representation gap
 
-# Development Philosophy
+### Phase 4 — AI platform
 
-The platform favors:
+- [x] MCP Server and tools
+- [x] Rust AI Agent
+- [x] Ollama and local LLM inference
+- [x] Deterministic MCP tool selection
+- [ ] Enforce and test MCP authentication and tenant authorization
+- [ ] Add tenant-aware regulatory lookup
 
-* Explicit service boundaries
-* Strong typing
-* Event contracts
-* Asynchronous processing
-* Observable systems
-* Deterministic infrastructure access
-* Failure isolation
-* Idempotent operations
-* Schema evolution
-* AI as an operational interface rather than an uncontrolled infrastructure actor
+### Phase 5 — Financial intelligence
 
-The AI layer is deliberately separated from the transactional core.
+- [x] Financial transaction model and ingestion path observed in code
+- [x] Atomic transaction + outbox persistence
+- [x] Anti-Fraud rules and persistence observed in code
+- [x] AML rules and idempotent alert persistence observed in code
+- [ ] Verify current AML deployment and end-to-end consumption
+- [ ] Resolve regulatory jurisdiction from a trusted tenant profile
+- [ ] Prevent AML comparisons and aggregation across incompatible currencies
+- [ ] Add bank-reported FX fields with provenance
+- [ ] Add explicit transaction origin/destination geography
+- [ ] Complete legal verification and effective dates for the regulatory corpus
+- [ ] Improve PDF extraction and traceable citations
+- [ ] Add end-to-end tenant-isolation and failure-recovery tests
 
-The LLM does not directly own business state.
+### Phase 6 — Production hardening
 
-Instead:
+- [ ] Dedicated authentication/identity service
+- [ ] Production secret management
+- [ ] TLS/mTLS
+- [ ] Production ingress and rate limiting
+- [ ] Network policies and resource limits
+- [ ] Production storage and backup/restore
+- [ ] Disaster recovery
+- [ ] Load and security testing
+- [ ] SLO/SLI monitoring and alerting
+- [ ] End-to-end trace validation
+- [ ] AI evaluation and model strategy
 
-```text
-LLM
- │
- ▼
-MCP
- │
- ▼
-Controlled tools
- │
- ▼
-Platform
-```
-
-This allows the AI layer to evolve independently from the core financial/audit processing system.
-
----
-
-# Roadmap
-
-## Phase 1 — Core Platform
-
-* [x] Rust workspace
-* [x] Audit Service
-* [x] API Gateway
-* [x] PostgreSQL
-* [x] Transactional Outbox
-* [x] Redpanda
-* [x] Schema Registry
-* [x] Avro
-* [x] Audit Consumer
-
-## Phase 2 — Reliability
-
-* [x] Idempotency
-* [x] Retry
-* [x] Dead Letter handling
-* [x] Event version routing
-* [x] Schema validation
-
-## Phase 3 — Observability
-
-* [x] OpenTelemetry
-* [x] Jaeger
-* [x] Prometheus
-* [x] Request IDs
-* [x] W3C Trace Context
-* [x] Kafka traceparent propagation
-
-## Phase 4 — AI Platform
-
-* [x] MCP Server
-* [x] MCP tools
-* [x] Rust AI Agent
-* [x] Ollama
-* [x] Local LLM inference
-* [x] Deterministic MCP tool selection
-
-## Phase 5 — Production Hardening
-
-* [ ] Dedicated authentication/identity service
-* [ ] Production secret management
-* [ ] TLS/mTLS
-* [ ] Production ingress
-* [ ] Rate limiting
-* [ ] Network policies
-* [ ] Resource limits
-* [ ] Production storage
-* [ ] Backup/restore
-* [ ] Disaster recovery
-* [ ] Load testing
-* [ ] Security testing
-* [ ] SLO/SLI monitoring
-* [ ] Alerting
-* [ ] End-to-end trace validation
-* [ ] AI evaluation and model strategy
-
----
-
-# License
+## License
 
 Internal / project-specific.
 
----
+## Status summary
 
-# Status
-
-**Architecture:** Production-oriented
-
-**Core event pipeline:** Operational
-
-**Event reliability patterns:** Implemented
-
-**Observability:** Operational
-
-**AI/MCP layer:** Operational
-
-**Kubernetes environment:** Operational
-
-**Production hardening:** In progress
+- **Architecture:** Production-oriented
+- **Core audit event pipeline:** Previously exercised
+- **Event reliability patterns:** Implemented; revalidate against the current revision
+- **Observability:** Operational in prior checks; preserve the existing telemetry implementation
+- **AI/MCP layer:** Implemented and exercised; authorization review remains
+- **Kubernetes environment:** Used for local development; current workload status must be checked
+- **Anti-Fraud:** Implemented; current integration checks remain necessary
+- **AML:** Implementation underway; currency semantics, tenant jurisdiction, legal RAG validation, and deployment verification remain
+- **Regulatory corpus:** Extraction work underway; legal verification pending
+- **Production hardening:** In progress
