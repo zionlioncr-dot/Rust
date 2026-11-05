@@ -1,0 +1,529 @@
+use crate::{
+    config::AmlConfig,
+    domain::{AmlAlert, AmlAssessment},
+};
+use anyhow::{Context, Result, bail};
+use chrono::Utc;
+use domain::financial_transaction::FinancialTransaction;
+use repository_lib::{RagRepository, RagSearchResult};
+use reqwest::Client;
+use serde::Deserialize;
+use serde_json::{Value, json};
+use std::time::Duration;
+use uuid::Uuid;
+
+const EMBEDDING_DIMENSION: usize = 768;
+
+#[derive(Clone)]
+pub struct RegulatoryRag {
+    repository: RagRepository,
+    client: Client,
+    embedding_url: String,
+    embedding_model: String,
+    chat_url: String,
+    chat_model: String,
+}
+
+#[derive(Deserialize)]
+struct EmbedResponse {
+    embeddings: Vec<Vec<f32>>,
+}
+
+#[derive(Deserialize)]
+struct ChatResponse {
+    message: ChatMessage,
+}
+
+#[derive(Deserialize)]
+struct ChatMessage {
+    content: String,
+}
+
+impl RegulatoryRag {
+    pub fn new(config: &AmlConfig, repository: RagRepository) -> Result<Self> {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(180))
+            .build()
+            .context("No se pudo crear el cliente HTTP de Ollama")?;
+
+        let base_url = config.app.ollama_base_url.trim_end_matches('/');
+
+        Ok(Self {
+            repository,
+            client,
+            embedding_url: format!("{base_url}/api/embed"),
+            embedding_model: config.app.ollama_embedding_model.clone(),
+            chat_url: config.ollama_chat_url.clone(),
+            chat_model: config.ollama_chat_model.clone(),
+        })
+    }
+
+    pub async fn assess(
+        &self,
+        tenant_id: &str,
+        event_id: &str,
+        jurisdiction: &str,
+        transaction: &FinancialTransaction,
+        related_transactions: &[Value],
+    ) -> Result<AmlAssessment> {
+        // La consulta vectorial prioriza los atributos concretos de la operación.
+        // El historial completo se conserva como contexto del análisis, pero no
+        // se mezcla indiscriminadamente en el embedding de búsqueda normativa.
+        let geographic_scope = classify_geographic_scope(
+            transaction.source_country.as_deref(),
+            transaction.destination_country.as_deref(),
+        );
+
+        // Consulta normativa estable: los atributos particulares de la
+        // transacción se conservan en user_prompt y no contaminan el embedding.
+        // La jurisdicción y la vigencia se aplican también como filtros SQL.
+        let query = format!(
+            concat!(
+                "Normativa de prevención de legitimación de capitales y ",
+                "financiamiento al terrorismo aplicable en {}. ",
+                "Disposiciones sobre identificación y conocimiento del cliente, ",
+                "identificación del beneficiario final, debida diligencia, ",
+                "monitoreo de operaciones, operaciones inusuales y sospechosas, ",
+                "evaluación de riesgos, jurisdicciones de riesgo, reportes regulatorios, ",
+                "conservación de registros, controles internos y responsabilidades ",
+                "de los sujetos obligados. Recuperar artículos y obligaciones ",
+                "regulatorias pertinentes para evaluar operaciones financieras."
+            ),
+            jurisdiction
+        );
+        let embedding = self.embed(&query).await?;
+
+        let evidence = self
+            .repository
+            .search_regulatory(
+                &embedding,
+                &query,
+                &jurisdiction,
+                transaction.occurred_at.date_naive(),
+                5,
+            )
+            .await
+            .context("No se pudo recuperar evidencia regulatoria verificada")?;
+
+        let evidence_json = evidence
+            .iter()
+            .take(4)
+            .map(evidence_to_json)
+            .collect::<Vec<_>>();
+
+        if evidence_json.is_empty() {
+            let transaction_data = serde_json::to_value(transaction)?;
+            let created_at = Utc::now();
+
+            return Ok(AmlAssessment {
+                id: Uuid::new_v4(),
+                tenant_id: tenant_id.to_string(),
+                event_id: event_id.to_string(),
+                transaction_id: transaction.id,
+                model: "not_invoked_no_evidence".to_string(),
+                jurisdiction: jurisdiction.to_string(),
+                assessment_status: "manual_review".to_string(),
+                suspicious: false,
+                severity: "low".to_string(),
+                category: "insufficient_regulatory_evidence".to_string(),
+                description: "Revisión manual requerida: no se recuperó evidencia regulatoria.".to_string(),
+                rationale: "No se recuperaron documentos regulatorios para la jurisdicción y fecha evaluadas. La ausencia de documentos recuperados no demuestra que no existan obligaciones regulatorias ni que la transacción sea legítima o sospechosa. No se emite una conclusión AML automatizada; se requiere revisión humana.".to_string(),
+                confidence: None,
+                evidence_refs: Value::Array(vec![]),
+                regulatory_evidence: Value::Array(vec![]),
+                limitations: Value::Array(vec![
+                    json!("No se recuperaron documentos regulatorios."),
+                    json!("La ausencia de evidencia recuperada no demuestra legitimidad ni ausencia de obligaciones."),
+                    json!("El modelo conversacional no fue invocado."),
+                    json!("Se requiere revisión manual antes de concluir la evaluación AML."),
+                ]),
+                transaction_data,
+                created_at,
+                alert: None,
+            });
+        }
+
+        let system_prompt = r#"
+Eres un analista especializado en prevención de legitimación de capitales y financiación del terrorismo.
+Realiza una evaluación contextual, neutral y trazable de la operación; no presupongas que es sospechosa ni que es legítima.
+
+Considera conjuntamente:
+1. Los hechos observables de la transacción actual.
+2. Las operaciones históricas relacionadas por cuentas, respetando su secuencia temporal.
+3. La evidencia regulatoria recuperada para la jurisdicción y fecha de la operación.
+
+CRITERIOS DE ANÁLISIS:
+- El ámbito geográfico indicado se deriva únicamente de los países informados; no demuestra la ruta real de los fondos.
+- Si el ámbito es domestic_indicated, no describas la operación como internacional o realizada en el extranjero salvo que otros hechos verificables lo sustenten.
+- Si el ámbito es cross_border_indicated, no concluyas automáticamente que existe sospecha ni que una norma específica resulta aplicable.
+- Trata los documentos recuperados como evidencia candidata: su recuperación no demuestra por sí sola la aplicabilidad al caso concreto.
+- No atribuyas normas, jurisdicciones de alto riesgo ni clasificaciones de países sin respaldo explícito y pertinente en la evidencia recibida.
+- Un importe, incluso elevado, no demuestra por sí solo una operación sospechosa. Distingue obligaciones de reporte o registro de indicadores de sospecha.
+- Separa hechos observados, indicadores potenciales, explicaciones alternativas e información desconocida.
+- Evalúa la pertinencia de cada documento regulatorio antes de usarlo como fundamento.
+- Vincula cada conclusión regulatoria con el contenido concreto de la evidencia recibida.
+- Distingue entre una obligación normativa, un indicador de riesgo y una conclusión sobre esta operación.
+- No afirmes que una operación nacional o internacional queda fuera de regulación, ni que un país está catalogado de riesgo, salvo que la evidencia recibida sustente esa afirmación para el contexto aplicable.
+- No infieras que una operación cumple la normativa solo porque la contraparte sea conocida, ni que la incumple solo por ser internacional, usar cierto canal, involucrar un país o tener determinado importe.
+- Considera patrones históricos únicamente cuando los datos disponibles permitan establecer la relación; no inventes relaciones, frecuencias, propósitos ni antecedentes.
+- No conviertas la falta de información sobre beneficiario final, origen de fondos, propósito económico o contraparte en prueba de legitimidad o de infracción. Señala qué información falta y por qué podría importar.
+- No confundas que no se haya recuperado una norma pertinente con que no exista una obligación normativa.
+- No inventes leyes, artículos, citas, hechos ni documentos. No extrapoles más allá del texto normativo recibido.
+- No apliques umbrales monetarios fijos ni reglas deterministas. El importe, la frecuencia, el país o el canal no deben decidir por sí solos si existe sospecha.
+- Expón los principales factores a favor y en contra de la sospecha. Si los datos son ambiguos, indícalo expresamente.
+- La severidad debe ser coherente con la conclusión y la evidencia disponible. La confianza debe reflejar la calidad, pertinencia y suficiencia de los datos; no expreses una precisión que el análisis no permite justificar.
+- No afirmes que un documento respalda una conclusión si su contenido solo trata un asunto general o distinto.
+
+Devuelve únicamente un objeto JSON con estos campos:
+{
+  "suspicious": boolean,
+  "severity": "low" | "medium" | "high" | "critical",
+  "category": string,
+  "description": string,
+  "rationale": string,
+  "confidence": number,
+  "evidence_refs": [string],
+  "limitations": [string]
+}
+
+Instrucciones para los campos:
+- suspicious: conclusión contextual del análisis, no una regla automática.
+- severity: nivel coherente con los factores identificados; no lo uses como sustituto de suspicious.
+- category: categoría breve que describa el tipo de hallazgo, sin inventar una infracción legal.
+- description: resumen conciso del resultado y los factores determinantes.
+- rationale: explica los hechos observados, los indicadores a favor y en contra, las explicaciones alternativas y la relación concreta con la evidencia regulatoria. Distingue los hechos de las inferencias.
+- confidence: número entre 0 y 1 que refleje la confianza real en esta evaluación.
+- evidence_refs: exclusivamente los document_id presentes en la evidencia regulatoria recibida. Incluye solo documentos realmente pertinentes para el razonamiento.
+- limitations: enumera las lagunas de datos, las ambigüedades y las limitaciones de pertinencia documental que puedan afectar la conclusión.
+
+No cites operaciones históricas como si fueran documentos regulatorios.
+No afirmes que una obligación se cumple o se incumple sin datos que permitan sostenerlo.
+"#;
+
+        let user_prompt = json!({
+            "tenant_id": tenant_id,
+            "event_id": event_id,
+            "jurisdiction": jurisdiction,
+            "geographic_scope_indicated": geographic_scope,
+            "transaction_date": transaction.occurred_at.date_naive().to_string(),
+            "transaction": transaction,
+            "related_transactions_context": related_transactions,
+            "verified_regulatory_evidence": evidence_json
+        });
+
+        let response = self
+            .client
+            .post(&self.chat_url)
+            .json(&json!({
+                "model": self.chat_model,
+                "stream": false,
+                "format": {
+                    "type": "object",
+                    "properties": {
+                        "suspicious": {"type": "boolean"},
+                        "severity": {
+                            "type": "string",
+                            "enum": ["low", "medium", "high", "critical"]
+                        },
+                        "category": {"type": "string"},
+                        "description": {"type": "string"},
+                        "rationale": {"type": "string"},
+                        "confidence": {"type": "number"},
+                        "evidence_refs": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "limitations": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": [
+                        "suspicious",
+                        "severity",
+                        "category",
+                        "description",
+                        "rationale",
+                        "confidence",
+                        "evidence_refs",
+                        "limitations"
+                    ],
+                    "additionalProperties": false
+                },
+                "think": false,
+                "options": {
+                    "temperature": 0,
+                    "num_ctx": 6144,
+                    "num_predict": 1536
+                },
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt.to_string()}
+                ]
+            }))
+            .send()
+            .await
+            .context("No se pudo invocar Ollama para el análisis AML")?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            bail!("Ollama respondió HTTP {status}: {body}");
+        }
+
+        let envelope: ChatResponse =
+            serde_json::from_str(&body).context("Respuesta de chat de Ollama inválida")?;
+
+        let assessment: Value = serde_json::from_str(&envelope.message.content)
+            .context("El modelo no devolvió un objeto JSON válido")?;
+
+        let suspicious = assessment
+            .get("suspicious")
+            .and_then(Value::as_bool)
+            .context("El análisis AML no contiene suspicious booleano")?;
+
+        let severity = assessment
+            .get("severity")
+            .and_then(Value::as_str)
+            .unwrap_or("medium")
+            .to_ascii_lowercase();
+
+        let severity = match severity.as_str() {
+            "low" | "medium" | "high" | "critical" => severity,
+            _ => "medium".to_string(),
+        };
+
+        let description = assessment
+            .get("description")
+            .and_then(Value::as_str)
+            .unwrap_or("Evaluación contextual AML completada")
+            .trim()
+            .to_string();
+
+        let category = assessment
+            .get("category")
+            .and_then(Value::as_str)
+            .map(normalize_category)
+            .unwrap_or_else(|| "contextual_review".to_string());
+
+        let rationale = assessment
+            .get("rationale")
+            .and_then(Value::as_str)
+            .unwrap_or("El modelo no proporcionó una justificación detallada.")
+            .trim()
+            .to_string();
+
+        let confidence = assessment
+            .get("confidence")
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite())
+            .map(|value| value.clamp(0.0, 1.0));
+
+        // Las referencias se restringen a los documentos efectivamente
+        // recuperados por el repositorio RAG.
+        let valid_ids = evidence_json
+            .iter()
+            .filter_map(|item| item.get("document_id").and_then(Value::as_str))
+            .collect::<Vec<_>>();
+
+        let evidence_refs = assessment
+            .get("evidence_refs")
+            .and_then(Value::as_array)
+            .map(|items| {
+                items
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .filter(|id| valid_ids.iter().any(|valid| *valid == *id))
+                    .map(|id| Value::String(id.to_string()))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        let limitations = assessment
+            .get("limitations")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        let regulatory_evidence = Value::Array(evidence_json.clone());
+        let transaction_data = serde_json::to_value(transaction)?;
+        let created_at = Utc::now();
+        let assessment_id = Uuid::new_v4();
+
+        // Las evaluaciones negativas también se conservan para auditoría.
+        // No se crea una alerta si suspicious=false.
+        let alert = if suspicious {
+            let details = json!({
+                "analysis_type": "ollama_regulatory_rag",
+                "model": self.chat_model,
+                "jurisdiction": jurisdiction,
+                "category": category,
+                "rationale": rationale,
+                "confidence": confidence,
+                "evidence_refs": evidence_refs,
+                "regulatory_evidence": regulatory_evidence,
+                "limitations": limitations,
+                "transaction": transaction_data
+            });
+
+            Some(AmlAlert {
+                id: Uuid::new_v4(),
+                tenant_id: tenant_id.to_string(),
+                event_id: event_id.to_string(),
+                transaction_id: transaction.id,
+                rule_code: "llm_regulatory_assessment".to_string(),
+                severity: severity.clone(),
+                description: description.clone(),
+                details,
+                created_at,
+            })
+        } else {
+            None
+        };
+
+        Ok(AmlAssessment {
+            id: assessment_id,
+            tenant_id: tenant_id.to_string(),
+            event_id: event_id.to_string(),
+            transaction_id: transaction.id,
+            model: self.chat_model.clone(),
+            jurisdiction: jurisdiction.to_string(),
+            assessment_status: "evaluated".to_string(),
+            suspicious,
+            severity,
+            category,
+            description,
+            rationale,
+            confidence,
+            evidence_refs: Value::Array(evidence_refs),
+            regulatory_evidence,
+            limitations: Value::Array(limitations),
+            transaction_data,
+            created_at,
+            alert,
+        })
+    }
+
+    async fn embed(&self, input: &str) -> Result<Vec<f32>> {
+        let response = self
+            .client
+            .post(&self.embedding_url)
+            .json(&json!({
+                "model": self.embedding_model,
+                "input": input
+            }))
+            .send()
+            .await
+            .context("No se pudo solicitar el embedding a Ollama")?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            bail!("Ollama embeddings respondió HTTP {status}: {body}");
+        }
+
+        let parsed: EmbedResponse =
+            serde_json::from_str(&body).context("Respuesta de embeddings inválida")?;
+
+        let embedding = parsed
+            .embeddings
+            .into_iter()
+            .next()
+            .context("Ollama devolvió una lista de embeddings vacía")?;
+
+        if embedding.len() != EMBEDDING_DIMENSION {
+            bail!(
+                "Dimensión de embedding incorrecta: esperadas {}, recibidas {}",
+                EMBEDDING_DIMENSION,
+                embedding.len()
+            );
+        }
+
+        Ok(embedding)
+    }
+}
+
+fn classify_geographic_scope(
+    source_country: Option<&str>,
+    destination_country: Option<&str>,
+) -> &'static str {
+    match (source_country, destination_country) {
+        (Some(source), Some(destination))
+            if !source.trim().is_empty() && !destination.trim().is_empty() =>
+        {
+            if source.trim().eq_ignore_ascii_case(destination.trim()) {
+                "domestic_indicated"
+            } else {
+                "cross_border_indicated"
+            }
+        }
+        _ => "indeterminate",
+    }
+}
+
+fn evidence_to_json(item: &RagSearchResult) -> Value {
+    let excerpt = item.content.chars().take(900).collect::<String>();
+    let excerpt_truncated = item.content.chars().count() > 900;
+
+    json!({
+        "document_id": item.id.to_string(),
+        "evidence_status": "candidate_not_case_applicability_confirmed",
+        "source": item.source,
+        "metadata": item.metadata,
+        "similarity": item.similarity,
+        "excerpt": excerpt,
+        "excerpt_truncated": excerpt_truncated
+    })
+}
+
+fn normalize_category(value: &str) -> String {
+    let normalized = value
+        .trim()
+        .to_ascii_lowercase()
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .collect::<String>()
+        .split('_')
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("_");
+
+    if normalized.is_empty() {
+        "contextual_review".to_string()
+    } else {
+        normalized.chars().take(64).collect()
+    }
+}
+
+#[cfg(test)]
+mod geographic_scope_tests {
+    use super::classify_geographic_scope;
+
+    #[test]
+    fn same_country_indicates_domestic_scope() {
+        assert_eq!(
+            classify_geographic_scope(Some("CR"), Some("cr")),
+            "domestic_indicated"
+        );
+    }
+
+    #[test]
+    fn different_countries_indicate_cross_border_scope() {
+        assert_eq!(
+            classify_geographic_scope(Some("CR"), Some("PA")),
+            "cross_border_indicated"
+        );
+    }
+
+    #[test]
+    fn missing_country_is_indeterminate() {
+        assert_eq!(classify_geographic_scope(Some("CR"), None), "indeterminate");
+        assert_eq!(classify_geographic_scope(None, Some("CR")), "indeterminate");
+        assert_eq!(
+            classify_geographic_scope(Some(" "), Some("CR")),
+            "indeterminate"
+        );
+    }
+}

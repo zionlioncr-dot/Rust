@@ -1,0 +1,302 @@
+use crate::domain::AmlAssessment;
+use anyhow::{bail, Context, Result};
+use sqlx::PgPool;
+
+#[derive(Clone)]
+pub struct PostgresAmlRepository {
+    pool: PgPool,
+}
+
+impl PostgresAmlRepository {
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+
+    /// Resuelve la jurisdicción del tenant desde su perfil activo y vigente.
+    /// La fecha corresponde a la fecha de la transacción evaluada.
+    pub async fn jurisdiction_for_tenant(
+        &self,
+        tenant_id: &str,
+        as_of: chrono::NaiveDate,
+    ) -> Result<String> {
+        let jurisdiction = sqlx::query_scalar::<_, String>(
+            r#"
+            SELECT jurisdiction
+            FROM aml_tenant_regulatory_profiles
+            WHERE tenant_id = $1
+              AND status = 'active'
+              AND effective_from <= $2
+              AND (effective_to IS NULL OR effective_to >= $2)
+            ORDER BY effective_from DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(as_of)
+        .fetch_optional(&self.pool)
+        .await
+        .context("No se pudo consultar el perfil regulatorio del tenant AML")?;
+
+        match jurisdiction {
+            Some(value) if !value.trim().is_empty() => {
+                Ok(value.trim().to_ascii_uppercase())
+            }
+            Some(_) => bail!(
+                "El perfil regulatorio contiene una jurisdicción vacía: tenant_id={tenant_id}"
+            ),
+            None => bail!(
+                "No existe un perfil regulatorio activo y vigente: tenant_id={tenant_id}, fecha={as_of}"
+            ),
+        }
+    }
+
+    /// Guarda el evento procesado, la evaluación completa y sus alertas
+    /// en una única transacción. Devuelve false si el evento ya fue procesado.
+    pub async fn process_event(
+        &self,
+        tenant_id: &str,
+        event_id: &str,
+        assessment: &AmlAssessment,
+    ) -> Result<bool> {
+        validate_assessment(tenant_id, event_id, assessment)?;
+
+        let mut tx = self.pool.begin().await?;
+
+        let claimed = sqlx::query_scalar::<_, String>(
+            r#"
+            INSERT INTO aml_processed_events (tenant_id, event_id)
+            VALUES ($1, $2)
+            ON CONFLICT (tenant_id, event_id) DO NOTHING
+            RETURNING event_id
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(event_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+
+        if claimed.is_none() {
+            tx.rollback().await?;
+            return Ok(false);
+        }
+
+        sqlx::query(
+            r#"
+            INSERT INTO aml_assessments (
+                assessment_id,
+                tenant_id,
+                event_id,
+                transaction_id,
+                model,
+                jurisdiction,
+                suspicious,
+                severity,
+                category,
+                description,
+                rationale,
+                confidence,
+                evidence_refs,
+                regulatory_evidence,
+                limitations,
+                transaction_data,
+                created_at
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16, $17
+            )
+            "#,
+        )
+        .bind(assessment.id)
+        .bind(&assessment.tenant_id)
+        .bind(&assessment.event_id)
+        .bind(assessment.transaction_id)
+        .bind(&assessment.model)
+        .bind(&assessment.jurisdiction)
+        .bind(assessment.suspicious)
+        .bind(&assessment.severity)
+        .bind(&assessment.category)
+        .bind(&assessment.description)
+        .bind(&assessment.rationale)
+        .bind(assessment.confidence)
+        .bind(&assessment.evidence_refs)
+        .bind(&assessment.regulatory_evidence)
+        .bind(&assessment.limitations)
+        .bind(&assessment.transaction_data)
+        .bind(assessment.created_at)
+        .execute(&mut *tx)
+        .await
+        .context("No se pudo persistir la evaluación AML")?;
+
+        if let Some(alert) = assessment.alert.as_ref() {
+            sqlx::query(
+                r#"
+                INSERT INTO aml_alerts (
+                    id,
+                    tenant_id,
+                    event_id,
+                    transaction_id,
+                    rule_code,
+                    severity,
+                    description,
+                    details,
+                    status,
+                    created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9)
+                ON CONFLICT (tenant_id, event_id, rule_code) DO NOTHING
+                "#,
+            )
+            .bind(alert.id)
+            .bind(&alert.tenant_id)
+            .bind(&alert.event_id)
+            .bind(alert.transaction_id)
+            .bind(&alert.rule_code)
+            .bind(&alert.severity)
+            .bind(&alert.description)
+            .bind(&alert.details)
+            .bind(alert.created_at)
+            .execute(&mut *tx)
+            .await
+            .context("No se pudo persistir la alerta AML")?;
+        }
+
+        tx.commit().await?;
+        Ok(true)
+    }
+}
+
+
+fn validate_assessment(
+    tenant_id: &str,
+    event_id: &str,
+    assessment: &AmlAssessment,
+) -> Result<()> {
+    if assessment.tenant_id != tenant_id || assessment.event_id != event_id {
+        bail!("La evaluación AML no coincide con el tenant_id/event_id del evento");
+    }
+
+    if assessment.suspicious != assessment.alert.is_some() {
+        bail!("Una evaluación sospechosa debe tener exactamente una alerta; una no sospechosa no debe tenerla");
+    }
+
+    if let Some(alert) = assessment.alert.as_ref() {
+        if alert.tenant_id != tenant_id
+            || alert.event_id != event_id
+            || alert.transaction_id != assessment.transaction_id
+        {
+            bail!("La alerta AML no coincide con la identidad de la evaluación");
+        }
+
+        if alert.severity != assessment.severity
+            || alert.description != assessment.description
+        {
+            bail!("La severidad o descripción de la alerta no coincide con la evaluación");
+        }
+
+        if alert.rule_code.trim().is_empty() {
+            bail!("La alerta AML debe incluir rule_code");
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_assessment;
+    use crate::domain::{AmlAlert, AmlAssessment};
+    use chrono::Utc;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    fn assessment(suspicious: bool) -> AmlAssessment {
+        let tenant_id = "tenant-test".to_string();
+        let event_id = Uuid::new_v4().to_string();
+        let transaction_id = Uuid::new_v4();
+        let created_at = Utc::now();
+
+        let alert = suspicious.then(|| AmlAlert {
+            id: Uuid::new_v4(),
+            tenant_id: tenant_id.clone(),
+            event_id: event_id.clone(),
+            transaction_id,
+            rule_code: "llm_regulatory_assessment".to_string(),
+            severity: "high".to_string(),
+            description: "Revisión contextual".to_string(),
+            details: json!({}),
+            created_at,
+        });
+
+        AmlAssessment {
+            id: Uuid::new_v4(),
+            tenant_id,
+            event_id,
+            transaction_id,
+            model: "test-model".to_string(),
+            jurisdiction: "CR".to_string(),
+            suspicious,
+            severity: "high".to_string(),
+            category: "contextual_review".to_string(),
+            description: "Revisión contextual".to_string(),
+            rationale: "Justificación de prueba".to_string(),
+            confidence: Some(0.8),
+            evidence_refs: json!([]),
+            regulatory_evidence: json!([]),
+            limitations: json!([]),
+            transaction_data: json!({}),
+            created_at,
+            alert,
+        }
+    }
+
+    #[test]
+    fn accepts_non_suspicious_assessment_without_alert() {
+        let item = assessment(false);
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_ok());
+    }
+
+    #[test]
+    fn accepts_suspicious_assessment_with_matching_alert() {
+        let item = assessment(true);
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_ok());
+    }
+
+    #[test]
+    fn rejects_suspicious_assessment_without_alert() {
+        let mut item = assessment(true);
+        item.alert = None;
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_err());
+    }
+
+    #[test]
+    fn rejects_non_suspicious_assessment_with_alert() {
+        let mut item = assessment(false);
+        item.alert = Some(AmlAlert {
+            id: Uuid::new_v4(),
+            tenant_id: item.tenant_id.clone(),
+            event_id: item.event_id.clone(),
+            transaction_id: item.transaction_id,
+            rule_code: "llm_regulatory_assessment".to_string(),
+            severity: item.severity.clone(),
+            description: item.description.clone(),
+            details: json!({}),
+            created_at: Utc::now(),
+        });
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_err());
+    }
+
+    #[test]
+    fn rejects_alert_with_different_transaction_id() {
+        let mut item = assessment(true);
+        item.alert.as_mut().unwrap().transaction_id = Uuid::new_v4();
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_err());
+    }
+
+    #[test]
+    fn rejects_alert_with_different_severity() {
+        let mut item = assessment(true);
+        item.alert.as_mut().unwrap().severity = "critical".to_string();
+        assert!(validate_assessment(&item.tenant_id, &item.event_id, &item).is_err());
+    }
+}

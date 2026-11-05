@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aml-service
+  namespace: financial-platform
+  labels:
+    app: aml-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aml-service
+  template:
+    metadata:
+      labels:
+        app: aml-service
+    spec:
+      containers:
+        - name: aml-service
+          image: aml-service:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 3003
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres:5432/financial"
+            - name: MAX_DB_CONNECTIONS
+              value: "5"
+            - name: KAFKA_BROKERS
+              value: "redpanda:9092"
+            - name: SCHEMA_REGISTRY_URL
+              value: "http://redpanda:8081"
+            - name: AML_KAFKA_TOPIC
+              value: "financial-transactions"
+            - name: AML_CONSUMER_GROUP
+              value: "aml-group"
+            - name: AML_PORT
+              value: "3003"
+            - name: AML_HIGH_VALUE_THRESHOLD
+              value: "10000"
+            - name: AML_STRUCTURING_MIN_TRANSACTIONS
+              value: "5"
+            - name: AML_STRUCTURING_MIN_TOTAL
+              value: "10000"
+            - name: RUST_LOG
+              value: "info"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aml-service
+  namespace: financial-platform
+spec:
+  type: ClusterIP
+  selector:
+    app: aml-service
+  ports:
+    - name: http
+      port: 3003
+      targetPort: http

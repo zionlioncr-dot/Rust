@@ -7,6 +7,8 @@ pub struct Config {
     pub audit_service_url: String,
 
     pub anti_fraud_service_url: String,
+    pub ai_agent_url: String,
+    pub ai_agent_internal_token: String,
 
     pub jwt_secret: String,
 
@@ -33,6 +35,11 @@ impl Config {
 
             anti_fraud_service_url: env::var("ANTI_FRAUD_SERVICE_URL")
                 .unwrap_or_else(|_| "http://localhost:3002".to_string()),
+
+            ai_agent_url: env::var("AI_AGENT_URL")
+                .unwrap_or_else(|_| "http://ai-agent:8001".to_string()),
+
+            ai_agent_internal_token: env::var("AI_AGENT_INTERNAL_TOKEN").unwrap_or_default(),
 
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "development-secret-change-me".to_string()),

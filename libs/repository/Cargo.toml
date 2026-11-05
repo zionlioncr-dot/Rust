@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 domain = { path = "../domain" }
+telemetry = { path = "../telemetry" }
 
 tokio.workspace = true
 sqlx.workspace = true

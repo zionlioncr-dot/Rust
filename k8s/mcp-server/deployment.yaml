@@ -36,6 +36,11 @@ spec:
                 secretKeyRef:
                   name: postgres-secret
                   key: POSTGRES_DB
+            - name: MCP_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-internal
+                  key: MCP_INTERNAL_TOKEN
             - name: OLLAMA_BASE_URL
               value: "http://ollama:11434"
             - name: OLLAMA_EMBEDDING_MODEL

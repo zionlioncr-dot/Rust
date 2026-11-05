@@ -23,7 +23,7 @@ use crate::{
 impl FinancialTransactionRepository for PostgresRepository {
     async fn create_with_outbox(
         &self,
-        transaction: FinancialTransaction,
+        mut transaction: FinancialTransaction,
         outbox_event: OutboxEvent,
     ) -> Result<FinancialTransaction> {
         ensure!(
@@ -42,6 +42,7 @@ impl FinancialTransactionRepository for PostgresRepository {
             transaction.amount > rust_decimal::Decimal::ZERO,
             "Transaction amount must be positive"
         );
+        transaction.currency = transaction.currency.trim().to_ascii_uppercase();
         ensure!(
             transaction.currency.len() == 3
                 && transaction
@@ -50,6 +51,32 @@ impl FinancialTransactionRepository for PostgresRepository {
                     .all(|b| b.is_ascii_alphabetic()),
             "currency must be a three-letter code"
         );
+        let exchange_rate = transaction
+            .exchange_rate
+            .ok_or_else(|| anyhow::anyhow!("exchange_rate is required for new transactions"))?;
+        ensure!(
+            exchange_rate > rust_decimal::Decimal::ZERO,
+            "exchange_rate must be positive"
+        );
+
+        let base_currency = transaction
+            .base_currency
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("base_currency is required for new transactions"))?
+            .trim()
+            .to_ascii_uppercase();
+        ensure!(
+            base_currency.len() == 3 && base_currency.bytes().all(|b| b.is_ascii_alphabetic()),
+            "base_currency must be a three-letter code"
+        );
+        if transaction.currency == base_currency {
+            ensure!(
+                exchange_rate == rust_decimal::Decimal::ONE,
+                "exchange_rate must equal 1 when currency equals base_currency"
+            );
+        }
+        transaction.exchange_rate = Some(exchange_rate);
+        transaction.base_currency = Some(base_currency.clone());
         ensure!(
             !transaction.source_account_id.trim().is_empty(),
             "source_account_id is required"
@@ -62,17 +89,33 @@ impl FinancialTransactionRepository for PostgresRepository {
             !transaction.country_code.trim().is_empty(),
             "country_code is required"
         );
+        for (field, country) in [
+            ("source_country", transaction.source_country.as_deref()),
+            (
+                "destination_country",
+                transaction.destination_country.as_deref(),
+            ),
+        ] {
+            if let Some(country) = country {
+                ensure!(
+                    country.len() == 2 && country.bytes().all(|b| b.is_ascii_uppercase()),
+                    "{field} must be a two-letter uppercase ISO country code"
+                );
+            }
+        }
         ensure!(
             !transaction.channel.trim().is_empty(),
             "channel is required"
         );
 
+        let (trace_id, traceparent) = telemetry::tracing::current_trace_context();
+
         let event_payload = EventEnvelope {
             metadata: EventMetadata {
                 event_id: outbox_event.id,
                 correlation_id: transaction.id,
-                trace_id: String::new(),
-                traceparent: None,
+                trace_id: trace_id.unwrap_or_default(),
+                traceparent: traceparent.clone(),
                 source: "financial-transaction-service".to_string(),
                 timestamp: Utc::now(),
                 tenant_id: transaction.tenant_id.clone(),
@@ -96,8 +139,12 @@ impl FinancialTransactionRepository for PostgresRepository {
                 external_transaction_id,
                 amount,
                 currency,
+                exchange_rate,
+                base_currency,
                 source_account_id,
                 destination_account_id,
+                source_country,
+                destination_country,
                 counterparty,
                 country_code,
                 channel,
@@ -106,8 +153,8 @@ impl FinancialTransactionRepository for PostgresRepository {
                 created_at
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7,
-                $8, $9, $10, $11, $12, $13
+                $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16, $17
             )
             "#,
         )
@@ -116,8 +163,12 @@ impl FinancialTransactionRepository for PostgresRepository {
         .bind(&transaction.external_transaction_id)
         .bind(transaction.amount)
         .bind(&transaction.currency)
+        .bind(exchange_rate)
+        .bind(&base_currency)
         .bind(&transaction.source_account_id)
         .bind(&transaction.destination_account_id)
+        .bind(&transaction.source_country)
+        .bind(&transaction.destination_country)
         .bind(&transaction.counterparty)
         .bind(&transaction.country_code)
         .bind(&transaction.channel)
@@ -166,8 +217,12 @@ impl FinancialTransactionRepository for PostgresRepository {
                 external_transaction_id,
                 amount,
                 currency,
+                exchange_rate,
+                base_currency,
                 source_account_id,
                 destination_account_id,
+                source_country,
+                destination_country,
                 counterparty,
                 country_code,
                 channel,

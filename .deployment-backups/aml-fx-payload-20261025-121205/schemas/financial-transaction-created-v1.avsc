@@ -1,0 +1,89 @@
+{
+  "type": "record",
+  "name": "FinancialTransactionCreated",
+  "namespace": "financial.aml.events",
+  "fields": [
+    {
+      "name": "event_type",
+      "type": "string"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "record",
+        "name": "EventMetadata",
+        "fields": [
+          { "name": "correlation_id", "type": "string" },
+          { "name": "event_id", "type": "string" },
+          { "name": "source", "type": "string" },
+          { "name": "timestamp", "type": "string" },
+          { "name": "trace_id", "type": "string" },
+          {
+            "name": "traceparent",
+            "type": ["null", "string"],
+            "default": null
+          },
+          { "name": "tenant_id", "type": "string" }
+        ]
+      }
+    },
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "FinancialTransactionPayload",
+        "fields": [
+          {
+            "name": "transaction",
+            "type": {
+              "type": "record",
+              "name": "FinancialTransaction",
+              "fields": [
+                { "name": "id", "type": "string" },
+                { "name": "tenant_id", "type": "string" },
+                {
+                  "name": "external_transaction_id",
+                  "type": ["null", "string"],
+                  "default": null
+                },
+                {
+                  "name": "amount",
+                  "type": "string"
+                },
+                { "name": "currency", "type": "string" },
+                { "name": "source_account_id", "type": "string" },
+                { "name": "destination_account_id", "type": "string" },
+                {
+                  "name": "counterparty",
+                  "type": ["null", "string"],
+                  "default": null
+                },
+                { "name": "country_code", "type": "string" },
+                { "name": "channel", "type": "string" },
+                {
+                  "name": "client_ip",
+                  "type": ["null", "string"],
+                  "default": null
+                },
+                { "name": "occurred_at", "type": "string" },
+                { "name": "created_at", "type": "string" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "version",
+      "type": {
+        "type": "record",
+        "name": "EventVersion",
+        "fields": [
+          { "name": "major", "type": "int" },
+          { "name": "minor", "type": "int" },
+          { "name": "patch", "type": "int" }
+        ]
+      }
+    }
+  ]
+}

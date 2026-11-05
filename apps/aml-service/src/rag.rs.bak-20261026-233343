@@ -1,0 +1,390 @@
+use crate::{
+    config::AmlConfig,
+    domain::{AmlAlert, AmlAssessment},
+};
+use anyhow::{bail, Context, Result};
+use chrono::Utc;
+use domain::financial_transaction::FinancialTransaction;
+use repository_lib::{RagRepository, RagSearchResult};
+use reqwest::Client;
+use serde::Deserialize;
+use serde_json::{json, Value};
+use std::time::Duration;
+use uuid::Uuid;
+
+const EMBEDDING_DIMENSION: usize = 768;
+
+#[derive(Clone)]
+pub struct RegulatoryRag {
+    repository: RagRepository,
+    client: Client,
+    embedding_url: String,
+    embedding_model: String,
+    chat_url: String,
+    chat_model: String,
+}
+
+#[derive(Deserialize)]
+struct EmbedResponse {
+    embeddings: Vec<Vec<f32>>,
+}
+
+#[derive(Deserialize)]
+struct ChatResponse {
+    message: ChatMessage,
+}
+
+#[derive(Deserialize)]
+struct ChatMessage {
+    content: String,
+}
+
+impl RegulatoryRag {
+    pub fn new(config: &AmlConfig, repository: RagRepository) -> Result<Self> {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(180))
+            .build()
+            .context("No se pudo crear el cliente HTTP de Ollama")?;
+
+        let base_url = config.app.ollama_base_url.trim_end_matches('/');
+
+        Ok(Self {
+            repository,
+            client,
+            embedding_url: format!("{base_url}/api/embed"),
+            embedding_model: config.app.ollama_embedding_model.clone(),
+            chat_url: config.ollama_chat_url.clone(),
+            chat_model: config.ollama_chat_model.clone(),
+        })
+    }
+
+    pub async fn assess(
+        &self,
+        tenant_id: &str,
+        event_id: &str,
+        jurisdiction: &str,
+        transaction: &FinancialTransaction,
+    ) -> Result<AmlAssessment> {
+        let query = format!(
+            "Evaluación contextual de prevención de legitimación de capitales. \
+             Jurisdicción: {}. Transacción: {}",
+            jurisdiction,
+            serde_json::to_string(transaction)?
+        );
+
+        let embedding = self.embed(&query).await?;
+
+        let evidence = self
+            .repository
+            .search_regulatory(
+                &embedding,
+                &jurisdiction,
+                transaction.occurred_at.date_naive(),
+                5,
+            )
+            .await
+            .context("No se pudo recuperar evidencia regulatoria verificada")?;
+
+        let evidence_json = evidence
+            .iter()
+            .take(4)
+            .map(evidence_to_json)
+            .collect::<Vec<_>>();
+
+        let system_prompt = r#"
+Eres un analista de prevención de legitimación de capitales.
+Evalúa la transacción usando sus datos y la evidencia regulatoria proporcionada.
+No inventes leyes, artículos, citas ni hechos.
+No apliques umbrales monetarios fijos ni reglas deterministas.
+Distingue los hechos observados de las inferencias.
+Si no hay evidencia suficiente para concluir que existe sospecha, responde suspicious=false.
+No confundas la ausencia de documentos recuperados con una infracción.
+Devuelve únicamente un objeto JSON con estos campos:
+{
+  "suspicious": boolean,
+  "severity": "low" | "medium" | "high" | "critical",
+  "category": string,
+  "description": string,
+  "rationale": string,
+  "confidence": number,
+  "evidence_refs": [string],
+  "limitations": [string]
+}
+evidence_refs debe contener exclusivamente los document_id presentes en la evidencia recibida.
+Si no hay evidencia suficiente, indícalo en limitations.
+"#;
+
+        let user_prompt = json!({
+            "tenant_id": tenant_id,
+            "event_id": event_id,
+            "jurisdiction": jurisdiction,
+            "transaction_date": transaction.occurred_at.date_naive().to_string(),
+            "transaction": transaction,
+            "verified_regulatory_evidence": evidence_json
+        });
+
+        let response = self
+            .client
+            .post(&self.chat_url)
+            .json(&json!({
+                "model": self.chat_model,
+                "stream": false,
+                "format": {
+                    "type": "object",
+                    "properties": {
+                        "suspicious": {"type": "boolean"},
+                        "severity": {
+                            "type": "string",
+                            "enum": ["low", "medium", "high", "critical"]
+                        },
+                        "category": {"type": "string"},
+                        "description": {"type": "string"},
+                        "rationale": {"type": "string"},
+                        "confidence": {"type": "number"},
+                        "evidence_refs": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "limitations": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": [
+                        "suspicious",
+                        "severity",
+                        "category",
+                        "description",
+                        "rationale",
+                        "confidence",
+                        "evidence_refs",
+                        "limitations"
+                    ],
+                    "additionalProperties": false
+                },
+                "think": false,
+                "options": {
+                    "temperature": 0,
+                    "num_ctx": 4096,
+                    "num_predict": 512
+                },
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt.to_string()}
+                ]
+            }))
+            .send()
+            .await
+            .context("No se pudo invocar Ollama para el análisis AML")?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            bail!("Ollama respondió HTTP {status}: {body}");
+        }
+
+        let envelope: ChatResponse =
+            serde_json::from_str(&body).context("Respuesta de chat de Ollama inválida")?;
+
+        let assessment: Value = serde_json::from_str(&envelope.message.content)
+            .context("El modelo no devolvió un objeto JSON válido")?;
+
+        let suspicious = assessment
+            .get("suspicious")
+            .and_then(Value::as_bool)
+            .context("El análisis AML no contiene suspicious booleano")?;
+
+        let severity = assessment
+            .get("severity")
+            .and_then(Value::as_str)
+            .unwrap_or("medium")
+            .to_ascii_lowercase();
+
+        let severity = match severity.as_str() {
+            "low" | "medium" | "high" | "critical" => severity,
+            _ => "medium".to_string(),
+        };
+
+        let description = assessment
+            .get("description")
+            .and_then(Value::as_str)
+            .unwrap_or("Evaluación contextual AML completada")
+            .trim()
+            .to_string();
+
+        let category = assessment
+            .get("category")
+            .and_then(Value::as_str)
+            .map(normalize_category)
+            .unwrap_or_else(|| "contextual_review".to_string());
+
+        let rationale = assessment
+            .get("rationale")
+            .and_then(Value::as_str)
+            .unwrap_or("El modelo no proporcionó una justificación detallada.")
+            .trim()
+            .to_string();
+
+        let confidence = assessment
+            .get("confidence")
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite())
+            .map(|value| value.clamp(0.0, 1.0));
+
+        // Las referencias se restringen a los documentos efectivamente
+        // recuperados por el repositorio RAG.
+        let valid_ids = evidence
+            .iter()
+            .map(|item| item.id.to_string())
+            .collect::<Vec<_>>();
+
+        let evidence_refs = assessment
+            .get("evidence_refs")
+            .and_then(Value::as_array)
+            .map(|items| {
+                items
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .filter(|id| valid_ids.iter().any(|valid| valid == id))
+                    .map(|id| Value::String(id.to_string()))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        let limitations = assessment
+            .get("limitations")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        let regulatory_evidence = Value::Array(evidence_json.clone());
+        let transaction_data = serde_json::to_value(transaction)?;
+        let created_at = Utc::now();
+        let assessment_id = Uuid::new_v4();
+
+        // Las evaluaciones negativas también se conservan para auditoría.
+        // No se crea una alerta si suspicious=false.
+        let alert = if suspicious {
+            let details = json!({
+                "analysis_type": "ollama_regulatory_rag",
+                "model": self.chat_model,
+                "jurisdiction": jurisdiction,
+                "category": category,
+                "rationale": rationale,
+                "confidence": confidence,
+                "evidence_refs": evidence_refs,
+                "regulatory_evidence": regulatory_evidence,
+                "limitations": limitations,
+                "transaction": transaction_data
+            });
+
+            Some(AmlAlert {
+                id: Uuid::new_v4(),
+                tenant_id: tenant_id.to_string(),
+                event_id: event_id.to_string(),
+                transaction_id: transaction.id,
+                rule_code: "llm_regulatory_assessment".to_string(),
+                severity: severity.clone(),
+                description: description.clone(),
+                details,
+                created_at,
+            })
+        } else {
+            None
+        };
+
+        Ok(AmlAssessment {
+            id: assessment_id,
+            tenant_id: tenant_id.to_string(),
+            event_id: event_id.to_string(),
+            transaction_id: transaction.id,
+            model: self.chat_model.clone(),
+            jurisdiction: jurisdiction.to_string(),
+            suspicious,
+            severity,
+            category,
+            description,
+            rationale,
+            confidence,
+            evidence_refs: Value::Array(evidence_refs),
+            regulatory_evidence,
+            limitations: Value::Array(limitations),
+            transaction_data,
+            created_at,
+            alert,
+        })
+    }
+
+    async fn embed(&self, input: &str) -> Result<Vec<f32>> {
+        let response = self
+            .client
+            .post(&self.embedding_url)
+            .json(&json!({
+                "model": self.embedding_model,
+                "input": input
+            }))
+            .send()
+            .await
+            .context("No se pudo solicitar el embedding a Ollama")?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            bail!("Ollama embeddings respondió HTTP {status}: {body}");
+        }
+
+        let parsed: EmbedResponse =
+            serde_json::from_str(&body).context("Respuesta de embeddings inválida")?;
+
+        let embedding = parsed
+            .embeddings
+            .into_iter()
+            .next()
+            .context("Ollama devolvió una lista de embeddings vacía")?;
+
+        if embedding.len() != EMBEDDING_DIMENSION {
+            bail!(
+                "Dimensión de embedding incorrecta: esperadas {}, recibidas {}",
+                EMBEDDING_DIMENSION,
+                embedding.len()
+            );
+        }
+
+        Ok(embedding)
+    }
+}
+
+fn evidence_to_json(item: &RagSearchResult) -> Value {
+    let excerpt = item.content.chars().take(900).collect::<String>();
+    let excerpt_truncated = item.content.chars().count() > 900;
+
+    json!({
+        "document_id": item.id.to_string(),
+        "source": item.source,
+        "metadata": item.metadata,
+        "similarity": item.similarity,
+        "excerpt": excerpt,
+        "excerpt_truncated": excerpt_truncated
+    })
+}
+
+fn normalize_category(value: &str) -> String {
+    let normalized = value
+        .trim()
+        .to_ascii_lowercase()
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .collect::<String>()
+        .split('_')
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("_");
+
+    if normalized.is_empty() {
+        "contextual_review".to_string()
+    } else {
+        normalized.chars().take(64).collect()
+    }
+}

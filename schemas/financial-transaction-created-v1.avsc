@@ -13,17 +13,38 @@
         "type": "record",
         "name": "EventMetadata",
         "fields": [
-          { "name": "correlation_id", "type": "string" },
-          { "name": "event_id", "type": "string" },
-          { "name": "source", "type": "string" },
-          { "name": "timestamp", "type": "string" },
-          { "name": "trace_id", "type": "string" },
+          {
+            "name": "correlation_id",
+            "type": "string"
+          },
+          {
+            "name": "event_id",
+            "type": "string"
+          },
+          {
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "string"
+          },
+          {
+            "name": "trace_id",
+            "type": "string"
+          },
           {
             "name": "traceparent",
-            "type": ["null", "string"],
+            "type": [
+              "null",
+              "string"
+            ],
             "default": null
           },
-          { "name": "tenant_id", "type": "string" }
+          {
+            "name": "tenant_id",
+            "type": "string"
+          }
         ]
       }
     },
@@ -39,34 +60,96 @@
               "type": "record",
               "name": "FinancialTransaction",
               "fields": [
-                { "name": "id", "type": "string" },
-                { "name": "tenant_id", "type": "string" },
+                {
+                  "name": "id",
+                  "type": "string"
+                },
+                {
+                  "name": "tenant_id",
+                  "type": "string"
+                },
                 {
                   "name": "external_transaction_id",
-                  "type": ["null", "string"],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
                   "default": null
                 },
                 {
                   "name": "amount",
                   "type": "string"
                 },
-                { "name": "currency", "type": "string" },
-                { "name": "source_account_id", "type": "string" },
-                { "name": "destination_account_id", "type": "string" },
+                {
+                  "name": "currency",
+                  "type": "string"
+                },
+                {
+                  "name": "exchange_rate",
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "default": null
+                },
+                {
+                  "name": "base_currency",
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "default": null
+                },
+                {
+                  "name": "source_account_id",
+                  "type": "string"
+                },
+                {
+                  "name": "destination_account_id",
+                  "type": "string"
+                },
+                {
+                  "name": "source_country",
+                  "type": ["null", "string"],
+                  "default": null
+                },
+                {
+                  "name": "destination_country",
+                  "type": ["null", "string"],
+                  "default": null
+                },
                 {
                   "name": "counterparty",
-                  "type": ["null", "string"],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
                   "default": null
                 },
-                { "name": "country_code", "type": "string" },
-                { "name": "channel", "type": "string" },
+                {
+                  "name": "country_code",
+                  "type": "string"
+                },
+                {
+                  "name": "channel",
+                  "type": "string"
+                },
                 {
                   "name": "client_ip",
-                  "type": ["null", "string"],
+                  "type": [
+                    "null",
+                    "string"
+                  ],
                   "default": null
                 },
-                { "name": "occurred_at", "type": "string" },
-                { "name": "created_at", "type": "string" }
+                {
+                  "name": "occurred_at",
+                  "type": "string"
+                },
+                {
+                  "name": "created_at",
+                  "type": "string"
+                }
               ]
             }
           }
@@ -79,9 +162,18 @@
         "type": "record",
         "name": "EventVersion",
         "fields": [
-          { "name": "major", "type": "int" },
-          { "name": "minor", "type": "int" },
-          { "name": "patch", "type": "int" }
+          {
+            "name": "major",
+            "type": "int"
+          },
+          {
+            "name": "minor",
+            "type": "int"
+          },
+          {
+            "name": "patch",
+            "type": "int"
+          }
         ]
       }
     }

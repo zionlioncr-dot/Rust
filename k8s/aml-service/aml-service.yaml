@@ -31,18 +31,20 @@ spec:
               value: "redpanda:9092"
             - name: SCHEMA_REGISTRY_URL
               value: "http://redpanda:8081"
+            - name: AML_PORT
+              value: "3003"
             - name: AML_KAFKA_TOPIC
               value: "financial-transactions"
             - name: AML_CONSUMER_GROUP
               value: "aml-group"
-            - name: AML_PORT
-              value: "3003"
-            - name: AML_HIGH_VALUE_THRESHOLD
-              value: "10000"
-            - name: AML_STRUCTURING_MIN_TRANSACTIONS
-              value: "5"
-            - name: AML_STRUCTURING_MIN_TOTAL
-              value: "10000"
+            - name: OLLAMA_BASE_URL
+              value: "http://ollama:11434"
+            - name: OLLAMA_EMBEDDING_MODEL
+              value: "nomic-embed-text:latest"
+            - name: OLLAMA_CHAT_URL
+              value: "http://ollama:11434/api/chat"
+            - name: OLLAMA_MODEL
+              value: "qwen3:0.6b"
             - name: RUST_LOG
               value: "info"
           resources:

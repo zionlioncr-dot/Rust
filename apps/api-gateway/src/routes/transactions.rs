@@ -14,12 +14,51 @@ pub struct CreateTransactionRequest {
     pub external_transaction_id: Option<String>,
     pub amount: String,
     pub currency: String,
+    /// Decimal string: units of base_currency per unit of currency.
+    pub exchange_rate: String,
+    /// Three-letter reporting currency configured by the originating bank.
+    pub base_currency: String,
     pub source_account_id: String,
     pub destination_account_id: String,
+    pub source_country: String,
+    pub destination_country: String,
     pub counterparty: Option<String>,
     pub country_code: String,
     pub channel: String,
     pub client_ip: Option<String>,
+}
+
+fn parse_fx(
+    exchange_rate: &str,
+    base_currency: &str,
+    currency: &str,
+) -> Result<(Decimal, String), &'static str> {
+    let rate = Decimal::from_str(exchange_rate.trim())
+        .map_err(|_| "exchange_rate must be a valid positive decimal")?;
+
+    if rate <= Decimal::ZERO {
+        return Err("exchange_rate must be positive");
+    }
+
+    let base = base_currency.trim().to_ascii_uppercase();
+
+    if base.len() != 3 || !base.bytes().all(|b| b.is_ascii_alphabetic()) {
+        return Err("base_currency must be a three-letter alphabetic code");
+    }
+
+    if currency == base && rate != Decimal::ONE {
+        return Err("exchange_rate must equal 1 when currency equals base_currency");
+    }
+
+    Ok((rate, base))
+}
+
+fn bad_request(message: &'static str) -> axum::response::Response {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(serde_json::json!({ "error": message })),
+    )
+        .into_response()
 }
 
 pub async fn create_transaction(
@@ -39,36 +78,38 @@ pub async fn create_transaction(
 
     let amount = match Decimal::from_str(input.amount.trim()) {
         Ok(value) if value > Decimal::ZERO => value,
-        _ => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({
-                    "error": "amount must be a valid positive decimal"
-                })),
-            )
-                .into_response();
-        }
+        _ => return bad_request("amount must be a valid positive decimal"),
     };
 
     let currency = input.currency.trim().to_ascii_uppercase();
     let country_code = input.country_code.trim().to_ascii_uppercase();
     let source_account_id = input.source_account_id.trim().to_string();
     let destination_account_id = input.destination_account_id.trim().to_string();
+    let source_country = input.source_country.trim().to_ascii_uppercase();
+    let destination_country = input.destination_country.trim().to_ascii_uppercase();
     let channel = input.channel.trim().to_string();
 
     if currency.len() != 3
+        || !currency.bytes().all(|b| b.is_ascii_alphabetic())
         || country_code.is_empty()
         || source_account_id.is_empty()
         || destination_account_id.is_empty()
         || channel.is_empty()
+        || source_country.len() != 2
+        || !source_country.bytes().all(|b| b.is_ascii_uppercase())
+        || destination_country.len() != 2
+        || !destination_country.bytes().all(|b| b.is_ascii_uppercase())
     {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "error": "currency must have 3 letters; country_code, accounts and channel are required"
-            })),
-        ).into_response();
+        return bad_request(
+            "currency must have 3 letters; country_code, accounts, channel and valid two-letter source_country/destination_country are required",
+        );
     }
+
+    let (exchange_rate, base_currency) =
+        match parse_fx(&input.exchange_rate, &input.base_currency, &currency) {
+            Ok(values) => values,
+            Err(message) => return bad_request(message),
+        };
 
     let now = Utc::now();
     let transaction_id = Uuid::new_v4();
@@ -79,8 +120,12 @@ pub async fn create_transaction(
         external_transaction_id: input.external_transaction_id,
         amount,
         currency,
+        exchange_rate: Some(exchange_rate),
+        base_currency: Some(base_currency),
         source_account_id,
         destination_account_id,
+        source_country: Some(source_country),
+        destination_country: Some(destination_country),
         counterparty: input.counterparty,
         country_code,
         channel,
@@ -121,5 +166,40 @@ pub async fn create_transaction(
             )
                 .into_response()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_fx;
+    use rust_decimal::Decimal;
+    use std::str::FromStr;
+
+    #[test]
+    fn accepts_positive_rate_and_normalizes_base_currency() {
+        let (rate, currency) = parse_fx(" 1.25 ", " crc ", "USD").unwrap();
+
+        assert_eq!(rate, Decimal::from_str("1.25").unwrap());
+        assert_eq!(currency, "CRC");
+    }
+
+    #[test]
+    fn rejects_missing_or_invalid_rate() {
+        assert!(parse_fx("", "CRC", "USD").is_err());
+        assert!(parse_fx("abc", "CRC", "USD").is_err());
+        assert!(parse_fx("0", "CRC", "USD").is_err());
+        assert!(parse_fx("-1", "CRC", "USD").is_err());
+    }
+
+    #[test]
+    fn rejects_invalid_base_currency() {
+        assert!(parse_fx("1.25", "US", "CRC").is_err());
+        assert!(parse_fx("1.25", "U$D", "CRC").is_err());
+    }
+
+    #[test]
+    fn same_currency_requires_rate_one() {
+        assert!(parse_fx("1.25", "CRC", "CRC").is_err());
+        assert_eq!(parse_fx("1", " crc ", "CRC").unwrap().0, Decimal::ONE);
     }
 }

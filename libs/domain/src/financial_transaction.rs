@@ -15,10 +15,25 @@ pub struct FinancialTransaction {
     pub external_transaction_id: Option<String>,
 
     pub amount: Decimal,
+    /// Currency in which `amount` is denominated.
     pub currency: String,
+    /// Units of base_currency per one unit of currency, supplied by the bank.
+    #[serde(default)]
+    pub exchange_rate: Option<Decimal>,
+    /// Tenant/bank reporting currency used for AML comparisons.
+    #[serde(default)]
+    pub base_currency: Option<String>,
 
     pub source_account_id: String,
     pub destination_account_id: String,
+
+    /// ISO 3166-1 alpha-2 country where the transaction originated.
+    #[serde(default)]
+    pub source_country: Option<String>,
+
+    /// ISO 3166-1 alpha-2 destination country of the transaction.
+    #[serde(default)]
+    pub destination_country: Option<String>,
 
     pub counterparty: Option<String>,
     pub country_code: String,

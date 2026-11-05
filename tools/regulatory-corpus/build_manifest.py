@@ -56,9 +56,21 @@ def clean_line(line, code):
     line = line.rstrip()
 
     # Reparaciones conservadoras de palabras partidas por la extracción PDF.
+    line = re.sub(r"\bd\s+e\b", "de", line, flags=re.IGNORECASE)
+    line = re.sub(r"\bp\s+ara\b", "para", line, flags=re.IGNORECASE)
     # No unir fragmentos genéricos como "d e la": podrían alterar el sentido.
     split_words = {
+        "cl iente": "cliente",
+        "con structoras": "constructoras",
+        "for mulario": "formulario",
+        "moni toreo": "monitoreo",
+        "tr ansaccional": "transaccional",
+        "tr ansacciones": "transacciones",
+        "tra nsaccional": "transaccional",
         "opera ciones": "operaciones",
+        "operac iones": "operaciones",
+        "op eraciones": "operaciones",
+        "evaluaci ones": "evaluaciones",
         "transaccion es": "transacciones",
         "transac ciones": "transacciones",
         "financie ro": "financiero",
@@ -66,6 +78,14 @@ def clean_line(line, code):
         "financiam iento": "financiamiento",
         "financia miento": "financiamiento",
         "capita les": "capitales",
+        "ca pitales": "capitales",
+        "SUG EF": "SUGEF",
+        "j urídica": "jurídica",
+        "inscr ipción": "inscripción",
+        "med io": "medio",
+        "re alizará": "realizará",
+        "s er": "ser",
+        "periód ica": "periódica",
         "obligad os": "obligados",
         "t erroristas": "terroristas",
         "super visión": "supervisión",
@@ -89,14 +109,31 @@ def clean_line(line, code):
         "infor mación": "información",
         "ordena miento": "ordenamiento",
         "super visados": "supervisados",
+        "sup ervisados": "supervisados",
+        "financ ieras": "financieras",
+        "real izan": "realizan",
+        "transac ción": "transacción",
+        "real izadas": "realizadas",
         "refor ma": "reforma",
+        "comercial es": "comerciales",
+        "ejecu tar": "ejecutar",
+        "d el": "del",
+        "obl igado": "obligado",
+        "identificac ión": "identificación",
+        "informac ión": "información",
+        "des critas": "descritas",
+        "or igen": "origen",
+        "colaborad or": "colaborador",
+        "li derada": "liderada",
+        "est ablecer": "establecer",
+        "superintendenc ia": "superintendencia",
 
     }
 
     for broken, fixed in split_words.items():
         line = re.sub(
             re.escape(broken),
-            lambda m: fixed.upper() if m.group(0).isupper() else fixed,
+            lambda m: fixed.upper() if m.group(0).isupper() else fixed.capitalize() if m.group(0)[:1].isupper() else fixed,
             line,
             flags=re.IGNORECASE,
         )

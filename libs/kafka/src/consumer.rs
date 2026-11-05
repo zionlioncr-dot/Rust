@@ -2,7 +2,7 @@ use anyhow::Result;
 use apache_avro::types::Value as AvroValue;
 use futures_util::StreamExt;
 use rdkafka::{
-    consumer::{Consumer, StreamConsumer},
+    consumer::{CommitMode, Consumer, StreamConsumer},
     message::Headers,
     Message,
 };
@@ -12,20 +12,51 @@ use crate::{event::KafkaEvent, schema_registry::SchemaRegistryClient};
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
     schema_registry: SchemaRegistryClient,
+    manual_commit: bool,
 }
 
 impl KafkaConsumer {
     pub fn new(brokers: &str, group: &str, schema_registry_url: &str) -> Result<Self> {
+        Self::new_with_manual_commit(brokers, group, schema_registry_url, false)
+    }
+
+    pub fn new_with_manual_commit(
+        brokers: &str,
+        group: &str,
+        schema_registry_url: &str,
+        manual_commit: bool,
+    ) -> Result<Self> {
+        Self::new_with_manual_commit_and_max_poll_interval(
+            brokers,
+            group,
+            schema_registry_url,
+            manual_commit,
+            300_000,
+        )
+    }
+
+    pub fn new_with_manual_commit_and_max_poll_interval(
+        brokers: &str,
+        group: &str,
+        schema_registry_url: &str,
+        manual_commit: bool,
+        max_poll_interval_ms: u32,
+    ) -> Result<Self> {
+        let enable_auto_commit = if manual_commit { "false" } else { "true" };
+        let max_poll_interval_ms = max_poll_interval_ms.to_string();
+
         let consumer: StreamConsumer = rdkafka::ClientConfig::new()
             .set("bootstrap.servers", brokers)
             .set("group.id", group)
-            .set("enable.auto.commit", "true")
+            .set("enable.auto.commit", enable_auto_commit)
+            .set("max.poll.interval.ms", &max_poll_interval_ms)
             .set("auto.offset.reset", "earliest")
             .create()?;
 
         Ok(Self {
             consumer,
             schema_registry: SchemaRegistryClient::new(schema_registry_url),
+            manual_commit,
         })
     }
 
@@ -74,6 +105,12 @@ impl KafkaConsumer {
                 traceparent,
             })
             .await?;
+
+            // En modo manual, confirmar únicamente después de que el handler
+            // haya terminado correctamente.
+            if self.manual_commit {
+                self.consumer.commit_message(&message, CommitMode::Sync)?;
+            }
         }
 
         Ok(())

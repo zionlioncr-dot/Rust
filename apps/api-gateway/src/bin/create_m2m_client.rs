@@ -10,6 +10,7 @@ const ALLOWED_SCOPES: &[&str] = &[
     "fraud:write",
     "transactions:read",
     "transactions:write",
+    "aml:analyze",
 ];
 
 #[tokio::main]

@@ -24,3 +24,4 @@ rust_decimal.workspace = true
 async-trait.workspace = true
 
 reqwest.workspace = true
+redis.workspace = true

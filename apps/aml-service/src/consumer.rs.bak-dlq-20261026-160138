@@ -1,0 +1,325 @@
+use crate::{config::AmlConfig, rag::RegulatoryRag, repository::PostgresAmlRepository};
+use anyhow::{Context, Result};
+use domain::events::{
+    dead_letter_event::DeadLetterEvent, event_envelope::EventEnvelope,
+    event_types::FINANCIAL_TRANSACTION_CREATED,
+    financial_transaction_created::FinancialTransactionCreatedEvent,
+};
+use kafka::consumer::{KafkaConsumer, KafkaEvent};
+use repository_lib::{DeadLetterRepository, PostgresRepository, RagRepository};
+use rust_decimal::Decimal;
+use serde_json::{json, Value};
+use sqlx::PgPool;
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
+use tracing::{error, info, warn};
+use uuid::Uuid;
+
+const MAX_ATTEMPTS: u32 = 5;
+const INITIAL_RETRY_DELAY: Duration = Duration::from_millis(100);
+const MAX_RETRY_DELAY: Duration = Duration::from_secs(10);
+
+pub async fn run_consumer(config: AmlConfig, pool: PgPool) -> Result<()> {
+    let kafka = Arc::new(KafkaConsumer::new_with_manual_commit(
+        &config.app.kafka_brokers,
+        &config.consumer_group,
+        &config.app.schema_registry_url,
+        true,
+    )?);
+
+    kafka
+        .subscribe(&[config.kafka_topic.as_str()])
+        .await
+        .context("No se pudo suscribir el consumidor AML al tópico")?;
+
+    let repository = Arc::new(PostgresAmlRepository::new(pool.clone()));
+
+    let dead_letter_repository: Arc<dyn DeadLetterRepository> =
+        Arc::new(PostgresRepository::new(pool.clone()));
+
+    let rag_repository = RagRepository::new(pool);
+    let rag = Arc::new(RegulatoryRag::new(&config, rag_repository)?);
+
+    info!(
+        topic = %config.kafka_topic,
+        group = %config.consumer_group,
+        model = %config.ollama_chat_model,
+        max_attempts = MAX_ATTEMPTS,
+        "Consumidor AML iniciado"
+    );
+
+    let kafka_for_handler = Arc::clone(&kafka);
+    let repository_for_handler = Arc::clone(&repository);
+    let dlq_for_handler = Arc::clone(&dead_letter_repository);
+    let rag_for_handler = Arc::clone(&rag);
+
+    kafka
+        .listen(move |event| {
+            let kafka = Arc::clone(&kafka_for_handler);
+            let repository = Arc::clone(&repository_for_handler);
+            let dlq = Arc::clone(&dlq_for_handler);
+            let rag = Arc::clone(&rag_for_handler);
+
+            async move { handle_event(event, kafka, repository, dlq, rag).await }
+        })
+        .await
+}
+
+async fn handle_event(
+    event: KafkaEvent,
+    kafka: Arc<KafkaConsumer>,
+    repository: Arc<PostgresAmlRepository>,
+    dlq: Arc<dyn DeadLetterRepository>,
+    rag: Arc<RegulatoryRag>,
+) -> Result<()> {
+    let synthetic_id = || Uuid::new_v5(&Uuid::NAMESPACE_OID, &event.payload);
+
+    let decoded = match kafka.decode_avro(&event.payload).await {
+        Ok(decoded) => decoded,
+        Err(err) => {
+            let error_message =
+                format!("invalid_avro_payload; event_id sintético derivado del payload: {err:#}");
+
+            save_dlq(
+                dlq.as_ref(),
+                synthetic_id(),
+                "invalid_avro_payload",
+                json!({
+                    "raw_payload_bytes": event.payload,
+                    "key": event.key,
+                    "traceparent": event.traceparent,
+                    "synthetic_event_id": true
+                }),
+                error_message,
+                1,
+            )
+            .await?;
+
+            return Ok(());
+        }
+    };
+
+    let envelope: EventEnvelope = match serde_json::from_value(decoded.clone()) {
+        Ok(envelope) => envelope,
+        Err(err) => {
+            save_dlq(
+                dlq.as_ref(),
+                synthetic_id(),
+                "invalid_event_envelope",
+                json!({
+                    "decoded_payload": decoded,
+                    "key": event.key,
+                    "traceparent": event.traceparent,
+                    "synthetic_event_id": true
+                }),
+                format!("invalid_event_envelope; event_id sintético derivado del payload: {err:#}"),
+                1,
+            )
+            .await?;
+
+            return Ok(());
+        }
+    };
+
+    let event_id = envelope.metadata.event_id;
+    let event_type = envelope.event_type.clone();
+    let envelope_payload = serde_json::to_value(&envelope)
+        .context("No se pudo serializar el sobre original para DLQ")?;
+
+    if event_type != FINANCIAL_TRANSACTION_CREATED {
+        save_dlq(
+            dlq.as_ref(),
+            event_id,
+            event_type,
+            envelope_payload,
+            "Tipo de evento no admitido por el consumidor AML".to_string(),
+            1,
+        )
+        .await?;
+
+        return Ok(());
+    }
+
+    let tenant_id = envelope.metadata.tenant_id.trim().to_string();
+
+    if tenant_id.is_empty() {
+        save_dlq(
+            dlq.as_ref(),
+            event_id,
+            event_type,
+            envelope_payload,
+            "tenant_id vacío en los metadatos del evento".to_string(),
+            1,
+        )
+        .await?;
+
+        return Ok(());
+    }
+
+    let payload: FinancialTransactionCreatedEvent =
+        match serde_json::from_value(envelope.payload.clone()) {
+            Ok(payload) => payload,
+            Err(err) => {
+                save_dlq(
+                    dlq.as_ref(),
+                    event_id,
+                    event_type,
+                    envelope_payload,
+                    format!("Payload FinancialTransactionCreated inválido: {err:#}"),
+                    1,
+                )
+                .await?;
+
+                return Ok(());
+            }
+        };
+
+    let transaction = payload.transaction;
+
+    let validation_error = if transaction.tenant_id.trim() != tenant_id {
+        Some("tenant_id del evento no coincide con el de la transacción".to_string())
+    } else if transaction.amount <= Decimal::ZERO {
+        Some("Importe de transacción no positivo".to_string())
+    } else if transaction.currency.trim().len() != 3 {
+        Some("Código de moneda inválido".to_string())
+    } else {
+        None
+    };
+
+    if let Some(reason) = validation_error {
+        save_dlq(
+            dlq.as_ref(),
+            event_id,
+            event_type,
+            envelope_payload,
+            reason,
+            1,
+        )
+        .await?;
+
+        return Ok(());
+    }
+
+    let mut delay = INITIAL_RETRY_DELAY;
+    let mut last_error = None;
+
+    for attempt in 1..=MAX_ATTEMPTS {
+        let result = async {
+            let transaction_date = transaction.occurred_at.date_naive();
+
+            let jurisdiction = repository
+                .jurisdiction_for_tenant(&tenant_id, transaction_date)
+                .await
+                .context("No se pudo resolver la jurisdicción del tenant")?;
+
+            info!(
+                %tenant_id,
+                %event_id,
+                %jurisdiction,
+                %transaction_date,
+                attempt,
+                "Jurisdicción AML resuelta"
+            );
+
+            let assessment = rag
+                .assess(
+                    &tenant_id,
+                    &event_id.to_string(),
+                    &jurisdiction,
+                    &transaction,
+                )
+                .await
+                .context("Falló la evaluación AML mediante RAG")?;
+
+            let alert_count = usize::from(assessment.alert.is_some());
+
+            let processed = repository
+                .process_event(&tenant_id, &event_id.to_string(), &assessment)
+                .await
+                .context("Falló la persistencia de la evaluación AML")?;
+
+            Ok::<(bool, usize), anyhow::Error>((processed, alert_count))
+        }
+        .await;
+
+        match result {
+            Ok((processed, alert_count)) => {
+                if processed {
+                    info!(
+                        %tenant_id,
+                        %event_id,
+                        transaction_id = %transaction.id,
+                        alert_count,
+                        attempt,
+                        "Evento AML procesado"
+                    );
+                } else {
+                    info!(
+                        %tenant_id,
+                        %event_id,
+                        attempt,
+                        "Evento AML duplicado; omitido"
+                    );
+                }
+
+                return Ok(());
+            }
+            Err(err) => {
+                warn!(
+                    %tenant_id,
+                    %event_id,
+                    attempt,
+                    max_attempts = MAX_ATTEMPTS,
+                    error = %err,
+                    "Falló el intento de procesamiento AML"
+                );
+
+                last_error = Some(format!("{err:#}"));
+
+                if attempt < MAX_ATTEMPTS {
+                    sleep(delay).await;
+                    delay = delay.saturating_mul(2).min(MAX_RETRY_DELAY);
+                }
+            }
+        }
+    }
+
+    let error_message =
+        last_error.unwrap_or_else(|| "Fallaron los intentos de procesamiento AML".to_string());
+
+    error!(
+        %tenant_id,
+        %event_id,
+        attempts = MAX_ATTEMPTS,
+        error = %error_message,
+        "Se agotaron los reintentos AML; enviando evento a DLQ"
+    );
+
+    save_dlq(
+        dlq.as_ref(),
+        event_id,
+        event_type,
+        envelope_payload,
+        error_message,
+        MAX_ATTEMPTS as i32,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn save_dlq(
+    repository: &dyn DeadLetterRepository,
+    event_id: Uuid,
+    event_type: impl Into<String>,
+    payload: Value,
+    error_message: String,
+    attempts: i32,
+) -> Result<()> {
+    let event = DeadLetterEvent::new(event_id, event_type, payload, error_message, attempts);
+
+    repository
+        .save(event)
+        .await
+        .context("No se pudo guardar el evento en dead_letter_events")
+}

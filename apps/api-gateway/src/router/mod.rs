@@ -13,10 +13,14 @@ use crate::{
         bank_ip_allowlist::bank_ip_allowlist,
         logging::logging,
         request_id::request_id,
-        scope::{authorize_fraud_scope, authorize_scope, authorize_transactions_scope},
+        scope::{
+            authorize_aml_scope, authorize_fraud_scope, authorize_scope,
+            authorize_transactions_scope,
+        },
         trace_context::propagate_incoming_context,
     },
     proxy::{
+        ai_agent::proxy_ai_agent_chat,
         audit::{proxy_audit, ProxyState},
         fraud::proxy_fraud_alerts,
     },
@@ -35,6 +39,14 @@ pub fn build_router(config: Config, pool: PgPool, redis: Option<ConnectionManage
         .route("/audit", any(proxy_audit))
         .route("/audit/{path}", any(proxy_audit))
         .route_layer(middleware::from_fn(authorize_scope))
+        .route_layer(middleware::from_fn_with_state(
+            proxy_state.clone(),
+            authenticate,
+        ));
+
+    let protected_aml_routes = Router::new()
+        .route("/chat", post(proxy_ai_agent_chat))
+        .route_layer(middleware::from_fn(authorize_aml_scope))
         .route_layer(middleware::from_fn_with_state(
             proxy_state.clone(),
             authenticate,
@@ -79,6 +91,7 @@ pub fn build_router(config: Config, pool: PgPool, redis: Option<ConnectionManage
         .merge(protected_audit_routes)
         .merge(protected_fraud_routes)
         .merge(protected_transaction_routes)
+        .merge(protected_aml_routes)
         .with_state(proxy_state)
         .layer(middleware::from_fn(logging))
         .layer(middleware::from_fn(propagate_incoming_context))

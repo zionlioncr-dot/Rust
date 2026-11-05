@@ -217,6 +217,7 @@ impl RagRepository {
     pub async fn search_regulatory(
         &self,
         embedding: &[f32],
+        query: &str,
         jurisdiction: &str,
         as_of: chrono::NaiveDate,
         limit: i64,
@@ -228,47 +229,114 @@ impl RagRepository {
             );
         }
 
+        if query.trim().is_empty() {
+            bail!("regulatory search query cannot be empty");
+        }
+
         if jurisdiction.trim().is_empty() {
             bail!("regulatory jurisdiction cannot be empty");
         }
 
         let limit = limit.clamp(1, 10);
+        let candidate_limit = (limit * 5).clamp(20, 50);
         let embedding = format_vector(embedding);
         let as_of = as_of.format("%Y-%m-%d").to_string();
 
         let results = sqlx::query_as::<_, RagSearchRow>(
             r#"
+            WITH eligible AS NOT MATERIALIZED (
+                SELECT
+                    id,
+                    source,
+                    content,
+                    metadata,
+                    embedding
+                FROM rag_documents
+                WHERE metadata->>'document_type' = 'regulation'
+                  AND UPPER(COALESCE(metadata->>'jurisdiction', '')) = UPPER($2)
+                  AND metadata->>'verified' = 'true'
+                  AND COALESCE(metadata->>'regulation_code', '') <> ''
+                  AND COALESCE(metadata->>'article', '') <> ''
+                  AND COALESCE(metadata->>'source_url', '') LIKE 'https://%'
+                  AND COALESCE(metadata->>'effective_from', '')
+                        ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                  AND metadata->>'effective_from' <= $3
+                  AND (
+                      NULLIF(metadata->>'effective_to', '') IS NULL
+                      OR (
+                          metadata->>'effective_to'
+                              ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                          AND metadata->>'effective_to' >= $3
+                      )
+                  )
+            ),
+            vector_candidates AS (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        ORDER BY embedding <=> $1::vector, id
+                    ) AS position
+                FROM eligible
+                ORDER BY embedding <=> $1::vector, id
+                LIMIT $4
+            ),
+            text_candidates AS (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (
+                        ORDER BY
+                            ts_rank_cd(
+                                to_tsvector('spanish', content),
+                                websearch_to_tsquery('spanish', $5)
+                            ) DESC,
+                            id
+                    ) AS position
+                FROM eligible
+                WHERE to_tsvector('spanish', content)
+                    @@ websearch_to_tsquery('spanish', $5)
+                ORDER BY
+                    ts_rank_cd(
+                        to_tsvector('spanish', content),
+                        websearch_to_tsquery('spanish', $5)
+                    ) DESC,
+                    id
+                LIMIT $4
+            ),
+            combined_candidates AS (
+                SELECT id, position FROM vector_candidates
+                UNION ALL
+                SELECT id, position FROM text_candidates
+            ),
+            fused_ranking AS (
+                SELECT
+                    id,
+                    SUM(
+                        1.0 / (60.0 + position::double precision)
+                    ) AS rrf_score
+                FROM combined_candidates
+                GROUP BY id
+            )
             SELECT
-                id,
-                source,
-                content,
-                metadata,
-                1 - (embedding <=> $1::vector) AS similarity
-            FROM rag_documents
-            WHERE metadata->>'document_type' = 'regulation'
-              AND UPPER(COALESCE(metadata->>'jurisdiction', '')) = UPPER($2)
-              AND metadata->>'verified' = 'true'
-              AND COALESCE(metadata->>'regulation_code', '') <> ''
-              AND COALESCE(metadata->>'article', '') <> ''
-              AND COALESCE(metadata->>'source_url', '') LIKE 'https://%'
-              AND COALESCE(metadata->>'effective_from', '')
-                    ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-              AND metadata->>'effective_from' <= $3
-              AND (
-                    NULLIF(metadata->>'effective_to', '') IS NULL
-                    OR (
-                        metadata->>'effective_to'
-                            ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-                        AND metadata->>'effective_to' >= $3
-                    )
-              )
-            ORDER BY embedding <=> $1::vector
-            LIMIT $4
+                document.id,
+                document.source,
+                document.content,
+                document.metadata,
+                1 - (document.embedding <=> $1::vector) AS similarity
+            FROM eligible AS document
+            INNER JOIN fused_ranking AS ranking
+                ON ranking.id = document.id
+            ORDER BY
+                ranking.rrf_score DESC,
+                similarity DESC,
+                document.id
+            LIMIT $6
             "#,
         )
         .bind(embedding)
         .bind(jurisdiction.trim())
         .bind(as_of)
+        .bind(candidate_limit)
+        .bind(query.trim())
         .bind(limit)
         .fetch_all(&self.pool)
         .await?;

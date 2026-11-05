@@ -46,6 +46,13 @@ spec:
 
             - name: ANTI_FRAUD_SERVICE_URL
               value: "http://anti-fraud:3002"
+            - name: AI_AGENT_URL
+              value: "http://ai-agent:8001"
+            - name: AI_AGENT_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-agent-internal
+                  key: AI_AGENT_INTERNAL_TOKEN
 
             - name: JWT_SECRET
               valueFrom:

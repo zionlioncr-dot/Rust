@@ -60,3 +60,31 @@ async fn authorize(request: Request, next: Next, required_scope: &'static str) -
 
     next.run(request).await
 }
+
+pub async fn authorize_aml_scope(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::{Method, StatusCode};
+    use axum::response::IntoResponse;
+
+    if request.method() != Method::POST {
+        return (StatusCode::METHOD_NOT_ALLOWED, "Method not allowed").into_response();
+    }
+
+    let claims = match request
+        .extensions()
+        .get::<crate::middleware::auth::Claims>()
+    {
+        Some(claims) => claims,
+        None => {
+            return (StatusCode::UNAUTHORIZED, "Missing authenticated claims").into_response();
+        }
+    };
+
+    if !claims.scopes.iter().any(|scope| scope == "aml:analyze") {
+        return (StatusCode::FORBIDDEN, "Insufficient scope: aml:analyze").into_response();
+    }
+
+    next.run(request).await
+}

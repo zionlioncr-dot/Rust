@@ -6,7 +6,7 @@ use std::{
 use anyhow::{Context, Result};
 use axum::{
     extract::State,
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{get, post},
     Json, Router,
 };
@@ -79,6 +79,25 @@ REGLAS PARA SÍMBOLOS DEL CÓDIGO:
    y después cómo se relaciona con los demás.
 10. Si el nombre preguntado no aparece como definición explícita, no afirmes que tiene
     una definición propia.
+
+REGLAS PARA ANÁLISIS AML:
+
+- Para analizar una cuenta o actividad transaccional por posible lavado de activos,
+  utiliza obligatoriamente aml.analyze_account cuando se proporcionen tenant_id y
+  account_id. No dependas de la selección espontánea de herramientas por el modelo.
+- La jurisdicción se resuelve desde el perfil regulatorio activo del tenant, vigente
+  en la fecha de análisis. No exijas que el usuario la proporcione ni la inventes.
+- Si falta tenant_id o account_id, solicita únicamente los identificadores ausentes.
+- La herramienta devuelve transacciones observadas y evidencia recuperada del corpus
+  regulatorio para la jurisdicción y fecha aplicables.
+- Basa las conclusiones regulatorias únicamente en la evidencia devuelta. Distingue
+  hechos observados, indicadores de riesgo e interpretaciones.
+- Cita regulación, artículo, vigencia y fuente cuando estén disponibles.
+- Si falta un perfil efectivo o no hay evidencia regulatoria verificada, declara esa
+  limitación. No asumas que la jurisdicción es Costa Rica.
+- No inventes umbrales ni reglas jurídicas. No presentes el resultado como dictamen
+  legal y no ordenes la presentación automática de reportes.
+- No dependas de tablas aml_regulatory_rules para interpretar la normativa.
 
 REGLAS DE RAG:
 
@@ -219,6 +238,9 @@ struct AiAgent {
     ollama: Client,
     mcp: rmcp::service::RunningService<RoleClient, InitializeRequestParams>,
     tools: Vec<McpToolDefinition>,
+    mcp_url: String,
+    ollama_chat_url: String,
+    ollama_model: String,
 }
 
 #[derive(Debug, Clone)]
@@ -268,11 +290,43 @@ struct RagDocument {
 
 impl AiAgent {
     async fn connect() -> Result<Self> {
-        info!(mcp_url = MCP_URL, "Connecting AI Agent to MCP server");
+        let mcp_url = std::env::var("MCP_URL").unwrap_or_else(|_| MCP_URL.to_string());
+        let ollama_chat_url =
+            std::env::var("OLLAMA_CHAT_URL").unwrap_or_else(|_| OLLAMA_CHAT_URL.to_string());
+        let ollama_model =
+            std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| OLLAMA_MODEL.to_string());
+
+        if mcp_url.trim().is_empty()
+            || ollama_chat_url.trim().is_empty()
+            || ollama_model.trim().is_empty()
+        {
+            anyhow::bail!("MCP_URL, OLLAMA_CHAT_URL y OLLAMA_MODEL deben ser válidos");
+        }
+
+        info!(mcp_url = %mcp_url, "Connecting AI Agent to MCP server");
 
         info!("STEP 1: creating MCP transport");
 
-        let transport = StreamableHttpClientTransport::from_uri(MCP_URL);
+        let mcp_internal_token = std::env::var("MCP_INTERNAL_TOKEN")
+            .context("MCP_INTERNAL_TOKEN debe estar configurado")?;
+        if mcp_internal_token.trim().is_empty() {
+            anyhow::bail!("MCP_INTERNAL_TOKEN no puede estar vacío");
+        }
+
+        let mut custom_headers = std::collections::HashMap::new();
+        custom_headers.insert(
+            axum::http::HeaderName::from_static("x-mcp-internal-token"),
+            axum::http::HeaderValue::from_str(&mcp_internal_token)
+                .context("MCP_INTERNAL_TOKEN contiene caracteres inválidos")?,
+        );
+
+        let transport_config =
+            rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig::with_uri(
+                mcp_url.clone(),
+            )
+            .custom_headers(custom_headers);
+
+        let transport = StreamableHttpClientTransport::from_config(transport_config);
 
         info!("STEP 2: MCP transport created");
 
@@ -329,15 +383,22 @@ impl AiAgent {
             .context("Failed to create Ollama HTTP client")?;
 
         info!(
-            url = OLLAMA_CHAT_URL,
-            model = OLLAMA_MODEL,
+            url = %ollama_chat_url,
+            model = %ollama_model,
             timeout_seconds = OLLAMA_TIMEOUT_SECONDS,
             "Ollama client configured"
         );
 
         info!("STEP 9: AI Agent connection initialization completed");
 
-        Ok(Self { ollama, mcp, tools })
+        Ok(Self {
+            ollama,
+            mcp,
+            tools,
+            mcp_url,
+            ollama_chat_url,
+            ollama_model,
+        })
     }
 
     fn ollama_tools(&self) -> Vec<OllamaTool> {
@@ -412,7 +473,7 @@ impl AiAgent {
         };
 
         let request = OllamaRequest {
-            model: OLLAMA_MODEL.to_string(),
+            model: self.ollama_model.clone(),
             messages,
             tools,
             stream: false,
@@ -423,8 +484,8 @@ impl AiAgent {
         let payload = serde_json::to_vec(&request).context("Failed to serialize Ollama request")?;
 
         info!(
-            url = OLLAMA_CHAT_URL,
-            model = OLLAMA_MODEL,
+            url = %self.ollama_chat_url,
+            model = %self.ollama_model,
             payload_bytes = payload.len(),
             message_count = request.messages.len(),
             tool_count = request.tools.len(),
@@ -438,7 +499,7 @@ impl AiAgent {
         let response = timeout(
             Duration::from_secs(OLLAMA_TIMEOUT_SECONDS),
             self.ollama
-                .post(OLLAMA_CHAT_URL)
+                .post(&self.ollama_chat_url)
                 .header("Content-Type", "application/json")
                 .body(payload)
                 .send(),
@@ -588,7 +649,7 @@ impl AiAgent {
         // ------------------------------------------------------------
         // 6. SEMANTIC RAG / PLATFORM KNOWLEDGE
         // ------------------------------------------------------------
-        if is_rag_question(question) {
+        if is_rag_question(question) && !is_aml_question(question) {
             return Some((
                 "rag.search",
                 json!({
@@ -657,7 +718,7 @@ impl AiAgent {
         })
     }
 
-    async fn run(&self, question: String) -> Result<AgentResult> {
+    async fn run(&self, question: String, trusted_tenant_id: Option<&str>) -> Result<AgentResult> {
         let started = Instant::now();
 
         info!(question = %question, "Processing user request");
@@ -676,6 +737,76 @@ impl AiAgent {
                 tool_name: None,
             },
         ];
+
+        // ============================================================
+        // AML: análisis conversacional determinista bajo demanda
+        // ============================================================
+        if is_aml_question(&question) {
+            let Some(tenant_id) = trusted_tenant_id
+                .map(str::trim)
+                .filter(|tenant| !tenant.is_empty())
+            else {
+                return Ok(AgentResult {
+                    answer: "El análisis AML requiere una sesión autenticada con un tenant verificado. No envíes el tenant como parte de la pregunta.".to_string(),
+                    tool: None,
+                    execution_time_ms: started.elapsed().as_millis(),
+                });
+            };
+
+            let account_id = extract_named_value(
+                &question,
+                &["account_id", "account-id", "account id", "cuenta_id"],
+            );
+
+            let Some(account_id) = account_id.filter(|value| !value.trim().is_empty()) else {
+                return Ok(AgentResult {
+                    answer: "Para realizar el análisis AML, indica el account_id de la cuenta que deseas analizar.".to_string(),
+                    tool: None,
+                    execution_time_ms: started.elapsed().as_millis(),
+                });
+            };
+
+            let arguments = json!({
+                "tenant_id": tenant_id,
+                "account_id": account_id
+            });
+            let tool_name = "aml.analyze_account";
+
+            let raw_result = self
+                .call_mcp_tool(tool_name, arguments.clone())
+                .await
+                .with_context(|| {
+                    format!("Required MCP tool '{}' failed for AML analysis", tool_name)
+                })?;
+
+            messages.push(OllamaMessage {
+                role: "assistant".to_string(),
+                content: None,
+                tool_calls: Some(vec![OllamaToolCall {
+                    call_type: Some("function".to_string()),
+                    function: OllamaFunctionCall {
+                        name: tool_name.to_string(),
+                        arguments,
+                    },
+                }]),
+                tool_name: None,
+            });
+
+            messages.push(OllamaMessage {
+                role: "tool".to_string(),
+                content: Some(raw_result),
+                tool_calls: None,
+                tool_name: Some(tool_name.to_string()),
+            });
+
+            let final_message = self.chat(messages, false).await?;
+
+            return Ok(AgentResult {
+                answer: final_message.content.unwrap_or_default(),
+                tool: Some(tool_name.to_string()),
+                execution_time_ms: started.elapsed().as_millis(),
+            });
+        }
 
         // ============================================================
         // DETERMINISTIC TOOL POLICY
@@ -1517,12 +1648,66 @@ async fn health() -> Json<HealthResponse> {
     })
 }
 
-async fn chat(
+fn constant_time_token_eq(expected: &[u8], provided: &[u8]) -> bool {
+    let max_len = expected.len().max(provided.len());
+    let mut diff = expected.len() ^ provided.len();
+
+    for index in 0..max_len {
+        let left = expected.get(index).copied().unwrap_or(0);
+        let right = provided.get(index).copied().unwrap_or(0);
+        diff |= (left ^ right) as usize;
+    }
+
+    diff == 0
+}
+
+async fn internal_chat(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(request): Json<ChatRequest>,
 ) -> Result<Json<ChatResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let message = request.message.trim();
+    let expected_token = std::env::var("AI_AGENT_INTERNAL_TOKEN").unwrap_or_default();
 
+    if expected_token.trim().is_empty() {
+        error!("AI_AGENT_INTERNAL_TOKEN no está configurado");
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse {
+                error: "Internal authentication is not configured".to_string(),
+            }),
+        ));
+    }
+
+    let provided_token = headers
+        .get("x-internal-agent-token")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("");
+
+    if !constant_time_token_eq(expected_token.as_bytes(), provided_token.as_bytes()) {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse {
+                error: "Invalid internal credentials".to_string(),
+            }),
+        ));
+    }
+
+    let tenant_id = headers
+        .get("x-tenant-id")
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse {
+                    error: "Missing authenticated tenant".to_string(),
+                }),
+            )
+        })?
+        .to_string();
+
+    let message = request.message.trim();
     if message.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -1532,36 +1717,18 @@ async fn chat(
         ));
     }
 
-    info!(
-        message = %message,
-        "Received HTTP chat request"
-    );
-
-    match state.agent.run(message.to_string()).await {
-        Ok(result) => {
-            info!(
-                tool = ?result.tool,
-                execution_time_ms = result.execution_time_ms,
-                "HTTP chat request completed"
-            );
-
-            Ok(Json(ChatResponse {
-                answer: result.answer,
-                tool: result.tool,
-                execution_time_ms: result.execution_time_ms,
-            }))
-        }
-
+    match state.agent.run(message.to_string(), Some(&tenant_id)).await {
+        Ok(result) => Ok(Json(ChatResponse {
+            answer: result.answer,
+            tool: result.tool,
+            execution_time_ms: result.execution_time_ms,
+        })),
         Err(error) => {
-            error!(
-                error = %error,
-                "HTTP chat request failed"
-            );
-
+            error!(error = %error, "Internal AI Agent request failed");
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {
-                    error: error.to_string(),
+                    error: "Internal agent request failed".to_string(),
                 }),
             ))
         }
@@ -1571,6 +1738,79 @@ async fn chat(
 // ================================================================
 // HELPERS
 // ================================================================
+
+fn extract_named_value(question: &str, keys: &[&str]) -> Option<String> {
+    let lower = question.to_lowercase();
+
+    for key in keys {
+        let mut offset = 0;
+
+        while offset < lower.len() {
+            let Some(relative) = lower[offset..].find(key) else {
+                break;
+            };
+
+            let start = offset + relative;
+            let end = start + key.len();
+
+            let before_ok = start == 0
+                || (!lower.as_bytes()[start - 1].is_ascii_alphanumeric()
+                    && lower.as_bytes()[start - 1] != b'_');
+            let after_ok = end == lower.len()
+                || (!lower.as_bytes()[end].is_ascii_alphanumeric()
+                    && lower.as_bytes()[end] != b'_');
+
+            if before_ok && after_ok {
+                let candidate = question[end..]
+                    .trim_start()
+                    .trim_start_matches(|c: char| c == '=' || c == ':' || c.is_whitespace());
+
+                let value = candidate
+                    .split(|c: char| c.is_whitespace() || c == ',' || c == ';' || c == '|')
+                    .next()
+                    .unwrap_or("")
+                    .trim_matches(|c: char| {
+                        matches!(
+                            c,
+                            '"' | '\'' | '`' | '(' | ')' | '[' | ']' | '.' | '!' | '?'
+                        )
+                    })
+                    .trim();
+
+                if !value.is_empty() {
+                    return Some(value.to_string());
+                }
+            }
+
+            offset = end;
+        }
+    }
+
+    None
+}
+
+fn is_aml_question(question: &str) -> bool {
+    let q = question.to_lowercase();
+
+    [
+        "aml",
+        "lavado de activos",
+        "blanqueo de capitales",
+        "anti-money laundering",
+        "transacción sospechosa",
+        "transacciones sospechosas",
+        "actividad sospechosa",
+        "analizar cuenta",
+        "analiza la cuenta",
+        "análisis de cuenta",
+        "analisis de cuenta",
+        "riesgo transaccional",
+        "estructuración de transacciones",
+        "estructuracion de transacciones",
+    ]
+    .iter()
+    .any(|term| q.contains(term))
+}
 
 fn is_rag_question(question: &str) -> bool {
     let q = question.to_lowercase();
@@ -1752,7 +1992,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/health", get(health))
-        .route("/chat", post(chat))
+        .route("/internal/chat", post(internal_chat))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 

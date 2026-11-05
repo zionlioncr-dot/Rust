@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-agent
+  namespace: financial-platform
+  labels:
+    app: ai-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-agent
+  template:
+    metadata:
+      labels:
+        app: ai-agent
+    spec:
+      containers:
+        - name: ai-agent
+          image: ai-agent:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8001
+              protocol: TCP
+          env:
+            - name: HTTP_HOST
+              value: "0.0.0.0"
+            - name: HTTP_PORT
+              value: "8001"
+            - name: MCP_URL
+              value: "http://mcp-server:8000/mcp"
+            - name: OLLAMA_CHAT_URL
+              value: "http://ollama:11434/api/chat"
+            - name: OLLAMA_MODEL
+              value: "qwen3:0.6b"
+            - name: AI_AGENT_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-agent-internal
+                  key: AI_AGENT_INTERNAL_TOKEN
+            - name: MCP_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-internal
+                  key: MCP_INTERNAL_TOKEN
+            - name: OTEL_SERVICE_NAME
+              value: "ai-agent"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger:4317"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"

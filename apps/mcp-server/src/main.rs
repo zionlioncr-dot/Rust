@@ -42,6 +42,7 @@ const MCP_PORT: u16 = 8000;
 #[derive(Clone)]
 struct McpServer {
     config: AppConfig,
+    pool: sqlx::PgPool,
     repository: Arc<PostgresRepository>,
     rag_repository: Arc<repository::RagRepository>,
     embedding_client: OllamaEmbeddingClient,
@@ -87,6 +88,51 @@ struct SchemaParams {
     subject: String,
 }
 
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+struct AmlAnalyzeAccountParams {
+    #[schemars(description = "Tenant identifier that owns the transactions")]
+    tenant_id: String,
+
+    #[schemars(description = "Bank account identifier to investigate")]
+    account_id: String,
+
+    #[schemars(
+        description = "Optional jurisdiction assertion; must match the active tenant profile"
+    )]
+    jurisdiction: Option<String>,
+
+    #[schemars(
+        description = "Analysis date in YYYY-MM-DD format; defaults to the current UTC date"
+    )]
+    as_of: Option<String>,
+
+    #[schemars(description = "Number of days to look back from the analysis date, from 1 to 365")]
+    lookback_days: Option<i64>,
+
+    #[schemars(description = "Maximum transactions to return, from 1 to 500")]
+    limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+struct AmlTransactionEvidence {
+    id: String,
+    external_transaction_id: Option<String>,
+    amount: String,
+    currency: String,
+    exchange_rate: Option<String>,
+    base_currency: Option<String>,
+    normalized_amount: Option<String>,
+    source_account_id: String,
+    destination_account_id: String,
+    source_country: Option<String>,
+    destination_country: Option<String>,
+    counterparty: Option<String>,
+    country_code: String,
+    channel: String,
+    client_ip: Option<String>,
+    occurred_at: String,
+}
+
 #[derive(Debug, Serialize)]
 struct HealthResponse {
     service: String,
@@ -99,6 +145,7 @@ struct HealthResponse {
 impl McpServer {
     fn new(
         config: AppConfig,
+        pool: sqlx::PgPool,
         repository: Arc<PostgresRepository>,
         rag_repository: Arc<repository::RagRepository>,
         embedding_client: OllamaEmbeddingClient,
@@ -106,6 +153,7 @@ impl McpServer {
     ) -> Self {
         Self {
             config,
+            pool,
             repository,
             rag_repository,
             embedding_client,
@@ -202,6 +250,299 @@ impl McpServer {
             })
             .to_string()
         })
+    }
+
+    #[tool(
+        name = "aml.analyze_account",
+        description = "Analyze tenant-scoped financial transactions using the tenant regulatory profile effective on the analysis date and retrieve verified regulatory corpus evidence. Jurisdiction is resolved from the database profile; no legal determination is made."
+    )]
+    async fn aml_analyze_account(
+        &self,
+        Parameters(params): Parameters<AmlAnalyzeAccountParams>,
+    ) -> String {
+        let tenant_id = params.tenant_id.trim();
+        let account_id = params.account_id.trim();
+        let requested_jurisdiction = params.jurisdiction.as_deref().map(str::trim);
+
+        if tenant_id.is_empty() || account_id.is_empty() {
+            return json!({
+                "error": "tenant_id and account_id are required and cannot be empty"
+            })
+            .to_string();
+        }
+
+        let as_of = match params.as_of {
+            Some(value) => match chrono::NaiveDate::parse_from_str(value.trim(), "%Y-%m-%d") {
+                Ok(date) => date,
+                Err(_) => {
+                    return json!({
+                        "error": "as_of must use YYYY-MM-DD format"
+                    })
+                    .to_string();
+                }
+            },
+            None => chrono::Utc::now().date_naive(),
+        };
+
+        // La jurisdicción se determina a partir del perfil activo y vigente
+        // del tenant. No se asume ninguna jurisdicción por defecto.
+        let profiles = match sqlx::query_as::<_, (String, String)>(
+            r#"
+            SELECT jurisdiction, BTRIM(base_currency::text) AS base_currency
+            FROM aml_tenant_regulatory_profiles
+            WHERE tenant_id = $1
+              AND status = 'active'
+              AND effective_from <= $2::date
+              AND (effective_to IS NULL OR effective_to >= $2::date)
+            ORDER BY effective_from DESC
+            LIMIT 2
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(as_of.to_string())
+        .fetch_all(&self.pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(error) => {
+                error!(%error, "Could not resolve AML tenant regulatory profile");
+                return json!({
+                    "error": "Could not resolve the tenant regulatory profile",
+                    "status": "regulatory_profile_lookup_failed"
+                })
+                .to_string();
+            }
+        };
+
+        if profiles.is_empty() {
+            return json!({
+                "error": "No active regulatory profile is effective for this tenant on the analysis date",
+                "status": "missing_active_regulatory_profile",
+                "tenant_id": tenant_id,
+                "as_of": as_of.to_string()
+            }).to_string();
+        }
+
+        if profiles.len() > 1 {
+            return json!({
+                "error": "More than one active regulatory profile applies to this tenant on the analysis date",
+                "status": "ambiguous_active_regulatory_profile",
+                "tenant_id": tenant_id,
+                "as_of": as_of.to_string()
+            }).to_string();
+        }
+
+        let (jurisdiction, profile_base_currency) = profiles
+            .into_iter()
+            .next()
+            .expect("one profile was verified");
+
+        if let Some(requested) = requested_jurisdiction {
+            if !requested.is_empty() && !requested.eq_ignore_ascii_case(&jurisdiction) {
+                return json!({
+                    "error": "The requested jurisdiction does not match the tenant's effective regulatory profile",
+                    "status": "jurisdiction_profile_mismatch",
+                    "requested_jurisdiction": requested,
+                    "profile_jurisdiction": jurisdiction,
+                    "tenant_id": tenant_id,
+                    "as_of": as_of.to_string()
+                }).to_string();
+            }
+        }
+
+        let lookback_days = params.lookback_days.unwrap_or(90).clamp(1, 365);
+        let limit = params.limit.unwrap_or(100).clamp(1, 500);
+
+        let transactions = match sqlx::query_as::<_, AmlTransactionEvidence>(
+            r#"
+            SELECT
+                id::text AS id,
+                external_transaction_id,
+                amount::text AS amount,
+                BTRIM(currency::text) AS currency,
+                exchange_rate::text AS exchange_rate,
+                BTRIM(base_currency::text) AS base_currency,
+                CASE
+                    WHEN BTRIM(base_currency::text) = $6
+                         AND exchange_rate IS NOT NULL
+                    THEN (amount * exchange_rate)::text
+                    ELSE NULL
+                END AS normalized_amount,
+                source_account_id,
+                destination_account_id,
+                source_country,
+                destination_country,
+                counterparty,
+                country_code,
+                channel,
+                client_ip,
+                occurred_at::text AS occurred_at
+            FROM financial_transactions
+            WHERE tenant_id = $1
+              AND (
+                    source_account_id = $2
+                    OR destination_account_id = $2
+              )
+              AND occurred_at >= (
+                    $3::date - (($4::int - 1) * INTERVAL '1 day')
+              )
+              AND occurred_at < ($3::date + INTERVAL '1 day')
+            ORDER BY occurred_at DESC
+            LIMIT $5
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(account_id)
+        .bind(as_of.to_string())
+        .bind(lookback_days as i32)
+        .bind(limit)
+        .bind(&profile_base_currency)
+        .fetch_all(&self.pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(error) => {
+                error!(%error, "AML account transaction query failed");
+                return json!({
+                    "error": "Failed to query account transactions",
+                    "tenant_id": tenant_id,
+                    "account_id": account_id
+                })
+                .to_string();
+            }
+        };
+
+        // La consulta semántica no incorpora identificadores de tenant,
+        // cuenta ni IP. Ollama recibe los fragmentos regulatorios recuperados,
+        // mientras que la evidencia transaccional se devuelve por separado.
+        let activity_summary = transactions
+            .iter()
+            .take(20)
+            .map(|tx| {
+                format!(
+                    "amount={} {}, normalized_amount={} {}, source_country={}, destination_country={}, country_code={}, channel={}, counterparty={}",
+                    tx.amount,
+                    tx.currency,
+                    tx.normalized_amount.as_deref().unwrap_or("unavailable"),
+                    &profile_base_currency,
+                    tx.source_country.as_deref().unwrap_or("unknown"),
+                    tx.destination_country.as_deref().unwrap_or("unknown"),
+                    tx.country_code,
+                    tx.channel,
+                    tx.counterparty.as_deref().unwrap_or("unknown")
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; ");
+
+        let regulatory_query = format!(
+            "Normativa de prevención de legitimación de capitales y financiamiento del terrorismo. \
+             Monitoreo de operaciones financieras, patrones de transacciones sospechosas, \
+             cuentas de origen y destino, estructuración de operaciones, transferencias transfronterizas, \
+             debida diligencia del cliente y obligaciones de reporte. \
+             Fecha de análisis: {}. Jurisdicción: {}. Cantidad de transacciones: {}. \
+             Evidencia de actividad: {}",
+            as_of,
+            jurisdiction,
+            transactions.len(),
+            if activity_summary.is_empty() {
+                "No se encontraron transacciones en el período seleccionado."
+            } else {
+                activity_summary.as_str()
+            }
+        );
+
+        let (regulatory_status, regulatory_evidence, regulatory_error) =
+            match self.embedding_client.embed(&regulatory_query).await {
+                Ok(embedding) => {
+                    match self
+                        .rag_repository
+                        .search_regulatory(&embedding, &regulatory_query, &jurisdiction, as_of, 5)
+                        .await
+                    {
+                        Ok(results) => {
+                            let evidence = results
+                                .into_iter()
+                                .map(|result| {
+                                    let metadata = &result.metadata;
+                                    let excerpt: String =
+                                        result.content.chars().take(1600).collect();
+
+                                    json!({
+                                        "document_id": result.id,
+                                        "source": result.source,
+                                        "regulation_code": metadata.get("regulation_code")
+                                            .and_then(serde_json::Value::as_str),
+                                        "article": metadata.get("article")
+                                            .and_then(serde_json::Value::as_str),
+                                        "title": metadata.get("title")
+                                            .and_then(serde_json::Value::as_str),
+                                        "document_version": metadata.get("document_version")
+                                            .and_then(serde_json::Value::as_str),
+                                        "effective_from": metadata.get("effective_from")
+                                            .and_then(serde_json::Value::as_str),
+                                        "effective_to": metadata.get("effective_to")
+                                            .and_then(serde_json::Value::as_str),
+                                        "source_url": metadata.get("source_url")
+                                            .and_then(serde_json::Value::as_str),
+                                        "jurisdiction": metadata.get("jurisdiction")
+                                            .and_then(serde_json::Value::as_str),
+                                        "similarity": result.similarity,
+                                        "excerpt": excerpt
+                                    })
+                                })
+                                .collect::<Vec<_>>();
+
+                            let status = if evidence.is_empty() {
+                                "no_verified_current_evidence"
+                            } else {
+                                "retrieved"
+                            };
+
+                            (status, evidence, None)
+                        }
+                        Err(error) => {
+                            error!(%error, "AML regulatory corpus search failed");
+                            (
+                                "unavailable",
+                                Vec::<serde_json::Value>::new(),
+                                Some("Regulatory corpus search failed".to_string()),
+                            )
+                        }
+                    }
+                }
+                Err(error) => {
+                    error!(%error, "AML regulatory query embedding failed");
+                    (
+                        "unavailable",
+                        Vec::<serde_json::Value>::new(),
+                        Some("Could not generate regulatory search embedding".to_string()),
+                    )
+                }
+            };
+
+        serde_json::to_string_pretty(&json!({
+            "analysis_type": "aml_account_evidence",
+            "tenant_id": tenant_id,
+            "account_id": account_id,
+            "jurisdiction": jurisdiction,
+            "profile_base_currency": profile_base_currency,
+            "as_of": as_of.to_string(),
+            "lookback_days": lookback_days,
+            "transaction_count": transactions.len(),
+            "transactions": transactions,
+            "regulatory_evidence_status": regulatory_status,
+            "regulatory_evidence": regulatory_evidence,
+            "regulatory_error": regulatory_error,
+            "interpretation_guidance": {
+                "distinguish_observed_facts_from_risk_indicators": true,
+                "cite_regulation_article_and_effective_dates": true,
+                "do_not_invent_legal_rules_or_thresholds": true,
+                "do_not_treat_model_output_as_a_legal_finding": true,
+                "do_not_automatically_file_a_regulatory_report": true
+            }
+        }))
+        .unwrap_or_else(|error| json!({"error": error.to_string()}).to_string())
     }
 
     #[tool(
@@ -431,12 +772,33 @@ impl McpServer {
 #[tool_handler(
     name = "financial-intelligence-platform-mcp",
     version = "0.1.0",
-    instructions = "MCP server for the Financial Intelligence Platform. Provides controlled access to tenant-scoped audit events, transactional outbox state, Kafka/Redpanda connectivity, Avro schemas, and semantic RAG search over platform documentation."
+    instructions = "MCP server for the Financial Intelligence Platform. Provides tenant-scoped audit and transaction evidence, verified regulatory RAG evidence for AML account analysis, transactional outbox state, Kafka/Redpanda connectivity, and Avro schemas."
 )]
 impl rmcp::ServerHandler for McpServer {}
 
 async fn health() -> &'static str {
     "ok"
+}
+
+async fn require_internal_mcp_token(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::StatusCode;
+    use axum::response::IntoResponse;
+
+    let expected = std::env::var("MCP_INTERNAL_TOKEN").unwrap_or_default();
+    let supplied = request
+        .headers()
+        .get("x-mcp-internal-token")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("");
+
+    if expected.is_empty() || supplied.is_empty() || supplied != expected {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+
+    next.run(request).await
 }
 
 #[tokio::main]
@@ -484,7 +846,7 @@ async fn main() -> Result<()> {
 
     let repository = Arc::new(PostgresRepository::new(pool.clone()));
 
-    let rag_repository = Arc::new(repository::RagRepository::new(pool));
+    let rag_repository = Arc::new(repository::RagRepository::new(pool.clone()));
 
     let embedding_client =
         OllamaEmbeddingClient::new(&config.ollama_base_url, &config.ollama_embedding_model)
@@ -494,13 +856,16 @@ async fn main() -> Result<()> {
 
     let server = McpServer::new(
         config,
+        pool,
         repository,
         rag_repository,
         embedding_client,
         schema_registry,
     );
 
-    let http_config = StreamableHttpServerConfig::default().with_json_response(true);
+    let http_config = StreamableHttpServerConfig::default()
+        .with_allowed_hosts(["localhost", "127.0.0.1", "::1", "mcp-server"])
+        .with_json_response(true);
 
     let mcp_service = StreamableHttpService::new(
         move || Ok(server.clone()),
@@ -508,9 +873,13 @@ async fn main() -> Result<()> {
         http_config,
     );
 
+    let protected_mcp = Router::new()
+        .nest_service("/mcp", mcp_service)
+        .route_layer(axum::middleware::from_fn(require_internal_mcp_token));
+
     let router = Router::new()
         .route("/health", get(health))
-        .nest_service("/mcp", mcp_service);
+        .merge(protected_mcp);
 
     let address: SocketAddr = format!("{}:{}", MCP_HOST, MCP_PORT)
         .parse()

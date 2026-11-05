@@ -1,0 +1,3602 @@
+===== PAGINA PDF 1 =====
+                  ACUERDO SUGEF 13-19
+
+
+
+
+REGLAMENTO PARA LA PREVENCIÓN DEL RIESGO DE LEGITIMACIÓN DE CAPITALES,
+FINANCIAMIENTO AL TERRORISMO Y FINANCIAMIENTO DE LA PROLIFERACIÓN DE
+ARMAS DE DESTRUCCIÓN MASIVA, APLICABLE A LOS SUJETOS OBLIGADOS POR LOS
+ARTÍCULOS 15 Y 15 BIS DE LA LEY 7786
+
+
+
+Reglamento aprobado por El Consejo Nacional de Supervisión del Sistema Financiero, en el
+literal A, artículo 7, del acta de la sesión 1542-2019, celebrada el 4 de noviembre de 2019.
+Publicado en el Alcance número 258 al Diario Oficial La Gaceta N° 220 del martes 19 de
+noviembre de 2019. Este Reglamento entra en vigencia a partir del 1° de diciembre de 2020.
+
+Lineamientos generales al Reglamento para la prevención del riesgo de legitimación de
+capitales, financiamiento al terrorismo y financiamiento de la proliferación de armas de
+destrucción masiva, aplicable a los sujetos obligados por los artículos 15 y 15 bis de la Ley
+7786,  aprobados  por  el  Superintendente  General de  Entidades  Financieras,  mediante
+Resolución SGF 3419-2019 SGF-PUBLICO del 11 de noviembre de 2019. Publicado en el
+Alcance N° 275 al Diario Oficial La Gaceta N° 235 del martes 10 de diciembre de 2019.
+
+
+
+
+
+                       CONTENIDO
+
+        VER CONSIDERANDOS
+
+        VER REGLAMENTO
+
+        VER LINEAMIENTOS GENERALES
+
+        VER HISTORIAL DE VERSIONES
+
+
+                      Versión     Fecha de actualización
+
+                        6         24 de mayo de 2024
+
+
+
+
+
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 2 =====
+Contenido
+
+CONSIDERANDOS ......................................................................................................................................... iv
+REGLAMENTO PARA LA PREVENCIÓN DEL RIESGO DE LEGITIMACIÓN DE CAPITALES,
+FINANCIAMIENTO AL TERRORISMO Y FINANCIAMIENTO DE LA PROLIFERACIÓN DE ARMAS DE
+DESTRUCCIÓN MASIVA, APLICABLE A LOS SUJETOS OBLIGADOS POR LOS ARTÍCULOS 15 Y 15
+BIS DE LA LEY 7786 ....................................................................................................................................... 1
+CAPÍTULO I ...................................................................................................................................................... 1
+DISPOSICIONES GENERALES ...................................................................................................................... 1
+  Artículo 1. Objeto ........................................................................................................................................... 1
+  Artículo 2. Alcance ......................................................................................................................................... 1
+  Artículo 3. Definiciones ................................................................................................................................. 1
+  Artículo 4. Tipos de sujetos inscritos ............................................................................................................. 5
+CAPÍTULO II..................................................................................................................................................... 5
+ADMINISTRACIÓN DEL RIESGO DEL SUJETO OBLIGADO ................................................................... 5
+  Artículo 5. Procedimiento para la administración del riesgo del sujeto obligado........................................... 5
+  Artículo 6. Nuevas tecnologías, productos, prácticas comerciales, mecanismos y canales de distribución. .. 6
+CAPÍTULO III ................................................................................................................................................... 6
+DEBIDA DILIGENCIA EN EL CONOCIMIENTO DEL CLIENTE ............................................................... 6
+  Artículo 7. Identificación del cliente .............................................................................................................. 6
+  Artículo 8. Clasificación de clientes ............................................................................................................... 6
+  Artículo 9. Política Conozca a su cliente ........................................................................................................ 6
+  Artículo 10. Información del cliente ............................................................................................................... 7
+  Artículo 11. Registro de la información del cliente ........................................................................................ 7
+  Artículo 12. Procedimiento para la clasificación del riesgo del cliente .......................................................... 8
+  Artículo 13. Mantenimiento y actualización de la información del cliente .................................................... 8
+CAPÍTULO IV ................................................................................................................................................... 8
+OTRAS MEDIDAS DE DEBIDA DILIGENCIA PARA CLIENTES Y ACTIVIDADES ESPECÍFICAS ..... 8
+  Artículo 14. Clientes de riesgo alto ................................................................................................................ 8
+  Artículo 15. Personas expuestas políticamente (PEP) .................................................................................... 9
+  Artículo 16. Personas jurídicas extranjeras .................................................................................................... 9
+  Artículo 17. Clientes designados en listas de organismos internacionales ..................................................... 9
+  Artículo 18. Identificación de relaciones comerciales y/o transacciones con jurisdicciones catalogadas de
+  riesgo 10
+CAPÍTULO V .................................................................................................................................................. 10
+REGISTRO Y NOTIFICACIÓN DE TRANSACCIONES ............................................................................. 10
+  Artículo 19. Operaciones únicas en efectivo ................................................................................................ 10
+  Artículo 20. Operaciones múltiples .............................................................................................................. 10
+  Artículo 21. Servicio de transferencia de dinero .......................................................................................... 11
+  Artículo 22. Remisión de información a la Superintendencia ...................................................................... 11
+  Artículo 23. Operaciones inusuales o sospechosas ....................................................................................... 11
+CAPÍTULO VI ................................................................................................................................................. 12
+OFICIAL DE CUMPLIMIENTO O PERSONA DE ENLACE ....................................................................... 12
+  Artículo 24. Oficial de cumplimiento o Persona de enlace .......................................................................... 12
+  Artículo 25. Requisitos del Oficial de cumplimiento o Persona de enlace ................................................... 13
+  Artículo 26. Incompatibilidades en los nombramientos del Oficial de cumplimiento o Persona de enlace . 14
+  Artículo 27. Funciones del Oficial de cumplimiento o Persona de enlace ................................................... 14
+CAPÍTULO VII ................................................................................................................................................ 16
+AUDITORÍA INTERNA Y EXTERNA SOBRE PREVENCIÓN Y CONTROL DE LA LC/FT/FPADM ... 16
+  AUDITORÍA INTERNA ............................................................................................................................. 16
+
+                                                                                                                                                                  ii
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 3 =====
+  Artículo 28. Auditoría interna sobre prevención y control de la LC/FT/FPADM ........................................ 16
+  Artículo 29. Programa e informe de auditoría interna .................................................................................. 16
+  AUDITORÍA EXTERNA ............................................................................................................................ 17
+  Artículo 30. Auditoría externa sobre prevención y control de LC/FT/FPADM ........................................... 17
+  Artículo 31. Alcance e informe de auditoría externa .................................................................................... 17
+CAPÍTULO VIII .............................................................................................................................................. 18
+MANUAL DE PREVENCIÓN, CAPACITACIÓN Y CONOZCA A SU PERSONAL ................................. 18
+ MANUAL DE PREVENCIÓN .................................................................................................................... 18
+  Artículo 32. Manual de prevención del riesgo de LC/FT/FPADM .............................................................. 18
+  CAPACITACIÓN ........................................................................................................................................ 18
+  Artículo 33. Capacitación ............................................................................................................................. 18
+  Artículo 34. Capacitación del Oficial de cumplimiento o Persona de enlace. .............................................. 19
+ CONOZCA A SU PERSONAL ................................................................................................................... 19
+  Artículo 35. Política conozca a su personal y a sus socios o beneficiarios. .................................................. 19
+CAPÍTULO IX ................................................................................................................................................. 20
+MONITOREO Y SEÑALES DE ALERTA ..................................................................................................... 20
+ MONITOREO .............................................................................................................................................. 20
+  Artículo 36. Monitoreo ................................................................................................................................. 20
+  SEÑALES DE ALERTA ............................................................................................................................. 20
+  Artículo 37. Señales de alertas ..................................................................................................................... 20
+CAPÍTULO X .................................................................................................................................................. 20
+OTRAS OBLIGACIONES .............................................................................................................................. 20
+  Artículo 38. Obligaciones adicionales para la Organización sin fines de lucro (OSFL) .............................. 20
+  Artículo 39. Responsabilidad indelegable del sujeto obligado sobre la debida diligencia. .......................... 21
+  Artículo 40. Información sobre las cuentas, productos o servicios, de uso exclusivo .................................. 21
+  Artículo 41. Sucursales y filiales en el extranjero ........................................................................................ 21
+CAPÍTULO XI ................................................................................................................................................. 21
+DISPOSICIONES SANCIONATORIAS ......................................................................................................... 21
+  Artículo 42. Sanciones .................................................................................................................................. 21
+  Artículo 43. Congelamiento o inmovilización establecidos en el artículo 33 bis de la Ley 7786 ................ 21
+DISPOSICIONES TRANSITORIAS ............................................................................................................... 22
+  Disposición transitoria única: Designación temporal de Persona de enlace ................................................. 22
+DISPOSICIONES FINALES ........................................................................................................................... 22
+  Disposición final primera: Lineamientos generales o acuerdos del Superintendente ................................... 22
+  Disposición final segunda: Sobre las políticas y procedimientos ................................................................. 23
+  Disposición final tercera: Vigencia .............................................................................................................. 23
+Lineamientos generales al Reglamento para la prevención del riesgo de Legitimación de Capitales,
+Financiamiento del Terrorismo y Financiamiento de la Proliferación de Armas de Destrucción Masiva, aplicable
+a los sujetos obligados por los artículos 15 y 15 bis de la Ley 7786 ................................................................ 24
+HISTORIAL DE VERSIONES ........................................................................................................................ 65
+
+
+
+
+
+                                                                                                                                                                 iii
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 4 =====
+                     CONSIDERANDOS
+
+
+
+considerando que:
+
+I.      De conformidad con lo estipulado en el artículo 171, inciso b), de la Ley Reguladora
+          del Mercado de Valores, Ley 7732;  le corresponde  al Consejo Nacional de
+          Supervisión del Sistema Financiero (CONASSIF), aprobar las normas atinentes a la
+          autorización, regulación, supervisión, fiscalización y vigilancia que, conforme a la
+         Ley, deben ejecutar la Superintendencia General de Entidades Financieras (SUGEF
+        o Superintendencia), la Superintendencia General de Valores (SUGEVAL) y la
+          Superintendencia de Pensiones (SUPEN), así como la Superintendencia General de
+         Seguros (SUGESE), producto de lo dispuesto al respecto en la Ley Reguladora del
+        Mercado de Seguros, Ley 8653.
+
+II.       El inciso c), del artículo 131, de la Ley Orgánica del Banco Central de Costa Rica,
+        Ley 7558; establece que el Superintendente de  la SUGEF puede proponer al
+       CONASSIF, para su aprobación, las normas que estime necesarias para el desarrollo
+         de las labores de fiscalización y vigilancia.
+
+III.     En  el ámbito  nacional, respecto de  la materia de  estupefacientes,  sustancias
+          psicotrópicas, drogas de uso no autorizado, actividades conexas, legitimación de
+           capitales y financiamiento al terrorismo; el ordenamiento jurídico se compone de las
+          siguientes normas, citadas según su orden jerárquico:  i. Ley 7786, Ley sobre
+          estupefacientes, sustancias psicotrópicas, drogas de uso no autorizado, actividades
+          conexas, legitimación de capitales y financiamiento  al terrorismo, reformada
+         mediante Leyes 8204, 8719, 9387 y 9449, en adelante referida como Ley 7786, ii.
+         Reglamentación sobre esa materia emanada del Poder Ejecutivo,  iii. Normativa
+          emitida por el CONASSIF, que complementa las normas de rango superior citadas;
+          para regular y prevenir la legitimación de capitales, el financiamiento al terrorismo y
+            el financiamiento de la proliferación de armas de destrucción masiva.
+
+IV.      El informe de Evaluación Mutua a Costa Rica, realizado por el Grupo de Acción
+          Financiera de Latinoamérica (GAFILAT), sobre las medidas de Antilavado de
+         Activos y Contra el Financiamiento del Terrorismo (ALA/CFT) instauradas en Costa
+          Rica, determina que no existe alguna autoridad competente que regule y supervise el
+          sistema ALA/CFT en los casinos físicos y los casinos por internet, ni las demás
+          Actividades y Profesiones No Financieras Designadas, salvo aquellas supervisadas
+
+
+                                                                                                                   iv
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 5 =====
+         por la SUGEF; se incluye en este Reglamento responsabilidades y obligaciones para
+           los sujetos que realizan las actividades indicadas en el informe, antes mencionado,
+          del GAFILAT.
+
+V.       Mediante el Alcance 101, al diario oficial La Gaceta del 11 de mayo de 2017, se
+          publicó la Ley 9449 del 10 de mayo de 2017, que reforma los artículos 15, 15 bis, 16
+        y 81 y adiciona los artículos 15 ter y 16 bis a la Ley 7786. Asimismo, en el Alcance
+        82 al diario oficial La Gaceta del 23 de abril de 2018, se publicó la Reglamentación
+         de los artículos 15 bis y 15 ter de la Ley 7786, Ley sobre estupefacientes, sustancias
+          psicotrópicas, drogas de uso no autorizado, actividades conexas, legitimación de
+          capitales y financiamiento al terrorismo, Decreto 41016-MP-MH-MSP-MJP; resulta
+          necesario emitir la reglamentación prudencial sobre la materia regulada en las citadas
+         normas, que defina responsabilidades y obligaciones para el sujeto que realiza alguna
+        o algunas de las actividades descritas en los artículos 15 y 15 bis de la Ley 7786 y
+          sus reformas, en adelante referido como sujeto obligado.
+
+VI.     La Ley 7786 establece la obligación de inscripción y supervisión; para cumplir con
+           lo definido en la citada Ley se emite el presente Reglamento para la prevención del
+          riesgo  de  Legitimación  de  Capitales,  Financiamiento  del  Terrorismo  y
+         Financiamiento de la Proliferación de Armas de Destrucción Masiva, aplicable a los
+          sujetos obligados por los artículos 15 y 15 bis de la Ley 7786, en adelante referido
+       como Reglamento, y sus lineamientos generales, que determinan responsabilidades
+        y obligaciones, con base en riesgo, para la prevención de la Legitimación de
+          Capitales, Financiamiento del Terrorismo y Financiamiento de la Proliferación de
+        Armas de Destrucción Masiva, en adelante referidas como LC/FT/FPADM.
+
+VII.     El artículo 15 de la Ley 7786 determina que los sujetos obligados que desempeñen
+         alguna de las actividades descritas en ese artículo, para cumplir las obligaciones
+          definidas en dicha Ley, entre ellas su deber de inscripción ante la SUGEF, deben
+           estar constituidas como sociedades de objeto único, conforme con las actividades
+          citadas en el artículo 15 de la Ley 7786.
+
+VIII.    Los artículos 15 y 15 bis de la Ley 7786 establecen que los sujetos obligados
+          presentan características diferentes según su naturaleza, tamaño, estructura, cantidad
+         de operaciones, número de empleados, volumen de producción y factores de
+          exposición al riesgo de LC/FT/FPADM; atendiendo a la complejidad operativa y
+           estructura de los mismos, la Superintendencia, mediante este Reglamento, establece
+         una categorización para esos sujetos obligados.
+
+
+
+                                                                                          v
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 6 =====
+IX.      El inciso d) del segundo párrafo del artículo 15 de la Ley 7786 menciona que ante el
+          surgimiento de nuevas  tecnologías en nuevos  productos y nuevas  prácticas
+          comerciales; los sujetos obligados por el artículo 15 mencionado, tienen la obligación
+         de establecer controles para administrar los riesgos de legitimación de capitales o
+          financiamiento del terrorismo.
+
+X.       El inciso a) del primer párrafo del artículo 15 de la Ley 7786 indica que los sujetos
+          obligados deben realizar la identificación de clientes y la debida diligencia, cuando
+          establezcan relaciones comerciales con estos, en aras de cerrar las brechas de la
+         recomendación 17 de la Evaluación Mutua a Costa Rica del GAFILAT de 2015;
+         conviene que el sujeto obligado establezca una efectiva política conozca a su cliente,
+         que le permita recopilar, registrar, custodiar, verificar y monitorear la información y
+          transacciones de sus clientes persona física o jurídica, sin delegar esa responsabilidad
+         en un tercero.
+
+XI.      El inciso b) del segundo párrafo del artículo 15 de la Ley 7786 indica que el sujeto
+         obligado debe velar por el mantenimiento y la disponibilidad de la información sobre
+           los  registros de  transacciones con  el  cliente;  resulta  necesario  conservar  la
+         información del cliente, y mantenerla a disposición de las autoridades competentes.
+
+XII.     El inciso h) del segundo párrafo del artículo 15 de la Ley 7786 determina que los
+          sujetos  obligados  deben  establecer  mecanismos  de  reporte  de  operaciones
+          sospechosas, incluyendo los intentos de realizarlas; le corresponde al sujeto obligado,
+           identificar y  analizar  las  transacciones  inusuales,  fundamentar  aquellas que
+         determine como  sospechosas, y cuando  proceda, informar a  las  autoridades
+         competentes que corresponda.
+
+XIII.    Los artículos 15 y 15 bis de la Ley 7786 otorgan a la SUGEF la potestad de exigir,
+         que dentro de la estructura organizativa del sujeto obligado, se incorpore un oficial
+         de cumplimiento o en su defecto, se autorice una estructura diferenciada. En virtud
+         de que las actividades realizadas por los sujetos obligados están expuestas al riesgo
+         de LC/FT/FPADM; surge la necesidad de designar el funcionario que identifique las
+          vulnerabilidades de la exposición a dicho riesgo, y que establezca métodos y acciones
+          para su prevención.
+
+XIV.     El inciso f) del párrafo segundo del artículo 15 de la Ley 7786 indica que cuando
+          existan sucursales y  filiales extranjeras, los sujetos obligados deben establecer
+          controles contra la legitimación de capitales y el financiamiento al terrorismo; se
+          incluye el tema en esta normativa.
+
+
+                                                                                                                  vi
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 7 =====
+XV.      El artículo 3 del Reglamento general sobre legislación contra el narcotráfico,
+          actividades conexas, legitimación de capitales, financiamiento al terrorismo y
+          delincuencia organizada, Decreto Ejecutivo 36948-MP-SP-JP-H-S, en adelante
+          referido como Reglamento a la Ley 7786, define los documentos de identificación
+           válidos, la normativa establece los tipos de documentos válidos, que le permitirán al
+          sujeto obligado verificar la identidad de sus clientes.
+
+XVI.     El artículo 14 del Reglamento a la Ley 7786 establece que todas la entidades y los
+          sujetos obligados descritos en los artículos 14 y 15 de la Ley 7786, deben contar con
+         una metodología para clasificar por riesgo a sus clientes; el sujeto obligado podrá
+            utilizar los criterios y las categorías que se encuentran definidas en esta normativa.
+
+XVII.    El artículo 50 del Reglamento a  la Ley 7786 determina que  la Oficialía de
+         Cumplimiento del sujeto obligado, será apoyada por una auditoría interna, y además
+          define que debe someterse a una auditoría externa; le permitirá al sujeto obligado la
+          verificación de la efectividad y el cumplimiento de las políticas, procedimientos y
+          controles establecidos para la prevención y detección de la LC/FT/FPADM.
+
+XVIII.   El artículo 47 del Reglamento a la Ley 7786 determina que los sujetos supervisados
+         deben establecer programas actualizados, periódicos y permanentes de capacitación
+          para todos sus empleados y directivos, en relación con la aplicación de la Ley 7786;
+           la capacitación periódica en temas y aspectos diferenciados que se mencionan en esta
+          normativa, contribuyen a cumplir con la obligación establecida en la Ley.
+
+XIX.     El artículo 46 del Reglamento a la Ley 7786 determina que el sujeto obligado debe
+         mantener un expediente actualizado y completo de cada uno de sus funcionarios,
+           directivos, administradores y representantes legales; el sujeto obligado, aplicará una
+           política Conozca a su personal, que le permita comprobar la integridad de sus
+          funcionarios y demás personas relacionadas.
+
+XX.      El artículo 30 del Reglamento a la Ley 7786 establece que los sujetos obligados
+         deben implementar programas de monitoreo basados en modelos de riesgo de
+          legitimación de capitales y financiamiento al terrorismo, que les permitan identificar
+          transacciones  atípicas  realizadas por todos sus  clientes;  el monitoreo de  las
+          transacciones u otras situaciones, permite establecer señales de alerta para detectar
+          situaciones inusuales, y aquellas que determine como sospechosas.
+
+XXI.     El artículo 6 de la Reglamentación de los artículos 15 bis y 15 ter de la Ley 7786,
+         Decreto Ejecutivo 41016-MP-MH-MSP-MJP, indica que las cuentas o servicios
+
+
+                                                                                                                              vii
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 8 =====
+          financieros que utilicen los sujetos obligados, deberán ser de uso exclusivo de la
+          actividad por la que se inscribió ante el ente supervisor; se establece que el sujeto
+         obligado notifique la información correspondiente.
+
+XXII.   La recomendación 8 del Grupo de Acción Financiera Internacional (GAFI), hace
+          énfasis sobre la vulnerabilidad de exposición al riesgo de LC/FT/FPADM en la
+          actividad de organizaciones sin fines de lucro, en adelante referidas como OSFL; es
+          importante que el sujeto obligado establezca medidas especiales para garantizar el
+         uso correcto de los fondos que administra, tanto en la recepción como en la entrega
+         de los mismos.
+
+XXIII.   Las medidas de debida diligencia facilitan el conocimiento de los clientes, así como,
+           la identificación de características especiales, entre ellas, clientes de riesgo alto,
+         personas expuestas políticamente (PEP), personas jurídicas extranjeras, personas
+         designadas en  listas de organismos internacionales, y  clientes que mantienen
+          relaciones  comerciales  con  países  catalogados  de  riesgo  por  organismos
+          internacionales; es necesario establecer medidas de debida diligencia reforzada, y
+        mecanismos de aprobación de la relación comercial o su continuidad.
+
+XXIV.   Algunas transacciones realizadas por los clientes mediante el ingreso o egreso de
+          dinero, en  efectivo u  otros medios de pago,  podrían  representar  riesgo de
+       LC/FT/FPADM; resulta necesario que la información relacionada con las mismas,
+          sea registrada y preparada por el sujeto obligado para su remisión, en la forma y
+          plazos que el Supervisor u otras autoridades competentes dispongan.
+
+XXV.    Las recomendaciones 6 y 7 del GAFI establecen que los países deben implementar
+         regímenes de sanciones financieras para cumplir con las Resoluciones del Consejo
+         de Seguridad de las Naciones Unidas relativas a la prevención y represión del
+          terrorismo, el financiamiento del terrorismo y la prevención, represión e interrupción
+         de la proliferación de armas de destrucción masiva y su financiamiento, y que en el
+           artículo 33 bis de la Ley 7786 establece el congelamiento o inmovilización inmediata
+         de todos los productos financieros, dinero, activos y bienes muebles o inmuebles de
+           las personas físicas o jurídicas que sean designadas o estén en las listas emitidas por
+            el Consejo de Seguridad de las Naciones Unidas; se incluye un artículo en este
+         Reglamento, para que los sujetos obligados atiendan lo requerido en el artículo 33
+           bis de la Ley 7786.
+
+XXVI.   Los lineamientos generales a este Reglamento facilitan la comprensión y aplicación
+         de esta normativa; el CONASSIF faculta al Superintendente General de Entidades
+
+
+                                                                                                                                    viii
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 9 =====
+          Financieras, en adelante referido como Superintendente, a emitir y/o modificar esos
+          lineamientos generales.
+
+XXVII.  Las recomendaciones 10 y 22 del GAFI, determinan que para el caso de las
+          actividades de casinos y comerciantes de metales preciosos y piedras preciosas, estas
+         deben establecer requisitos de debida diligencia del cliente y de mantenimiento de
+           registros, cuando los clientes se involucran en transacciones por un monto igual o
+        mayor al umbral designado aplicable; se incluye en los lineamientos generales a este
+         Reglamento, los umbrales para los casinos y comerciantes de metales preciosos y
+          piedras preciosas.
+
+XXVIII. Los artículos 1 y 12 de la Ley 8220, su reforma y reglamento establecen que el
+           análisis de la evaluación costo-beneficio de la regulación, lo deben realizar todas las
+           instituciones que conforman la Administración Pública, central y descentralizada,
+           instituciones autónomas y semiautónomas, órganos con  personalidad  jurídica
+          instrumental, entes públicos no estatales, municipalidades y empresas públicas sólo
+          para aquellas regulaciones nuevas o reformas a las existentes; la Dirección de Mejora
+          Regulatoria del Ministerio de Economía Industria y Comercio, mediante Informe
+         Dirección de Mejora Regulatoria DMR-DAR-INF-093-19, concluye que, desde la
+          perspectiva de la mejora regulatoria, la propuesta cumple con lo establecido y puede
+          continuar con el trámite que corresponda.
+
+XXIX.   El CONASSIF mediante artículo 7 del acta de la sesión 1483-2019 del 26 de febrero
+         de 2019, dispuso en firme, remitir en consulta pública el proyecto de Reglamento
+         para la prevención del riesgo de Legitimación de Capitales, Financiamiento al
+         Terrorismo y Financiamiento de la Proliferación de Armas de Destrucción Masiva,
+          aplicable a los sujetos obligados por los artículos 15 y 15 bis de la Ley 7786,
+        Acuerdo SUGEF 13-19; en  relación con  lo  anterior  los  comentarios y  las
+          observaciones recibidas, fueron valoradas y en lo que procedió se modificó el texto
+         sometido a consulta pública, conforme razonadamente se explicó en la matriz de
+          observaciones adjunta al oficio SGF-3110-2019 para dar cumplimiento al artículo 15
+           bis citado.
+
+dispuso en firme:
+
+aprobar  el Reglamento para  la prevención  del  riesgo de Legitimación de  Capitales,
+Financiamiento al Terrorismo y Financiamiento de la Proliferación de Armas de Destrucción
+Masiva, aplicable a los sujetos obligados por los artículos 15 y 15 bis de la Ley 7786, Acuerdo
+SUGEF 13-19, cuyo texto se detalla a continuación:
+
+
+                                                                                                                   ix
+                                                                           Acuerdo Sugef 13-19
+
+===== PAGINA PDF 10 =====
+ REGLAMENTO PARA LA PREVENCIÓN DEL RIESGO DE LEGITIMACIÓN DE
+ CAPITALES, FINANCIAMIENTO AL TERRORISMO Y FINANCIAMIENTO DE
+ LA PROLIFERACIÓN DE ARMAS DE DESTRUCCIÓN MASIVA, APLICABLE A
+ LOS SUJETOS OBLIGADOS POR LOS ARTÍCULOS 15 Y 15 BIS DE LA LEY 7786
+
+
+                        CAPÍTULO I
+
+                    DISPOSICIONES GENERALES
+
+
+
+Artículo 1. Objeto
+
+Este Reglamento tiene por objeto definir las responsabilidades y las obligaciones, con base en
+riesgo, según el tipo de sujeto obligado, para la prevención del riesgo de Legitimación de
+Capitales, Financiamiento del Terrorismo y Financiamiento de la Proliferación de Armas de
+Destrucción Masiva (LC/FT/FPADM), o de cualquier otra actividad ilícita determinada por la
+Ley 7786 y sus reformas.
+
+
+
+Artículo 2. Alcance
+
+Este Reglamento aplica a los sujetos obligados, que realicen alguna o algunas de las actividades
+descritas en los artículos 15 y 15 bis de la Ley 7786.
+
+
+
+Artículo 3. Definiciones
+
+Para los propósitos del Reglamento y sus lineamientos generales se establecen definiciones,
+que describen en forma amplia, algunas palabras o frases utilizadas en esta normativa.
+
+a.   Administración superior: persona(s) física(s) que, por su función, cargo o posición,
+      ejerza(n) o represente(n)  la máxima autoridad administrativa del sujeto obligado, o
+      intervenga(n)  o tenga(n)   la posibilidad de intervenir en  la toma de decisiones
+      importantes.
+
+b.   APNFD: Actividades y Profesiones No Financieras Designadas, mediante la Ley 7786 y
+      sus reformas, que son consideradas vulnerables de ser utilizadas para la LC/FT/FPADM.
+
+
+                                                                                          1
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 11 =====
+c.   Autoridad competente: autoridades que tienen designadas responsabilidades relativas al
+     combate contra la LC/FT/FPADM.
+
+d.   Autoridad máxima: persona física u órgano colegiado, responsable del sujeto obligado.
+    En  el caso de personas  jurídicas corresponde a  la Junta  Directiva, Consejo de
+     Administración u órgano equivalente, según la naturaleza jurídica del sujeto obligado de
+     que se trate.
+
+e.    Beneficiario final: persona física que finalmente posee o controla a un cliente y/o la
+     persona física en cuyo nombre se realiza una transacción o contrato, o recibe los
+      beneficios asociados. Incluye también a las personas que ejercen el control efectivo final
+      sobre una persona jurídica, fideicomisos u otra estructura jurídica.
+
+     La referencia a “que finalmente posee o controla” y a “control efectivo final”, se refiere
+     a las situaciones en las que el control se ejerce mediante una cadena de titularidad, o a
+      través de otros medios de control que no son un control directo.
+
+     Para el caso de las personas jurídicas o estructuras jurídicas nacionales, y en lo que resulte
+      compatible, se aplicará lo dispuesto en las definiciones del “Reglamento del registro de
+      transparencia y beneficiarios finales”, en relación al beneficiario final o efectivo.
+
+f.    Cliente habitual: usuario o beneficiario recurrente de los productos y/o servicios que
+      ofrecen los sujetos obligados. Además, se considerará aquella persona física o jurídica
+     que  realiza o pretende  realizar  transacciones que por sus  características puedan
+      considerarse vulnerables al riesgo de LC/FT/FPADM.
+
+g.    Cliente ocasional: persona física o jurídica que utiliza o se beneficia de los productos y/o
+      servicios que ofrecen los sujetos obligados, de forma no recurrente.
+
+h.   CONASSIF: Consejo Nacional de Supervisión del Sistema Financiero.
+
+i.    Debida diligencia: es la aplicación de políticas y procedimientos para que los sujetos
+      obligados puedan, de manera efectiva, identificar a sus clientes, verificar la información
+     y monitorear aquellas situaciones en las que participen, en relación con los riesgos y
+      prácticas de prevención de la LC/FT/FPADM.
+
+j.    Debida diligencia reforzada: es la aplicación de políticas y procedimientos adicionales
+     a las medidas de debida diligencia, que el sujeto obligado empleará a todos aquellos
+      clientes que, por presentar un riesgo alto, o en función de su análisis de riesgo se detecten
+
+                                                                                          2
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 12 =====
+      situaciones que por su  propia  naturaleza puedan  presentar un mayor  riesgo de
+    LC/FT/FPADM.
+
+k.   Debida diligencia simplificada: es la aplicación de políticas y procedimientos mínimas
+     de debida diligencia que el sujeto obligado empleará a todos aquellos clientes que por su
+      naturaleza puedan presentar un riesgo bajo de LC/FT/FPADM.
+
+l.    Funcionario: empleado o trabajador que labora en el sector público o en el sector
+      privado.
+
+m.  LC/FT/FPADM: acrónimos de Legitimación de Capitales (LC), Financiamiento al
+     Terrorismo (FT) y Financiamiento de la Proliferación de Armas de Destrucción Masiva
+    (FPADM).
+
+n.   Ley 7786: Ley sobre estupefacientes, sustancias psicotrópicas, drogas de uso no
+      autorizado, actividades conexas, legitimación de capitales y financiamiento al terrorismo,
+     y sus reformas.
+
+ñ.    Operaciones intentadas: son aquellas situaciones en las cuales alguna persona física
+      intentó realizar una transacción a su nombre o por cuenta de un tercero, y a pesar de que
+      dicha transacción no se realizó, se considera sospechosa por el sujeto obligado.
+
+o.   Operaciones inusuales: transacciones que no se ajustan al patrón habitual del cliente.
+
+p.   Operaciones sospechosas: transacciones inusuales realizadas en forma periódica o
+      aislada, que de acuerdo con los usos y costumbres de la actividad de que se trate, resulten
+      sin justificación material, económica o legal evidente, o de complejidad injustificada.
+
+q.   Organizaciones sin fines de lucro (OSFL): Organizaciones sin fines de lucro que envíen
+     o reciban dinero procedente de jurisdicciones internacionalmente catalogadas de riesgo,
+     o que mantengan relaciones con matrices, sucursales o filiales extranjeras ubicadas en
+       ellas.
+
+r.   Origen de fondos: se refiere a la actividad económica, causa o hecho que genera el nivel
+     de ingresos, la riqueza o la acumulación del dinero, que fundamenta la transacción que
+      realiza el cliente. La procedencia de los recursos, mediante una transferencia u operación
+     de un sujeto obligado, no justifica el origen de los fondos.
+
+s.    Política Conozca a su cliente: conjunto de políticas y procedimientos utilizadas por los
+      sujetos obligados para identificar y conocer, de manera efectiva a sus clientes, las
+
+
+                                                                                          3
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 13 =====
+      actividades a que se dedican y el origen de sus fondos, con el objetivo de prevenir el
+      riesgo de LC/FT/FPADM.
+
+t.   PEP: personas expuestas políticamente que de conformidad con la Ley contra  la
+     Corrupción y el Enriquecimiento Ilícito en la Función Pública, deben rendir declaración
+      jurada sobre su situación patrimonial ante la Controlaría General de la República por
+     ocupar determinados cargos públicos, según lo estipulado en el Reglamento general sobre
+      legislación  contra  el  narcotráfico,  actividades  conexas,  legitimación de  capitales,
+      financiamiento al terrorismo y delincuencia organizada.
+
+u.   Riesgo legal: es la posibilidad de pérdidas económicas debido a la inobservancia o
+      aplicación incorrecta o inoportuna de disposiciones legales o normativas, instrucciones
+     emanadas de los organismos de control o sentencias o resoluciones jurisdiccionales o
+      administrativas adversas y a la falta de claridad o redacción deficiente en los textos
+      contractuales que pueden afectar la formalización o ejecución de actos, contratos o
+      transacciones.
+
+v.    Riesgo de reputación: es la posibilidad de pérdidas económicas debido a la afectación
+      del prestigio de la entidad, derivadas de eventos adversos que trascienden a terceros.
+
+w.   Riesgo de LC/FT/FPADM: es la posibilidad de que el sujeto obligado sea utilizado para
+      operaciones de LC/FT/FPADM,  así como  potenciales pérdidas económicas y de
+      reputación, consecuencia de la pérdida de confianza en la integridad de la entidad y por
+      sanciones por incumplimientos a la Ley 7786 y su reglamentación conexa.
+
+x.  SUGEF o Superintendencia: Superintendencia General de Entidades Financieras.
+
+y.    Sujeto obligado: persona física o jurídica que desempeña alguna de las actividades
+      descritas en el artículo 15 bis de la Ley 7786, o persona jurídica que realiza alguna de las
+      actividades descritas en el artículo 15 de la Ley 7786, con excepción de los notarios a los
+     que se refiere el inciso e) de dicho artículo 15 bis, los que de conformidad con lo señalado
+     en el artículo 15 ter de la Ley 7786, serán supervisados en la materia por una unidad
+      especializada de la Dirección Nacional de Notariado.
+
+z.    Sujeto inscrito: persona física o jurídica que desempeña alguna de las actividades
+      descritas en el artículo 15 bis de la Ley 7786, o persona jurídica que realiza alguna de las
+      actividades descritas en el artículo 15 de la Ley 7786, que se encuentra inscrita ante la
+    SUGEF.
+
+aa.   Superintendente: Superintendente General de Entidades Financieras.
+
+
+                                                                                          4
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 14 =====
+Artículo 4. Tipos de sujetos inscritos
+
+La Superintendencia definirá en los lineamientos generales a este Reglamento la categorización
+de  los  sujetos  inscritos, con  el  objeto de  establecer  responsabilidades y  obligaciones
+diferenciadas; según  sus  características de  naturaleza, tamaño,  estructura,  cantidad de
+operaciones, número de empleados, volumen transaccional y factores de exposición al riesgo
+de LC/FT/FPADM.
+
+El sujeto inscrito debe suministrar la información según se define en los lineamientos generales
+a este Reglamento, que permita a la Superintendencia categorizar los sujetos inscritos.
+
+La Superintendencia comunicará al sujeto inscrito, por los medios que disponga, la categoría
+que le corresponde. En caso de que se presenten cambios en la categoría asignada, estos serán
+comunicados.
+
+La Superintendencia podrá modificar la clasificación del sujeto inscrito mediante resolución
+razonada, según se establece en los lineamientos generales a este Reglamento.
+
+El Superintendente otorgará un plazo razonable para que los sujetos obligados que se inscriban
+ante la SUGEF a partir de la entrada en vigencia de este Reglamento, se adapten a los
+requerimientos establecidos en el Reglamento y sus lineamientos generales según su categoría,
+o cuando la categoría asignada previamente al sujeto inscrito haya sido modificada.
+
+
+
+                        CAPÍTULO II
+
+        ADMINISTRACIÓN DEL RIESGO DEL SUJETO OBLIGADO
+
+
+
+Artículo 5. Procedimiento para la administración del riesgo del sujeto obligado.
+
+El  sujeto  obligado debe  elaborar un  procedimiento  para  administrar  sus  riesgos de
+LC/FT/FPADM.
+
+En los lineamientos generales a este Reglamento se establecen los elementos mínimos para el
+cumplimiento de lo indicado en este artículo.
+
+
+
+
+
+                                                                                          5
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 15 =====
+Artículo 6. Nuevas tecnologías, productos, prácticas comerciales, mecanismos y canales
+de distribución.
+
+El sujeto obligado debe aplicar el procedimiento mencionado en el artículo anterior, para
+administrar sus riesgos de LC/FT/FPADM, previo  al lanzamiento de nuevos productos,
+prácticas comerciales, canales de distribución o el uso de tecnologías nuevas o en desarrollo y
+el uso de activos virtuales.
+
+
+
+                        CAPÍTULO III
+
+       DEBIDA DILIGENCIA EN EL CONOCIMIENTO DEL CLIENTE
+
+
+
+Artículo 7. Identificación del cliente
+
+El sujeto obligado debe identificar a todos sus clientes, tanto personas físicas como jurídicas.
+Los documentos válidos para la identificación de los clientes se determinan en los lineamientos
+generales a este Reglamento.
+
+La Superintendencia podrá establecer en los lineamientos generales a este Reglamento,
+disposiciones diferenciadas dependiendo del tipo de actividad sujeta a inscripción.
+
+
+
+Artículo 8. Clasificación de clientes
+
+El sujeto obligado debe clasificar a sus clientes en dos categorías, habituales y ocasionales,
+considerando lo indicado en las definiciones de este Reglamento, de conformidad con los
+principios constitucionales de razonabilidad, objetividad y buena fe.
+
+La autoridad máxima del sujeto obligado debe aprobar los fundamentos utilizados para la
+clasificación de los clientes en dichas categorías.
+
+
+
+Artículo 9. Política Conozca a su cliente
+
+El sujeto obligado debe desarrollar e implementar una política denominada Conozca a su
+cliente, mediante un conjunto de procedimientos que le permitan establecer medidas de debida
+
+                                                                                          6
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 16 =====
+diligencia, con base en el riesgo del cliente, para conocer a sus clientes, con el objetivo de
+prevenir el riesgo de LC/FT/FPADM.
+
+El sujeto obligado debe aplicar medidas de debida diligencia desde el momento en que inicia
+las relaciones comerciales con el cliente.
+
+La Superintendencia podrá establecer en los lineamientos generales a este Reglamento,
+disposiciones diferenciadas dependiendo del tipo de actividad sujeta a inscripción.
+
+
+
+Artículo 10. Información del cliente
+
+El sujeto obligado debe recopilar y verificar la información de sus clientes, persona física o
+jurídica, que establece este Reglamento y sus lineamientos generales. Asimismo, puede requerir
+la información que considere conveniente, según sus políticas y procedimientos, para aplicar la
+debida diligencia en el conocimiento de su cliente.
+
+La Superintendencia podrá establecer en los lineamientos generales a este Reglamento,
+disposiciones diferenciadas dependiendo del tipo de actividad sujeta a inscripción.
+
+
+
+Artículo 11. Registro de la información del cliente
+
+El sujeto obligado debe registrar la información básica y adicional de sus clientes habituales,
+según se dispone en el artículo anterior, de conformidad con lo establecido en los lineamientos
+generales a este Reglamento.
+
+El sujeto obligado debe registrar la información mencionada en el párrafo anterior mediante un
+formulario que denominará Conozca a su cliente, el cual debe ser firmado por el cliente al inicio
+de  la relación comercial. Asimismo, debe custodiar  el formulario y  la documentación
+correspondiente de forma individualizada para cada cliente, de manera física o electrónica.
+
+Para los clientes ocasionales el sujeto obligado debe registrar, por los medios que considere
+conveniente, únicamente la información básica que dispone el artículo anterior, conforme a lo
+establecido en los lineamientos generales a este Reglamento.
+
+
+
+
+
+                                                                                          7
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 17 =====
+Artículo 12. Procedimiento para la clasificación del riesgo del cliente
+
+El sujeto obligado debe asignar una categoría de riesgo a cada cliente habitual mediante un
+procedimiento de clasificación de riesgo. Los elementos y  criterios mínimos que debe
+considerar están definidos en los lineamientos generales a este Reglamento, y deben ser acordes
+con la naturaleza de las operaciones que lleva a cabo el sujeto obligado.
+
+
+
+Artículo 13. Mantenimiento y actualización de la información del cliente
+
+El sujeto obligado debe mantener custodiada la información de sus clientes y los documentos
+de respaldo durante la relación comercial. Finalizada la relación comercial debe conservar la
+información y sus respaldos hasta el tiempo que establezca la Ley 7786, sus reglamentos y
+modificaciones. El sujeto obligado debe mantener la información y sus respaldos disponibles
+cuando así lo requieran las autoridades competentes.
+
+El sujeto obligado debe garantizar la confidencialidad, respecto a la información recopilada de
+sus clientes, y los demás aspectos establecidos en la Ley 8968 Protección de la Persona frente
+al tratamiento de sus datos personales.
+
+El sujeto obligado debe actualizar periódicamente la información recopilada mediante el
+proceso de debida diligencia en el conocimiento del cliente, según lo establecido en los
+lineamientos generales a este Reglamento y durante el tiempo que la relación comercial se
+mantenga activa.
+
+
+
+                        CAPÍTULO IV
+
+OTRAS MEDIDAS DE DEBIDA DILIGENCIA PARA CLIENTES Y ACTIVIDADES
+                          ESPECÍFICAS
+
+
+
+Artículo 14. Clientes de riesgo alto
+
+El sujeto obligado debe implementar una debida diligencia reforzada para los clientes habituales
+clasificados de riesgo alto, para mitigar el riesgo de LC/FT/FPADM presente en la relación
+comercial.
+
+
+
+                                                                                          8
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 18 =====
+La administración superior del sujeto obligado debe aprobar el inicio o la continuidad de la
+relación comercial, cuando el cliente es clasificado de riesgo alto.
+
+El sujeto obligado debe evidenciar lo indicado en los párrafos anteriores en el expediente del
+cliente de forma individualizada.
+
+
+
+Artículo 15. Personas expuestas políticamente (PEP)
+
+El sujeto obligado debe establecer un procedimiento para la identificación y aplicación de una
+debida diligencia reforzada a los clientes catalogados como Personas expuestas políticamente
+(PEP). El Reglamento general sobre legislación contra el narcotráfico, actividades conexas,
+legitimación de capitales, financiamiento al terrorismo y delincuencia organizada, establece
+quienes son consideradas Personas expuestas políticamente (PEP).
+
+La administración superior del sujeto obligado debe aprobar, el inicio de las relaciones
+comerciales con los clientes catalogados como PEP y  la continuidad de las relaciones
+comerciales con clientes que sean identificados como PEP.
+
+
+
+Artículo 16. Personas jurídicas extranjeras
+
+El sujeto obligado, para establecer o mantener las relaciones comerciales con los clientes
+habituales que sean personas jurídicas extranjeras, debe cumplir las obligaciones y requisitos
+establecidos en los lineamentos generales a este Reglamento.
+
+
+
+Artículo 17. Clientes designados en listas de organismos internacionales
+
+El sujeto obligado debe identificar desde el inicio de la relación comercial, si alguno de sus
+clientes se encuentra designado en alguna lista de organismos internacionales en materia de
+LC/FT/FPADM, y debe establecer la periodicidad de la verificación en dichas listas.
+
+El sujeto obligado debe establecer medidas de debida diligencia reforzada para los clientes
+identificados en las listas antes mencionadas, y debe reportarlos a la Unidad de Inteligencia
+Financiera en adelante referida como UIF. La administración superior del sujeto obligado debe
+aprobar, la continuidad de las relaciones comerciales con los clientes designados en alguna de
+las listas de los organismos internacionales en materia de LC/FT/FPADM.
+
+
+                                                                                          9
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 19 =====
+Artículo 18. Identificación de relaciones comerciales y/o transacciones con jurisdicciones
+catalogadas de riesgo
+
+El sujeto obligado debe identificar las relaciones comerciales y/o transacciones de sus clientes
+con países catalogados de riesgo por organismos internacionales en materia de LC/FT/FPADM,
+o cuando los fondos utilizados en la transacción, por instrucciones de su cliente, sean enviados
+o recibidos, hacia o desde los países antes mencionados.
+
+La administración superior del sujeto obligado debe aprobar la continuidad de las relaciones
+comerciales con estos clientes y debe establecer una debida diligencia reforzada.
+
+
+
+                        CAPÍTULO V
+
+          REGISTRO Y NOTIFICACIÓN DE TRANSACCIONES
+
+
+
+Artículo 19. Operaciones únicas en efectivo
+
+El sujeto obligado debe registrar en un formulario, físico o electrónico, el ingreso o egreso de
+dinero en efectivo (billetes y/o monedas), recibido o entregado en una única transacción,
+realizada en moneda local o extranjera, que iguale o supere los US$10.000,00 (diez mil dólares
+en la moneda de los Estados Unidos de América) o su equivalente en colones costarricenses u
+otra moneda extranjera.
+
+El sujeto obligado debe solicitar a la persona que físicamente realiza la transacción la firma del
+formulario y debe mantenerlo a disposición de las autoridades competentes.
+
+La Superintendencia enunciará  la información que debe contener  el formulario en los
+lineamientos generales a este Reglamento. Asimismo, podrá establecer en los lineamientos
+generales a este Reglamento, disposiciones diferenciadas dependiendo del tipo de actividad
+sujeta a inscripción.
+
+
+
+Artículo 20. Operaciones múltiples
+
+El sujeto obligado debe registrar el ingreso o egreso, de manera individualizada, de las
+transacciones múltiples realizadas por sus clientes, en efectivo o por cualquier otro medio de
+
+
+                                                                                         10
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 20 =====
+pago, durante un mes calendario, que en conjunto igualen o superen los US$10.000,00 (diez
+mil dólares en la moneda de los Estados Unidos de América) o su equivalente en colones
+costarricenses u otra moneda extranjera.
+
+La Superintendencia podrá establecer en los lineamientos generales a este Reglamento,
+disposiciones diferenciadas dependiendo del tipo de actividad sujeta a inscripción.
+
+El sujeto obligado debe conservar un registro de las transacciones que componen la operación
+múltiple, y mantenerlo a disposición de las autoridades competentes.
+
+
+
+Artículo 21. Servicio de transferencia de dinero
+
+El sujeto obligado que preste el servicio de transferencias de dinero locales o extranjeras, que
+igualen o superen los US$1.000,00 (mil dólares en la moneda de los Estados Unidos de
+América) o su equivalente en otras monedas, debe registrar electrónicamente la información de
+la transacción de acuerdo con lo indicado en los lineamientos generales a este Reglamento.
+
+El sujeto obligado debe mantener el registro de las transferencias a disposición de las
+autoridades competentes.
+
+
+
+Artículo 22. Remisión de información a la Superintendencia
+
+El sujeto obligado debe realizar los reportes de información, que le sean requeridos por la
+Superintendencia, y debe remitirlos en el (los) plazo(s) y a través de los medios dispuestos por
+este órgano de supervisión, considerando las excepciones que correspondan, según se establece
+en los lineamientos generales a este Reglamento.
+
+
+
+Artículo 23. Operaciones inusuales o sospechosas
+
+El sujeto obligado debe identificar aquellas operaciones inusuales y sospechosas cuando estas
+puedan representar un riesgo de LC/FT/FPADM.
+
+El sujeto obligado debe realizar un estudio de las operaciones inusuales, cuando concluya que
+la operación inusual es sospechosa, debe remitir un reporte en forma inmediata a la UIF del
+Instituto Costarricense sobre Drogas en adelante referido como ICD. Asimismo, debe realizar
+el reporte también al ICD cuando se trate de una operación intentada.
+
+                                                                                         11
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 21 =====
+El sujeto obligado debe mantener a disposición de las autoridades competentes, los estudios de
+operaciones inusuales y de operaciones sospechosas, que contengan los resultados de los
+análisis realizados.
+
+El sujeto obligado debe adoptar un procedimiento relacionado con:
+
+a)   La identificación de operaciones inusuales, sospechosas e intentadas.
+
+b)   Los reportes remitidos al ICD sobre:
+
+         i. Operaciones sospechosas.
+
+         ii. Operaciones intentadas.
+
+c)   La  confidencialidad  de  los  reportes  de  operaciones  sospechosas  e  información
+      relacionada, remitidos al ICD.
+
+d)   La calificación de riesgo del cliente y mantenimiento de la relación comercial.
+
+e)    Otras disposiciones mencionadas en este artículo.
+
+
+
+                        CAPÍTULO VI
+
+         OFICIAL DE CUMPLIMIENTO O PERSONA DE ENLACE
+
+
+
+Artículo 24. Oficial de cumplimiento o Persona de enlace
+
+El sujeto obligado debe designar un Oficial de cumplimiento a tiempo completo, o una Persona
+de enlace a tiempo completo o parcial, de conformidad con lo establecido en los lineamientos
+generales a este Reglamento. Esto, con  el objeto de identificar las vulnerabilidades de
+exposición al riesgo de LC/FT/FPADM, y establecer métodos y acciones para la prevención de
+este riesgo.
+
+El sujeto obligado debe propiciar las condiciones necesarias para el Oficial de cumplimiento o
+Persona de enlace, que garanticen el desempeño eficiente de sus funciones y la toma de
+decisiones, dentro del ámbito de sus competencias. Además, debe garantizar que en caso de
+ausencia del titular, este sea sustituido por un funcionario que realice las funciones que le
+corresponden al primero.
+
+                                                                                         12
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 22 =====
+La Junta Directiva u órgano equivalente del sujeto obligado debe nombrar el Oficial de
+cumplimiento o Persona de enlace, según se dispone en los lineamientos generales a este
+Reglamento.
+
+El sujeto obligado debe comunicar a la Superintendencia y a la UIF del ICD, el nombramiento
+del Oficial de cumplimiento o Persona de enlace, en los casos que corresponda, en un plazo no
+mayor a tres días hábiles posteriores a su designación, incluyendo las calidades y/o atestados.
+Asimismo, debe comunicar  la conclusión de  la relación de cualquiera de  ellos, y  las
+justificaciones correspondientes.
+
+
+
+Artículo 25. Requisitos del Oficial de cumplimiento o Persona de enlace
+
+El Oficial de cumplimiento o, en los casos que corresponda, la Persona de enlace, debe cumplir
+al menos con los siguientes requisitos y calidades:
+
+a)   Mayor de edad.
+
+b)   Formación académica mínima:
+
+         i. Oficial de cumplimiento: Técnico universitario o equivalente.
+
+         ii. Persona de enlace: Bachillerato en educación diversificada.
+
+c)    Experiencia mínima en labores de Oficialía de cumplimiento o en las labores de la
+      actividad citada en los artículos 15 o 15 bis de la Ley 7786, por la cual fue inscrito el
+      sujeto obligado:
+
+         i. Oficial de cumplimiento: tres años.
+
+         ii. Persona de enlace: un año.
+
+d)   Conocimiento en materia de prevención de legitimación de capitales y financiamiento al
+      terrorismo.
+
+e)   Conocimiento sobre hojas de cálculo electrónicas, procesadores de texto electrónicos y
+      correo electrónico.
+
+
+
+
+
+                                                                                         13
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 23 =====
+Artículo 26. Incompatibilidades en los nombramientos del Oficial de cumplimiento o
+Persona de enlace
+
+No pueden ser designados como Oficial de cumplimiento o Persona de enlace aquellas personas
+que:
+
+a)   Hayan sido condenadas por cualquiera de  los  delitos relacionados con temas de
+    LC/FT/FPADM.
+
+b)   Se encuentren designadas en listas en materia de LC/FT/FPADM, de la Organización de
+      las Naciones Unidas (ONU) o la Oficina de Control de Activos Extranjeros de Estados
+     Unidos (OFAC, por sus siglas en inglés).
+
+
+
+Artículo 27. Funciones del Oficial de cumplimiento o Persona de enlace
+
+El Oficial de cumplimiento o Persona de enlace del sujeto obligado debe realizar las siguientes
+funciones, con el objeto de prevenir el riesgo de LC/FT/FPADM:
+
+a)    Ser el enlace directo entre el sujeto obligado, la Superintendencia y cualquier otra
+      autoridad competente.
+
+b)    Elaborar y actualizar el manual de prevención del riesgo de LC/FT/FPADM.
+
+c)    Establecer medidas y controles sobre la prevención del riesgo de LC/FT/FPADM en
+      relación con:
+
+         i.     Identificación y  debida  diligencia  del  cliente cuando  establezca  relaciones
+           comerciales con el sujeto obligado.
+
+         ii.   Mantenimiento y disponibilidad de información sobre los registros de transacciones
+          con el cliente.
+
+         iii.   Personas expuestas políticamente (PEP).
+
+       iv.   Surgimiento  de  nuevas  tecnologías,  nuevos  productos  y  nuevas  prácticas
+           comerciales.
+
+      v.    Sucursales y filiales extranjeras.
+
+
+
+
+                                                                                         14
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 24 =====
+       vi.   Relaciones  comerciales y  transacciones con  personas  físicas o  jurídicas  e
+            instituciones  financieras,  domiciliadas en  países  catalogados de  riesgo  por
+          organismos internacionales.
+
+       vii.  Preparar y comunicar con absoluta independencia  el reporte de operaciones
+           sospechosas a la UIF del ICD, incluyendo los intentos de realizarlas.
+
+       viii.  Confidencialidad cuando se está entregando a UIF del ICD un reporte de operación
+           sospechosa o información relacionada.
+
+d)   Coordinar las labores de capacitación en materia de LC/FT/FPADM, tanto para los
+      funcionarios regulares como para los de nuevo ingreso.
+
+e)    Validar y enviar los reportes requeridos por las autoridades competentes.
+
+f)    Realizar monitoreo de las transacciones de los clientes, para identificar aquellas sin
+      justificación documental (fundamento económico o legal) o que se salen del patrón
+      habitual.
+
+g)    Elaborar y presentar informes al menos cada seis meses, de la gestión realizada por el
+      Oficial de cumplimiento o Persona de Enlace, a la autoridad máxima del sujeto obligado,
+      para la toma de decisiones.
+
+h)    Verificar la integridad de: los propietarios, apoderados, directivos, administradores y
+     empleados del sujeto obligado.
+
+i)     Atender las solicitudes de autoridades competentes (decomiso, secuestro u otra medida
+      cautelar), sobre bases relacionadas con la comisión de los delitos previstos en la Ley 7786.
+
+
+
+
+
+                                                                                         15
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 25 =====
+                       CAPÍTULO VII
+
+ AUDITORÍA INTERNA Y EXTERNA SOBRE PREVENCIÓN Y CONTROL DE LA
+                         LC/FT/FPADM
+
+
+
+AUDITORÍA INTERNA
+
+Artículo 28. Auditoría interna sobre prevención y control de la LC/FT/FPADM
+
+Los sujetos obligados que posean una auditoría interna, deben velar porque su auditoría interna
+evalúe la efectividad y el cumplimiento de las políticas, procedimientos y controles para la
+prevención y detección de la LC/FT/FPADM. En ausencia de esta figura debe designarse un
+funcionario para que realice esta labor, independiente de las áreas de negocio. Los sujetos
+obligados que deben cumplir con esta disposición son determinados en los lineamientos
+generales a este Reglamento.
+
+
+
+Artículo 29. Programa e informe de auditoría interna
+
+El sujeto obligado mediante la auditoría interna o funcionario designado para realizar esta labor
+debe elaborar y ejecutar un programa anual de evaluación, seguimiento y control, para la
+prevención del riesgo de LC/FT/FPADM.
+
+La auditoría interna o funcionario designado para realizar esta labor debe consignar sus
+resultados y recomendaciones mediante un informe, el cual debe ser entregado y conocido por
+los órganos que correspondan, y debe estar a disposición de la Superintendencia para efectos
+de supervisión.
+
+La autoridad máxima del sujeto obligado debe aprobar el plan de acción para la atención de las
+debilidades identificadas en el informe de auditoría interna.
+
+
+
+
+
+                                                                                         16
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 26 =====
+AUDITORÍA EXTERNA
+
+Artículo 30. Auditoría externa sobre prevención y control de LC/FT/FPADM
+
+El sujeto obligado debe someterse, de forma periódica, a una auditoría externa sobre el
+cumplimiento de las medidas para prevenir los riesgos de LC/FT/FPADM.
+
+El sujeto obligado debe constatar que la firma de auditoría externa o el auditor externo
+independiente, que contrata para realizar la auditoría se encuentre inscrita(o) en el Registro de
+Auditores Elegibles que forma parte del Registro Nacional de Valores e Intermediarios, de la
+Superintendencia General de Valores (SUGEVAL).
+
+La autoridad máxima del sujeto obligado debe aprobar la contratación de la firma de auditoría
+externa o auditor externo independiente, así como su continuidad, la cual debe fundamentarse
+según el valor agregado que aporte su informe en relación con la prevención del riesgo de
+LC/FT/FPADM, lo anterior, debe estar a disposición de la Superintendencia.
+
+El sujeto obligado no debe dar acceso, a los auditores externos, a la identidad de los clientes de
+los casos que se investiguen, o que hayan sido reportados como operaciones sospechosas.
+
+En los lineamientos generales a este Reglamento se establecen los tipos de sujetos obligados
+que deben cumplir estas disposiciones.
+
+
+
+Artículo 31. Alcance e informe de auditoría externa
+
+El sujeto obligado debe requerir al auditor externo que considere en el alcance de la auditoría,
+el análisis de cada uno de los aspectos descritos en los lineamientos generales a este
+Reglamento.
+
+El sujeto obligado debe verificar que el informe del auditor externo incluya los resultados y las
+recomendaciones, que sea entregado y conocido por los órganos que correspondan y que se
+encuentre a disposición de la Superintendencia para efectos de supervisión.
+
+La autoridad máxima del sujeto obligado debe aprobar el plan de acción para la atención de las
+debilidades identificadas en el informe de auditoría externa, en el plazo que sea establecido.
+
+
+
+
+
+                                                                                         17
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 27 =====
+                       CAPÍTULO VIII
+
+ MANUAL DE PREVENCIÓN, CAPACITACIÓN Y CONOZCA A SU PERSONAL
+
+
+
+MANUAL DE PREVENCIÓN
+
+Artículo 32. Manual de prevención del riesgo de LC/FT/FPADM
+
+El Manual de prevención del riesgo de LC/FT/FPADM, también conocido como Manual de
+cumplimiento, es un conjunto de políticas y procedimientos, elaborado por el sujeto obligado,
+que tiene como propósito orientar a los funcionarios en el acatamiento de las disposiciones
+legales, regulatorias y políticas internas, relativas al cumplimiento de la Ley 7786 y prevención
+del riesgo de LC/FT/FPADM.
+
+Los  sujetos obligados deben  desarrollar  el Manual para  la prevención  del  riesgo de
+LC/FT/FPADM, que cumpla con las siguientes características:
+
+a)   Aprobado por la autoridad máxima.
+
+b)   Revisado y actualizado al menos cada dos años, con la respectiva aprobación por parte de
+       la autoridad máxima.
+
+c)   Comunicado a todos los funcionarios del sujeto obligado.
+
+En los lineamientos generales a este Reglamento se definen las disposiciones que debe contener
+el Manual de prevención del riesgo de LC/FT/FPADM, el cual, debe elaborarse de acuerdo con
+el tamaño, estructura, cantidad de operaciones, número de empleados, volumen transaccional y
+factores de exposición  al riesgo de LC/FT/FPADM del sujeto obligado y debe estar a
+disposición de esta Superintendencia.
+
+
+
+CAPACITACIÓN
+
+Artículo 33. Capacitación
+
+El sujeto obligado debe capacitar, en materia de prevención del riesgo de LC/FT/FPADM, al
+menos una vez al año, a todo el personal, así como a sus representantes legales, apoderados,
+miembros de junta directiva y miembros del órgano de vigilancia (fiscal o puesto equivalente).
+
+
+                                                                                         18
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 28 =====
+En caso de que el sujeto obligado subcontrate personal para el desempeño de sus actividades,
+debe garantizarse que dicho personal subcontratado cuente con la capacitación anual antes
+mencionada.
+
+El sujeto obligado debe capacitar al personal de nuevo ingreso en materia de prevención del
+riesgo de LC/FT/FPADM.
+
+En los lineamientos generales a este Reglamento se definirán los elementos mínimos que debe
+contener el programa de capacitación anual.
+
+
+
+Artículo 34. Capacitación del Oficial de cumplimiento o Persona de enlace.
+
+El sujeto obligado debe velar porque el Oficial de cumplimiento o Persona de enlace reciban,
+al menos, anualmente capacitación especializada en materia de prevención del riesgo de
+LC/FT/FPADM.
+
+
+
+CONOZCA A SU PERSONAL
+
+Artículo 35. Política conozca a su personal y a sus socios o beneficiarios.
+
+El sujeto obligado debe establecer una política de reclutamiento, contratación y conocimiento
+de su personal, así como de sus socios o beneficiarios, representantes legales, apoderados,
+administradores, miembros de junta directiva y miembros del órgano de vigilancia (fiscal o
+puesto equivalente); que permita demostrar antecedentes personales, judiciales, laborales y
+patrimoniales, previos al momento de la vinculación, así como durante toda la relación
+contractual o laboral.
+
+
+
+
+
+                                                                                         19
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 29 =====
+                        CAPÍTULO IX
+
+              MONITOREO Y SEÑALES DE ALERTA
+
+
+
+MONITOREO
+
+Artículo 36. Monitoreo
+
+El sujeto obligado debe realizar un proceso de monitoreo continuo de acuerdo con la categoría
+de riesgo de sus clientes habituales, para asegurar que su perfil sea congruente con lo declarado
+al inicio y durante la relación comercial y con la categoría de riesgo del cliente.
+
+El sujeto obligado puede utilizar información de organismos internacionales, sobre asuntos
+relacionados con factores de exposición al riesgo de LC/FT/FPADM, que faciliten el monitoreo
+y la identificación de señales de alerta.
+
+
+
+SEÑALES DE ALERTA
+
+Artículo 37. Señales de alertas
+
+El sujeto obligado debe identificar y analizar las señales de alerta resultantes del proceso de
+monitoreo de sus clientes habituales; lo anterior, con el objetivo de detectar situaciones
+inusuales, y reportar a las autoridades competentes aquellas que determine como sospechosas.
+
+
+
+
+
+                        CAPÍTULO X
+
+                   OTRAS OBLIGACIONES
+
+
+
+Artículo 38. Obligaciones adicionales para la Organización sin fines de lucro (OSFL)
+
+La OSFL debe cumplir con las obligaciones adicionales definidas en los lineamientos generales
+a este Reglamento.
+
+
+                                                                                         20
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 30 =====
+Artículo 39. Responsabilidad indelegable del sujeto obligado sobre la debida diligencia.
+
+Los sujetos obligados son los responsables únicos y directos de establecer y aplicar sus políticas
+y procedimientos de debida diligencia, en el conocimiento del cliente y el origen de los fondos;
+esta responsabilidad es indelegable en un tercero.
+
+
+
+Artículo 40. Información sobre las cuentas, productos o servicios, de uso exclusivo
+
+El sujeto obligado debe notificar a la Superintendencia las cuentas, productos o servicios de uso
+exclusivo para la actividad por la que fue inscrito ante la SUGEF.
+
+
+
+Artículo 41. Sucursales y filiales en el extranjero
+
+El sujeto obligado debe establecer controles para la gestión del riesgo de LC/FT/FPADM,
+cuando mantenga sucursales o filiales en el extranjero.
+
+
+
+                        CAPÍTULO XI
+
+                 DISPOSICIONES SANCIONATORIAS
+
+
+
+Artículo 42. Sanciones
+
+El sujeto obligado que incumpla alguna de las responsabilidades u obligaciones establecidas en
+el presente Reglamento y normativa aplicable, podría ser sancionado de conformidad con las
+causales previstas por el artículo 81 de la Ley 7786 y sus reglamentos.
+
+
+
+Artículo 43. Congelamiento o inmovilización establecidos en el artículo 33 bis de la Ley
+7786
+
+Los sujetos obligados deben congelar o inmovilizar de forma inmediata los productos
+financieros, dinero, activos y bienes muebles o inmuebles, de las personas físicas o jurídicas,
+producto de las sanciones financieras dirigidas, designadas por el Consejo de Seguridad de la
+
+
+                                                                                         21
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 31 =====
+Organización de las Naciones Unidas en materia de terrorismo, financiamiento al terrorismo y
+financiamiento a la proliferación de armas de destrucción masiva, según lo establecido en el
+artículo 33 bis de la Ley 7786.
+
+Los sujetos obligados deben comunicar los resultados, del congelamiento o la inmovilización,
+a la Unidad de Inteligencia Financiera (UIF), dentro del plazo máximo establecido en la Ley
+7786.
+
+Los  sujetos  obligados deben mantener un monitoreo permanente de  las  listas y  las
+designaciones referidas.
+
+
+
+                  DISPOSICIONES TRANSITORIAS
+
+
+
+Disposición transitoria única: Designación temporal de Persona de enlace
+
+A partir de la publicación de este Reglamento y sus lineamientos generales en el diario oficial
+La Gaceta, los nuevos sujetos inscritos ante la SUGEF por el artículo 15 de la Ley 7786,
+conforme lo establecido en el Acuerdo SUGEF 11-18, podrán designar una Persona de enlace
+temporalmente, hasta el momento que entren en vigor las disposiciones establecidas en el
+párrafo final de la “Disposición final tercera” de este Reglamento, que obligará a los sujetos
+inscritos categorizados como Tipo 1 a la designación de un Oficial de cumplimiento y a los
+sujetos inscritos categorizados como Tipo 2 y 3 a la designación de una Persona de enlace.
+
+
+
+                     DISPOSICIONES FINALES
+
+
+
+Disposición final primera: Lineamientos generales o acuerdos del Superintendente
+
+El Superintendente deberá emitir, mediante resolución razonada, los lineamientos generales o
+acuerdos necesarios para la aplicación de las disposiciones contenidas en este Reglamento, los
+cuales formarán parte integral del mismo. Adicionalmente, podrá modificarlos en cualquier
+momento, en cuyo caso deberá comunicarlo a los sujetos obligados, a través de los medios que
+considere conveniente.
+
+
+
+
+                                                                                         22
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 32 =====
+Los lineamientos generales a este Reglamento aclaran o explican las disposiciones y/o los
+elementos establecidos en el Reglamento.
+
+
+
+Disposición final segunda: Sobre las políticas y procedimientos
+
+El sujeto obligado debe documentar las disposiciones contenidas en este Reglamento, mediante
+políticas y procedimientos aprobadas por la autoridad máxima de dicho sujeto obligado, las
+cuales deben ser revisadas al menos cada dos años y actualizadas en caso de ser necesario.
+
+
+
+Disposición final tercera: Vigencia
+
+Este Reglamento entrará en vigor a los doce meses contados a partir del primer día del mes
+siguiente de su publicación en el diario oficial La Gaceta, a excepción de lo siguiente:
+
+    Las obligaciones establecidas en los artículos 4 y 40 de este Reglamento entrarán en
+    vigor a los tres meses contados a partir del primer día del mes siguiente de la
+    publicación de este Reglamento en el diario oficial La Gaceta.
+
+    Las disposiciones establecidas en los artículos 24, 25, 26 y 27 de este Reglamento,
+    en relación con la designación, los requisitos, las incompatibilidades y las funciones
+    del Oficial de cumplimiento o Persona de enlace, entrarán en vigor a los ocho meses
+    contados a partir del primer día del mes siguiente de la publicación de este
+    Reglamento en el diario oficial La Gaceta.
+
+
+
+
+
+                                                                                         23
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 33 =====
+Lineamientos generales al Reglamento para la prevención del riesgo de Legitimación de
+   Capitales, Financiamiento del Terrorismo y Financiamiento de la Proliferación de
+Armas de Destrucción Masiva, aplicable a los sujetos obligados por los artículos 15 y 15
+                                     bis de la Ley 7786
+
+                 Superintendencia General de Entidades Financieras
+
+                                   Resolución
+                             11 de noviembre 2019
+                          SGF 3419-2019
+                           SGF-PUBLICO
+
+Dirigida a:
+
+    Actividades y Profesiones No Financieras Designadas (APNFD)
+   Bancos Comerciales del Estado
+   Bancos Creados por Leyes Especiales
+   Bancos Privados
+   Empresas Financieras no Bancarias
+    Otras Entidades Financieras
+    Organizaciones Cooperativas de Ahorro y Crédito
+    Entidades Autorizadas del Sistema Financiera Nacional para la Vivienda
+   Consejo Rector del Sistema de Banca de Desarrollo
+    Público en general
+
+Asunto: Lineamientos generales al Reglamento para la prevención del riesgo de Legitimación
+de Capitales, Financiamiento del Terrorismo y Financiamiento de la Proliferación de Armas de
+Destrucción Masiva, aplicable a los sujetos obligados por los artículos 15 y 15 bis de la Ley
+7786, Acuerdo SUGEF 13-19.
+
+El Superintendente General de Entidades Financieras
+
+Considerando que:
+
+I.    El Consejo Nacional de Supervisión del Sistema Financiero, mediante el artículo 7 del
+      acta de la sesión 1542-2019, del 4 de noviembre de 2019, aprobó el Reglamento para la
+     prevención del riesgo de Legitimación de Capitales, Financiamiento del Terrorismo y
+     Financiamiento de la Proliferación de Armas de Destrucción Masiva, aplicable a los
+      sujetos obligados por los artículos 15 y 15 bis de la Ley 7786, Acuerdo SUGEF 13-19.
+
+
+
+                                                                                         24
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 34 =====
+II.   La  disposición  final primera  del Reglamento para  la prevención  del  riesgo de
+     Legitimación de Capitales, Financiamiento del Terrorismo y Financiamiento de la
+      Proliferación de Armas de Destrucción Masiva, aplicable a los sujetos obligados por los
+      artículos 15 y 15 bis de la Ley 7786, Acuerdo SUGEF 13-19; establece que le corresponde
+       al Superintendente emitir los lineamientos generales necesarios para la aplicación de
+     dicho Reglamento.
+
+III.  De conformidad con el inciso b), artículo 131, de la Ley Orgánica del Banco Central de
+     Costa Rica, Ley 7558, corresponde al Superintendente tomar las medidas necesarias para
+      ejecutar los acuerdos del Consejo Nacional de Supervisión del Sistema Financiero.
+
+IV.  El CONASSIF mediante artículo 7 del acta de la sesión 1483-2019 del 26 de febrero de
+     2019, dispuso en firme, remitir en consulta pública  el proyecto de Reglamento para la
+     prevención del riesgo de Legitimación de Capitales, Financiamiento al Terrorismo y
+     Financiamiento de la Proliferación de Armas de Destrucción Masiva, aplicable a los
+      sujetos obligados por los artículos 15 y 15 bis de la Ley 7786 y sus lineamientos generales,
+     Acuerdo SUGEF 13-19; en relación con lo anterior los comentarios y las observaciones
+      recibidas, fueron valoradas y en lo que procedió se modificó el texto sometido a consulta
+      pública, conforme razonadamente se explicó en la matriz de observaciones adjunta al
+      oficio SGF-3110-2019 para dar cumplimiento al artículo 15 bis citado.
+
+Dispuso:
+
+Emitir los Lineamientos generales al Reglamento para la prevención del riesgo de Legitimación
+de Capitales, Financiamiento del Terrorismo y Financiamiento de la Proliferación de Armas de
+Destrucción Masiva, aplicable a los sujetos obligados por los artículos 15 y 15 bis de la Ley
+7786, Acuerdo SUGEF 13-19, de conformidad con el siguiente texto:
+
+
+
+
+
+                                                                                         25
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 35 =====
+              ACUERDO DEL SUPERINTENDENTE
+
+LINEAMIENTOS GENERALES AL REGLAMENTO PARA LA PREVENCIÓN DEL
+RIESGO DE  LEGITIMACIÓN DE  CAPITALES,  FINANCIAMIENTO DEL
+TERRORISMO Y FINANCIAMIENTO DE LA PROLIFERACIÓN DE ARMAS DE
+DESTRUCCIÓN MASIVA, APLICABLE A LOS SUJETOS OBLIGADOS POR LOS
+ARTÍCULOS 15 Y 15 BIS DE LA LEY 7786, ACUERDO SUGEF 13-19.
+
+
+                    DISPOSICIONES GENERALES
+
+
+1.   Objeto
+
+      1.1  Los presentes lineamientos generales al Reglamento para la prevención del riesgo
+          de Legitimación de Capitales, Financiamiento del Terrorismo y Financiamiento de
+             la Proliferación de Armas de Destrucción Masiva, aplicable a los sujetos obligados
+           por los artículos 15 y 15 bis de la Ley 7786, en adelante referido como Reglamento,
+          forman parte integral del mismo y aclaran o  explican las responsabilidades y
+           obligaciones descritas en este Reglamento, con base en riesgo, según el tipo de
+            sujeto obligado, para  la prevención del riesgo  la Legitimación de Capitales,
+           Financiamiento al Terrorismo y Financiamiento a la Proliferación de Armas de
+           Destrucción Masiva, en adelante referido como LC/FT/FPADM, o de cualquier otra
+            actividad ilícita determinada por la Ley 7786 y sus reformas.
+
+      1.2   El sujeto que realiza alguna o algunas de las actividades descritas en los artículos
+         15 y 15 bis de la Ley 7786, en adelante referido como sujeto obligado, podrá
+          implementar medidas adicionales a las mencionadas en el Reglamento para la
+           prevención de dicho riesgo.
+
+
+2.   Alcance
+
+      2.1   El Reglamento y sus lineamientos generales delimitan, según el tipo de sujeto
+           obligado, las responsabilidades y las obligaciones, con base en riesgo, para la
+           prevención de la LC/FT/FPADM.
+
+      2.2  Los tipos de sujetos obligados son definidos en este Reglamento y sus lineamientos
+            generales,  según  su  respectiva  naturaleza,  tamaño,  estructura,  cantidad de
+           operaciones, número  de  empleados, volumen  transaccional, y  factores  de
+           exposición al riesgo de LC/FT/FPADM.
+
+                                                                                         26
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 36 =====
+3.    Definiciones
+
+Para los propósitos del Reglamento y sus lineamientos generales, se establecen definiciones
+que describen en forma amplia, algunas palabras o frases utilizadas en esta normativa.
+
+
+4.   Tipos de sujetos inscritos
+
+      4.1   Para efectos de esta normativa la Superintendencia define los siguientes tipos de
+            sujetos inscritos:
+
+         Tipo 1: corresponde a los sujetos inscritos, con una mayor complejidad en su
+           operativa y estructura, que realizan actividades que por su naturaleza presentan
+         mayor vulnerabilidad a ser utilizadas para la LC/FT/FPADM.
+
+         Tipo 2: corresponde a los sujetos inscritos, con una complejidad media en su
+           operativa y  estructura, que  realizan  actividades que por su  naturaleza son
+           vulnerables a ser utilizadas para la LC/FT/FPADM.
+
+         Tipo 3: corresponde a los sujetos inscritos, con poca complejidad en su operativa y
+            estructura, que realizan actividades que por su naturaleza son catalogadas de menor
+           vulnerabilidad a ser utilizadas para la LC/FT/FPADM.
+
+         En el “Anexo Modelo de clasificación por tipo de sujeto obligado”, que forma parte
+            integral de este Reglamento y sus lineamientos generales, se establecen los
+           parámetros utilizados para la categorización de los tipos de sujetos inscritos.
+
+      4.2   El sujeto inscrito remitirá la información que determine la Superintendencia, a
+            través de los medios que disponga la Superintendencia, para que ésta realice la
+            categorización.
+
+             [5a]Para efectos de  la categorización que establece  el "Anexo  - Modelo de
+            clasificación por tipo de sujeto obligado", cuando el sujeto inscrito no suministre la
+           información requerida para su categorización, se le calificará según las variables de
+           Transaccionalidad y  Actividad,  hasta  tanto  el  sujeto  obligado  presente  la
+           información correspondiente que le permita al Supervisor asignar la ponderación
+            respectiva según los datos suministrados. La información que se utilizará de la
+           persona física o jurídica sobre su transaccionalidad se tomará de las cuentas abiertas
+           a su nombre en el Sistema Financiero Nacional. En caso de no contar con cuentas
+
+
+
+
+                                                                                         27
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 37 =====
+            abiertas en el Sistema Financiero Nacional, se realizará únicamente con base en la
+            variable de Actividad.
+
+      4.3  La clasificación del sujeto inscrito podrá ser modificada por la Superintendencia
+          mediante resolución razonada, en los siguientes casos:
+
+            a)   Cuando se presenten cambios en la información del sujeto inscrito.
+
+           b)   Como resultado del proceso de supervisión al sujeto inscrito.
+
+            c)   Como resultado de la modificación del “Modelo de clasificación por tipo de
+                  sujeto obligado”.
+
+           El Superintendente comunicará por los medios que disponga, el plazo para que los
+            sujetos obligados que se inscriban ante la SUGEF, a partir de la entrada en vigencia
+          de este Reglamento, se adapten a los requerimientos establecidos en el Reglamento
+         y sus lineamientos generales, o cuando la categoría previamente asignada al sujeto
+             inscrito haya sido modificada.
+
+
+        ADMINISTRACIÓN DEL RIESGO DEL SUJETO OBLIGADO
+
+
+5.   Procedimiento para la administración del riesgo del sujeto obligado
+
+      5.1   El sujeto obligado incluirá en el procedimiento, la identificación, evaluación,
+           monitoreo, control y mitigación de los riesgos de LC/FT/FPADM del sujeto
+           obligado, considerando sus particularidades, según su naturaleza y actividad, e
+            incorporará, entre otros, los siguientes criterios:
+
+            a)   Tipo de clientes: cualidades o características de los clientes, al inicio y durante
+                toda la relación comercial.
+
+           b)   Canales de  distribución: medios y formas  utilizados para  ofrecer  los
+                productos y servicios a los clientes.
+
+            c)    Ubicación geográfica: zonas en las que el sujeto obligado realiza su actividad,
+                  tanto local como internacional.
+
+           d)   Productos y servicios: nuevos o existentes que ofrece el sujeto obligado.
+
+
+
+
+                                                                                         28
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 38 =====
+           Este procedimiento se aplicará, según el tipo de sujeto inscrito, con la siguiente
+            periodicidad:
+
+              Tipo 1, cada año.
+
+              Tipo 2, cada dos años.
+
+              Tipo 3, cada tres años.
+
+      5.2   El sujeto obligado, según los resultados de  la aplicación del procedimiento,
+            establecerá planes correctivos que permitan subsanar las debilidades evidenciadas,
+          con acciones, responsables, y plazos para su corrección.
+
+      5.3   El sujeto obligado documentará y mantendrá a disposición de la Superintendencia
+         y demás autoridades competentes, los resultados de la aplicación del procedimiento
+         y de la toma de decisiones correspondiente.
+
+
+6.   Nuevas tecnologías, productos, prácticas comerciales, mecanismos y canales de
+      distribución.
+
+      6.1   El sujeto obligado previo al lanzamiento de nuevos productos, nuevas prácticas
+           comerciales, nuevos mecanismos y canales de distribución, el uso de nuevas
+           tecnologías o en desarrollo, y el uso de activos virtuales, evaluará los riesgos de
+        LC/FT/FPADM y tomará las acciones para mitigarlos.
+
+      6.2   Para cumplir con  lo  anterior,  el  sujeto obligado  aplicará  el procedimiento,
+           considerando lo establecido en los numerales 5.1, 5.2 y 5.3 anteriores, en lo que
+           corresponda.
+
+
+       DEBIDA DILIGENCIA EN EL CONOCIMIENTO DEL CLIENTE
+
+
+7.    Identificación del cliente
+
+      7.1   El sujeto obligado solicitará a sus clientes el documento de identificación válido,
+          según corresponda:
+
+            a)    Persona física:
+
+
+
+
+                                                                                         29
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 39 =====
+     Se considera como documento de identidad válido para personas físicas,
+     alguno de los siguientes:
+
+         i.    Cédula de identidad expedida por el Registro Civil, para nacionales.
+
+         ii.   Documento de  identidad expedido por  la  Dirección General de
+          Migración y Extranjería para las personas extranjeras residentes y
+            aquellas acreditadas con una categoría especial, de conformidad con la
+         Ley General de Migración y Extranjería.
+
+         iii.  Documento expedido por el Ministerio de Relaciones Exteriores y
+           Culto para las personas acreditadas por ese Ministerio como miembros
+          de una misión diplomática, de una misión consular o de un organismo
+            internacional.
+
+       iv.   Pasaporte, para las personas extranjeras no residentes.
+
+     Dichos documentos deben estar vigentes.
+
+b)   Persona jurídica:
+
+     El sujeto obligado identificará a las personas jurídicas con los siguientes
+     documentos válidos:
+
+         i.     Certificación de personería jurídica.
+
+          Las certificaciones físicas deben tener una fecha de emisión no mayor
+           a un mes. Cuando la certificación sea emitida por el Registro Nacional
+          en forma digital, la vigencia será de 15 días naturales.
+
+         ii.    Certificación emitida por Notario  Público,  la  cual  certifique  las
+            participaciones  representativas  del  capital  social,  el número  de
+            participaciones emitidas, suscritas y pagadas, el tipo y valor de cada
+            tipo de participación; y el nombre, calidades y dirección exacta de los
+            propietarios o beneficiarios finales, según los asientos de inscripción
+            del libro respectivo legalizado de la persona jurídica, cuando estas
+            participaciones sean iguales o superiores al 10% del capital social o de
+            los que posean la mayor participación, aun cuando no exceda el
+           porcentaje señalado. El Notario dará fe con vista en el asiento del libro
+            respectivo  legalizado,  que  las  participaciones  sociales  y  los
+
+
+                                                                             30
+                                                               Acuerdo Sugef 13-19
+
+                           Uso Interno
+
+===== PAGINA PDF 40 =====
+                  beneficiarios finales son las que constan a la fecha de emisión de la
+                   certificación.
+
+         En caso de que los participantes o beneficiarios sean personas jurídicas o
+           cualquier otra figura jurídica, se debe presentar el mismo detalle antes
+          mencionado, hasta el nivel de persona física con participación directa o
+            indirecta igual o superior al 10% del capital social, o de los que posean la
+         mayor  participación cuando no exceda  el  porcentaje  señalado. Dicha
+            certificación debe tener una fecha de emisión no mayor a un mes.
+
+         En los casos de personas jurídicas, el documento requerido en este numeral
+                  ii., no aplica cuando la persona jurídica, o sus propietarios o beneficiarios,
+           sean una institución pública o gubernamental, o entidades financieras sujetas
+           a la fiscalización de las superintendencias adscritas al CONASSIF, en materia
+          de legitimación de capitales y financiamiento al terrorismo, u organismos
+           intergubernamentales o empresas o figuras jurídicas cuyas acciones o valores
+          de contenido patrimonial se coticen en un mercado organizado, nacional o
+            extranjero, y que cuente con un órgano de regulación que sea miembro de la
+            International Organization of Securities Commissions (IOSCO, por sus siglas
+          en inglés).
+
+          Las personas jurídicas domiciliadas en el exterior presentarán los documentos
+            equivalentes, debidamente legalizados diplomáticamente o apostillados.
+
+           Para  asociaciones,  cooperativas,  fundaciones y  similares  nacionales o
+            extranjeras, el sujeto obligado solicitará documentos equivalentes y propios
+          de este tipo de entidades. Lo anterior de conformidad con el punto b) del
+           presente apartado.
+
+7.2  En el caso de los casinos identificarán a sus clientes cuando estos se involucren en
+      transacciones únicas o múltiples, de ingreso o egreso de dinero, por un monto igual
+     o superior a los US$3.000,00 en efectivo u otros instrumentos de pago.
+
+7.3  En  el caso de  los  comerciantes de metales  preciosos y  piedras  preciosas
+      identificarán a sus clientes cuando estos se involucren en transacciones únicas o
+      múltiples, de ingreso o egreso de dinero, por un monto igual o superior a los
+     US$15.000,00 en efectivo u otros instrumentos de pago.
+
+
+
+
+
+                                                                                   31
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 41 =====
+8.    Clasificación de clientes
+
+Para realizar la clasificación de los clientes, el sujeto obligado podrá considerar, entre otros, los
+siguientes aspectos:
+
+      a)    Cantidad de transacciones.
+
+      b)   Monto mínimo de las transacciones.
+
+      c)    Período de análisis para la clasificación.
+
+      d)   Transacciones inusuales.
+
+
+9.    Política Conozca a su cliente
+
+      9.1   El sujeto obligado definirá políticas y procedimientos con base en riesgos para el
+          conocimiento del cliente, de acuerdo con su actividad y riesgo de LC/FT/FPADM.
+         En correlación con lo anterior, procederá a:
+
+            a)    Recopilar la información del cliente para la debida diligencia.
+
+           b)    Identificar los beneficiarios finales.
+
+            c)    Registrar la información del cliente.
+
+           d)    Custodiar y tener disponible la información obtenida del cliente.
+
+            e)    Verificar la información del cliente.
+
+              f)    Monitorear las transacciones del cliente.
+
+      9.2   El sujeto obligado establecerá en sus políticas y procedimientos mecanismos para
+             identificar, cuando corresponda, la existencia de los beneficiarios finales diferentes
+            del cliente, pero que lo controlan,  para  lo que le aplicará todo lo referente a la
+            definición y alcances de beneficiario final dispuesta en el artículo 3 de esta
+          Normativa. Cuando no sea posible identificar a una persona física que ejerce
+             titularidad o control, se considerará como beneficiario final a la persona física
+            relevante que ejerza la administración superior de la entidad. En cualquiera de los
+           casos se deben requerir los documentos que identifiquen y demuestren la relación
+            del beneficiario final con el cliente y determinar según su apetito al riesgo, la
+           conveniencia de mantener la relación comercial en esas condiciones. Dichas
+
+                                                                                         32
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 42 =====
+             políticas y procedimientos deben aplicarse durante el plazo que se mantenga la
+            relación comercial.
+
+           Igualmente, en el caso de fideicomisos las políticas y procedimientos que se
+          aprueben deben disponer que el sujeto obligado obtenga la información suficiente
+          que le permita conocer el objeto del fideicomiso, el patrimonio fideicometido, el
+           origen  de  los  fondos  y  establecer  la  identidad  de  los  fideicomitentes,
+           fideicomisarios o beneficiarios finales de los recursos objeto del contrato.
+
+      9.3  En el caso de los casinos definirán políticas y procedimientos para el conocimiento
+          de sus clientes, cuando estos se involucren en transacciones únicas o múltiples, de
+           ingreso o egreso de dinero, por un monto igual o superior a los US$3.000,00 en
+            efectivo u otros instrumentos de pago.
+
+      9.4  En el caso de los comerciantes de metales preciosos y piedras preciosas definirán
+             políticas y procedimientos para el conocimiento de sus clientes, cuando estos se
+           involucren en transacciones únicas o múltiples, de ingreso o egreso de dinero, por
+         un monto igual o superior a los US$15.000,00 en efectivo u otros instrumentos de
+           pago.
+
+
+10.  Información del cliente
+
+      10.1. Información básica:
+
+         La información a recopilar por el sujeto obligado, respecto de los datos particulares
+          de las personas físicas o jurídicas, será al menos la siguiente:
+
+            a)    Persona física:
+
+                           i.   Nombre completo.
+
+                          ii.   Número de identificación.
+
+                          iii.   Nacionalidad (es).
+
+                     iv.   Fecha y lugar de nacimiento (indicando el país).
+
+                   v.    Dirección cierta y exacta del domicilio.
+
+                     vi.   Indicación si califica como PEP.
+
+
+                                                                                         33
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 43 =====
+              vii.  Copia del documento de identidad
+
+      b)   Persona jurídica:
+
+                  i.    Razón o denominación social.
+
+                  ii.   Número de cédula jurídica.
+
+                 iii.   Fecha y lugar de constitución.
+
+              iv.   Dirección cierta y exacta del domicilio donde realiza la actividad.
+
+             v.    Indicación  si alguno de sus socios o beneficiarios, apoderados o
+                 representantes legales, califican como PEP.
+
+              vi.   Certificación de personería jurídica, según se detalla en el numeral 7,
+                punto b), numeral i., de estos lineamientos generales.
+
+              vii.   Certificación emitida por Notario  Público,  la  cual  certifique  las
+                  participaciones representativas del capital social, según se detalla en el
+               numeral 7, punto b), numeral ii, de estos lineamientos generales.
+
+10.2. Información adicional:
+
+    La información adicional a recopilar por el sujeto obligado respecto de sus clientes,
+     personas físicas o jurídicas, es la siguiente:
+
+      a)    Persona física:
+
+                  i.    País de residencia.
+
+                  ii.    Profesión y ocupación.
+
+                 iii.  Nombre del patrono, o la naturaleza de sus negocios si desarrolla
+                 actividades independientes.
+
+              iv.   Propósito y naturaleza de la relación comercial.
+
+             v.    Cuantía mensual estimada de las operaciones que efectuará.
+
+              vi.   Descripción del origen de los fondos y justificación documental de las
+                  transacciones.
+
+
+                                                                                   34
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 44 =====
+              vii.  Correo electrónico.
+
+      b)   Persona jurídica:
+
+                  i.   Número de teléfono.
+
+                  ii.   Correo electrónico.
+
+                 iii.   Actividad o la naturaleza del negocio.
+
+              iv.   Propósito y naturaleza de la relación comercial.
+
+             v.    Cuantía mensual estimada de las operaciones que efectuará.
+
+              vi.   Descripción del origen de los fondos y justificación documental de las
+                  transacciones.
+
+      c)    Autorizados o beneficiarios:
+
+                  i.    Tipo y número del documento de identificación.
+
+                  ii.   Nombre completo.
+
+                 iii.   Nacionalidad (es).
+
+              iv.   Tipo de relación con el  titular, sea este de parentesco, comercial,
+                   laboral, entre otros.
+
+      d)   Donantes, asociados, beneficiarios y OSFL relacionadas:
+
+         En el caso de los sujetos obligados que se dediquen a la actividad de
+           organización sin fines de lucro OSFL, adoptarán medidas acordes con su
+            actividad para el conocimiento de sus donantes, asociados, beneficiarios y
+        OSFL relacionadas. Demostrarán que el origen de los recursos aportados por
+           sus donantes y asociados, y el destino de los fondos hacia beneficiarios u
+        OSFL  relacionadas, son  acordes con  el  propósito y  objetivos de su
+           organización.
+
+10.3. Otros datos generales:
+
+      a)   Fecha de inicio de la relación comercial.
+
+
+
+                                                                                   35
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 45 =====
+           b)   Código del cliente (en caso de que exista).
+
+            c)   Fecha de actualización de la información.
+
+     10.4 En el caso de los casinos recopilarán y verificarán la información de sus clientes,
+          cuando estos se involucren en transacciones, de ingreso o egreso de dinero, por un
+         monto igual o superior a los US$3.000,00 en efectivo u otros instrumentos de pago.
+
+     10.5 En el caso de los comerciantes de metales preciosos y piedras preciosas recopilarán
+         y verificarán  la información de sus  clientes, cuando estos se involucren en
+            transacciones, de ingreso o egreso de dinero, por un monto igual o superior a los
+          US$15.000,00 en efectivo u otros instrumentos de pago.
+
+
+11.  Registro de la información del cliente
+
+     11.1 Clientes habituales:
+
+            a)   La información de los clientes será registrada por el sujeto obligado en el
+                 formulario Conozca a su cliente, al inicio de la relación comercial y durante
+                    el tiempo que ésta permanezca.
+
+           b)   El formulario Conozca a su cliente contendrá como mínimo la información
+                 requerida en el Reglamento y estos lineamientos generales. Además el sujeto
+                obligado podrá incluir datos adicionales según lo establezca en sus políticas
+              y procedimientos.
+
+     11.2 Clientes ocasionales:
+
+           El sujeto obligado registrará la información básica de los clientes ocasionales,
+          mediante  los medios que estime convenientes y  estará a disposición de  la
+           Superintendencia cuando así lo requiera.
+
+
+12.  Procedimiento para la clasificación del riesgo del cliente
+
+     12.1 Para asignar una categoría de riesgo a cada cliente habitual, el sujeto obligado
+           diseñará e implementará un procedimiento de clasificación de riesgo del cliente,
+            utilizando las siguientes tres categorías:
+
+            a)   Riesgo alto.
+
+
+                                                                                         36
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 46 =====
+      b)   Riesgo moderado.
+
+      c)   Riesgo bajo.
+
+12.2 El sujeto obligado considerará, de acuerdo con su actividad, los siguientes criterios
+      para la clasificación de riesgo del cliente, sin estar limitados a estos:
+
+      a)    Nacionalidad (es).
+
+      b)    País de origen (país de nacimiento o país de constitución).
+
+      c)    País de residencia.
+
+      d)    Profesión u oficio.
+
+      e)   Zona geográfica de las actividades de negocios del cliente, incluyendo la
+            localización de las contrapartes con las cuales realiza transacciones y hace
+           negocios; si está vinculado con países considerados como de alto riesgo,
+          según lo recomendado por el Grupo de Acción Financiera Internacional
+          (GAFI), la Organización de las Naciones Unidas (ONU), entre otros.
+
+       f)    Actividad económica del cliente.
+
+      g)    Estructura de propiedad (beneficiario final).
+
+      h)    Tipo, monto y frecuencia de las transacciones (fuera y dentro del país).
+
+        i)    Utilización de efectivo.
+
+        j)    Origen de los recursos.
+
+      k)   Persona expuesta políticamente (PEP).
+
+     Los criterios o variables utilizados para asignar una categoría de riesgo a cada
+      cliente, serán justificados tanto para su inclusión como para su exclusión.
+
+12.3 El sujeto obligado documentará el procedimiento para la clasificación de riesgo de
+      los clientes.
+
+12.4 El procedimiento de  clasificación y  sus  modificaciones  serán conocidas y
+     aprobadas por la autoridad máxima del sujeto obligado.
+
+
+
+                                                                                   37
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 47 =====
+13.  Mantenimiento y actualización, de la información del cliente
+
+      13.1. La información que el sujeto obligado recopile y registre de sus clientes, la
+           conservará de forma individualizada para cada  cliente, de manera  física o
+            electrónica.
+
+     13.2 El sujeto obligado  solicitará a sus  clientes  la actualización periódica de  la
+           información que considere pertinente, durante la relación comercial. De dicha
+            actualización, quedará la evidencia correspondiente.
+
+     13.3 La información de  los  clientes  será  actualizada por  el  sujeto obligado de
+          conformidad con sus políticas y procedimientos, para esto se considerará al menos
+             la siguiente periodicidad, según la clasificación de riesgo de los clientes:
+
+            a)    Clientes clasificados de riesgo alto: al menos cada 12 meses.
+
+           b)    Clientes clasificados de riesgo moderado: al menos cada 24 meses.
+
+            c)    Clientes clasificados de riesgo bajo: al menos cada 36 meses.
+
+         En los casos en que se detecten cambios significativos en la actividad transaccional,
+            los sujetos obligados solicitaran al cliente actualizar la información y justificar su
+            situación particular de ingresos.
+
+     13.4 Las sucursales o filiales del sujeto obligado, ubicadas en el territorio nacional,
+          podrán intercambiar información de sus clientes con el sujeto obligado para efectos
+          de la prevención del riesgo de LC/FT/FPADM.
+
+
+OTRAS MEDIDAS DE DEBIDA DILIGENCIA PARA CLIENTES Y ACTIVIDADES
+                           ESPECÍFICAS
+
+
+14.   Clientes de riesgo alto
+
+     14.1 Los sujetos obligados establecerán las medidas de debida diligencia reforzada a los
+            clientes catalogados de riesgo alto.
+
+     14.2 La administración superior del sujeto obligado aprobará:
+
+            a)    El inicio de las relaciones comerciales con clientes catalogados de riesgo alto.
+
+
+
+                                                                                         38
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 48 =====
+           b)   La  continuidad  de  la  relación  comercial con  aquellos  clientes  cuya
+                  clasificación cambia a riesgo alto.
+
+
+15.  Personas expuestas políticamente (PEP)
+
+     15.1 Los sujetos obligados establecerán las medidas de debida diligencia reforzada para
+            los clientes catalogados como Personas expuestas políticamente (PEP), sean estos
+           nacionales o extranjeros.
+
+     15.2 El plazo durante el cual será considerado un cliente como PEP, comprende todo su
+          nombramiento hasta ocho años posteriores a la finalización de las funciones. En el
+           caso de  los  presidentes o  jefes de  estado  serán  considerados como PEP
+           indefinidamente.
+
+
+16.  Personas jurídicas extranjeras
+
+     El sujeto obligado antes de iniciar una relación comercial con alguna persona jurídica
+      extranjera:
+
+      a)    Validará que sean entidades constituidas y registradas en su país de origen de forma
+           nominativa, permitiendo identificar el nombre del titular o propietario.
+
+      b)    Identificará las personas físicas que han suscrito el pacto constitutivo.
+
+      c)    Identificará las personas físicas propietarias de las participaciones representativas
+            del capital social, con participación directa o indirecta igual o superior al 10% del
+            capital social, o de los que posean la mayor participación cuando no exceda el
+           porcentaje señalado, al inicio y durante de la relación comercial.
+
+
+17.   Clientes designados en listas de organismos internacionales
+
+     17.1 Los sujetos obligados revisarán los nombres de sus clientes contra las listas que
+          pongan a disposición los diferentes organismos internacionales, tales como, pero
+         no limitados a estos:
+
+            a)    Organización de las Naciones Unidas (ONU).
+
+           b)    Oficina de Control de Activos Extranjeros de Estados Unidos de América
+             (OFAC, por sus siglas en inglés).
+
+                                                                                         39
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 49 =====
+     17.2 Los sujetos obligados implementarán medidas de debida diligencia reforzada, para
+           aquellos clientes que se encuentren designados en alguna de las listas de los
+          organismos internacionales, y reportarán esos clientes a la Unidad de Inteligencia
+            Financiera, en adelante referida como UIF.
+
+
+18.   Identificación  de  relaciones  comerciales  y  transacciones  con  jurisdicciones
+     catalogadas de riesgo
+
+     18.1 Los  sujetos  obligados  identificarán  aquellas  relaciones  comerciales  y/o
+           transacciones de sus clientes con los países catalogados de riesgo, o cuando envíen
+         o reciban fondos hacia o desde países catalogados de riesgo por organismos
+            internacionales, tales como, pero no limitados a estos, Grupo de Acción Financiera
+            Internacional (GAFI), Oficina de Control de Activos Extranjeros de Estados Unidos
+          de América (OFAC) y Organización de las Naciones Unidas (ONU).
+
+     18.2 Las medidas adicionales que establezca el sujeto obligado a los clientes serán
+           proporcionales a los riesgos que presenten este tipo de transacciones.
+
+
+          REGISTRO Y NOTIFICACIÓN DE TRANSACCIONES
+
+
+19.  Operaciones únicas en efectivo
+
+     19.1 Se entenderá como formulario de operaciones únicas en efectivo, cualquier registro
+             físico o electrónico, que recopile la totalidad de la información de aquella operación
+          que iguale o supere los US$10.000,00 o su equivalente en colones costarricenses u
+            otra moneda extranjera.
+
+         Los comerciantes de metales preciosos y piedras preciosas registrarán en  el
+           formulario la información de las operaciones, únicas en efectivo, por un monto igual
+         o superior a los US$15.000,00.
+
+         Los formularios mencionados anteriormente serán firmados por la persona que
+           físicamente realiza la transacción.
+
+
+
+
+
+                                                                                         40
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 50 =====
+      19.2. La información que incluirá el formulario, se detalla a continuación:
+
+            a)   Datos de la persona que físicamente realiza la transacción: nombre completo,
+              número de teléfono, fecha nacimiento, número y tipo de identificación y
+                 domicilio exacto.
+
+           b)   Datos del cliente del sujeto obligado a nombre de quien se realiza  la
+                  transacción: nombre completo o razón social (para persona jurídica), número
+               de identificación, tipo de identificación y domicilio exacto.
+
+            c)    Descripción de la transacción: tipo de transacción (ingreso o egreso), número
+               de la transacción, fecha y hora de la transacción, monto y moneda original
+                 transada y monto total dolarizado.
+
+           d)   Origen de los recursos (breve descripción).
+
+            e)   Datos del beneficiario o destinatario: nombre completo, número de cuenta y
+              nombre de la entidad de destino.
+
+              f)   Nombre completo del funcionario que tramita la transacción.
+
+             La firma de la persona que físicamente realiza la transacción la verificará el
+                  sujeto  obligado  utilizando  los  medios  que  considere  convenientes,
+               conservando la evidencia en el expediente del cliente.
+
+     19.3 El sujeto obligado mantendrá la documentación de respaldo a disposición de las
+           autoridades competentes.
+
+
+20.  Operaciones múltiples
+
+     20.1 El sujeto obligado podrá registrar las transacciones múltiples en medios físicos o
+            electrónicos.
+
+     20.2 La información para este registro comprende:
+
+            a)   Nombre completo o razón social.
+
+           b)   Número de teléfono.
+
+            c)   Fecha de nacimiento o de constitución.
+
+
+
+                                                                                         41
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 51 =====
+           d)   Número de identificación.
+
+            e)   Tipo de identificación: cédula, pasaporte, cédula de residencia o cédula
+                   jurídica.
+
+              f)    Detalle si la transacción corresponde a un ingreso o a un egreso.
+
+           g)    Descripción de la transacción que incluya fecha, medio de pago utilizado,
+              número de operación, moneda, monto individual y monto total.
+
+     20.3  [3] [4]En caso de que las transacciones se realicen en diferentes tipos de moneda, el
+         monto total se expresará en dólares, moneda de los Estados Unidos de América, al
+            tipo de cambio de cierre del colón con respecto al dólar, utilizando el tipo de cambio
+          de cierre indicado en el Reglamento de Información Financiera.
+
+     20.4 En el caso de los casinos registrarán la información de las transacciones múltiples
+            realizadas por sus clientes, por un monto igual o superior a los US$3.000,00.
+
+     20.5 Los  comerciantes de  metales  preciosos y  piedras  preciosas  registrarán  la
+           información de las transacciones múltiples realizadas por sus clientes, por un monto
+            igual o superior a los US$15.000,00.
+
+
+21.   Servicio de transferencia de dinero
+
+     21.1 El sujeto obligado que preste el servicio de transferencias de dinero locales o
+            extranjeras registrará electrónicamente la siguiente información relacionada con
+            transferencias:
+
+            a)   Datos de la persona a cuyo nombre se realiza la transacción (cliente): nombre
+               completo o razón social (para persona jurídica) y número de identificación.
+
+           b)    Descripción de la transacción: tipo de transacción (ingreso o egreso), número
+               de la operación, fecha y hora de la transacción, monto y moneda original
+                  transada.
+
+            c)   Respecto a  la contraparte en  el  exterior, toda transferencia incluirá lo
+                  siguiente:
+
+                           i.    Información requerida sobre el originador:
+
+                         1.   Nombre completo o razón social del originador.
+
+
+                                                                                         42
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 52 =====
+                         2.   Número único de referencia de la transacción.
+
+                         3.    Dirección del originador, número de identificación, fecha y lugar
+                         de nacimiento, si se cuenta con dicha información.
+
+                          ii.   Información requerida sobre el beneficiario:
+
+                         1.   Nombre completo o razón social del beneficiario.
+
+                         2.   Número único de referencia de la transacción.
+
+           d)   En el caso de las transferencias electrónicas nacionales, es exigido al sujeto
+                obligado que la información que acompañe a las transferencias incluya la
+                información del originador, citada anteriormente.
+
+     21.2 Para los casos de las transferencias electrónicas inferiores a los US$1.000,00 (mil
+           dólares en la moneda de los Estados Unidos de América), los sujetos obligados se
+           asegurarán que  el registro contenga  el nombre completo o razón social del
+           originador y del beneficiario, además de un número único de referencia de la
+            transacción.
+
+     21.3 El sujeto obligado que envíe o reciba transferencias electrónicas establecerá un
+           procedimiento, para  aquellas  transferencias que carezcan de  la información
+           requerida sobre el beneficiario, que incluirá entre otros temas, lo siguiente:
+
+            a)    Ejecutar, rechazar o suspender la transferencia.
+
+           b)   Implementar acciones de seguimiento.
+
+
+22.  Remisión de información a la Superintendencia
+
+     22.1 Los reportes que remitirá el sujeto obligado a la Superintendencia, contendrán al
+         menos la siguiente información:
+
+            a)   Nombre completo o razón social.
+
+           b)   Número de identificación.
+
+            c)   Monto del ingreso o egreso en colones costarricenses o dólares moneda de
+                  los Estados Unidos de América según corresponda.
+
+
+
+                                                                                         43
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 53 =====
+      d)   Tipo de operación (única o múltiple).
+
+      e)    Fecha.
+
+       f)    Detalle de la transacción.
+
+      g)   Origen de los recursos.
+
+22.2 Los  siguientes  son  los  reportes  que  el  sujeto  obligado  remitirá  a  la
+      Superintendencia, según corresponda:
+
+      a)    Reporte de operaciones en efectivo (billetes y/o monedas), por sumas iguales
+         o superiores a US$10.000,00 o el equivalente en otras monedas, tanto de
+           ingreso como de egreso, realizadas, en forma única (una sola transacción) o
+           múltiple (varias transacciones efectuadas en un mes calendario). Los sujetos
+           obligados que se dediquen a la actividad de remesas/transferencias, casinos,
+           organizaciones sin fines de lucro (OSFL) y comerciantes de metales preciosos
+         y piedras preciosas, realizarán el reporte a partir de los umbrales (montos
+          mínimos) que se establecen en los incisos c), d), e) y f), de este mismo
+           numeral.
+
+      b)   Reporte de operaciones mediante cualquier forma de recibo o pago de fondos,
+           excepto efectivo, que igualen o superen los US$10.000,00 o su equivalente
+          en colones u otras monedas, tanto de ingreso como de egreso, realizadas en
+          forma única (una sola transacción) o múltiple (varias transacciones efectuadas
+          en un mes calendario). Los sujetos obligados que se dediquen a la actividad
+          de remesas/transferencias, casinos, organizaciones sin fines de lucro (OSFL)
+         y comerciantes de metales preciosos y piedras preciosas, realizarán el reporte
+           a partir de los umbrales (montos mínimos) que se establecen en los incisos c),
+             d), e) y f), de este mismo numeral.
+
+           El reporte no incluye aquellas operaciones cuyo pago proviene de un
+           financiamiento otorgado al cliente del sujeto obligado por alguna de las
+            instituciones financieras que establece el artículo 14 de la Ley 7786, cuando
+           ese pago es acreditado o girado directamente por la institución financiera a
+           favor del sujeto obligado.
+
+      c)    Reporte de operaciones de envío de remesas/transferencias al exterior o pago
+          de remesas/transferencias en Costa Rica, en efectivo o cualquier otro medio
+          de pago, por sumas iguales o superiores a US$1.000,00 realizadas en forma
+
+
+                                                                                   44
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 54 =====
+           única (una sola transacción) o múltiple (varias transacciones efectuadas en un
+         mes calendario).
+
+      d)   Reporte de operaciones de casinos, sobre los recursos que el cliente ingrese a
+           cualquier producto de azar, en efectivo o cualquier otro medio de pago que
+           involucre sumas iguales o superiores a US$3.000,00 realizadas en forma
+           única (una sola transacción) o múltiple (varias transacciones efectuadas en un
+         mes calendario).
+
+      e)    Reporte de operaciones que la organización sin fines de lucro (OSFL), envíe
+         o reciba, en efectivo o cualquier otro medio de pago, por sumas iguales o
+            superiores a US$1.000,00 realizadas en forma única (una sola transacción) o
+           múltiple (varias transacciones efectuadas en un mes calendario).
+
+       f)    Reporte de operaciones de comerciantes de metales preciosos y piedras
+           preciosas realizadas mediante efectivo o cualquier forma de recibo o pago de
+           fondos, que igualen o superen los US$15.000,00 o su equivalente en colones
+         u otras monedas, tanto de ingreso como de egreso, realizadas en forma única
+           (una sola transacción) o múltiple (varias transacciones efectuadas en un mes
+            calendario).
+
+22.3 Los reportes antes mencionados, serán remitidos a la Superintendencia según el tipo
+     de sujeto inscrito:
+
+      a)   Tipo 1: cada dos meses.
+
+      b)   Tipo 2: cada tres meses.
+
+      c)   Tipo 3: cada cuatro meses.
+
+         La información contenida en cada reporte comprenderá las operaciones
+            realizadas por sus clientes en el periodo correspondiente para cada tipo de
+            sujeto inscrito.
+
+         La Superintendencia determinará la forma y los medios para la recepción de
+             la información.
+
+           El sujeto inscrito contará con 20 días naturales, para la remisión, los cuales
+           correrán a partir del cierre del último día del periodo respectivo indicado para
+          cada tipo de sujeto inscrito.
+
+
+                                                                                   45
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 55 =====
+23.  Operaciones inusuales o sospechosas
+
+     23.1 El estudio de una operación inusual y sospechosa considera al menos los siguientes
+            datos:
+
+            a)    Identificación del cliente.
+
+           b)    Actividad económica.
+
+            c)    Antecedentes de la operación.
+
+           d)    Descripción detallada de los movimientos o transacciones estudiadas o
+                  analizadas, que incluya:
+
+                           i.    Personas involucradas con las transacciones.
+
+                          ii.   Zonas geográficas involucradas.
+
+                          iii.   Productos o servicios utilizados del sujeto obligado.
+
+                     iv.   Cualquier otra información que el sujeto obligado considere importante
+                      para sus análisis, señales de alerta y estadísticas.
+
+            e)    Conclusiones y recomendaciones.
+
+              f)    Documentación soporte (estados de cuenta, cheques, transferencias, gráficos,
+                 cuadros, procedimientos utilizados, entre otros).
+
+     23.2 El sujeto obligado remitirá el reporte, de manera inmediata, a la UIF del Instituto
+           Costarricense sobre Drogas, en adelante referido como ICD, según los lineamientos
+           definidos por la UIF.
+
+     23.3 El sujeto obligado implementará en sus procedimientos medidas adecuadas para
+          mantener la confidencialidad, sobre:
+
+            a)   La identidad de los empleados o directivos que hayan intervenido en el
+                proceso de  detección,  análisis y  reporte de una operación  inusual y
+                sospechosa.
+
+           b)   La identidad del cliente reportado en una operación sospechosa.
+
+
+
+
+                                                                                         46
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 56 =====
+         OFICIAL DE CUMPLIMIENTO O PERSONA DE ENLACE
+
+
+24.   Oficial de cumplimiento o Persona de enlace
+
+     24.1 El Oficial de cumplimiento o Persona de enlace es el encargado, dentro de la
+            estructura organizativa del sujeto obligado, de identificar los factores de exposición
+             al riesgo de LC/FT/FPADM y establecer métodos de prevención del mismo.
+
+     24.2 El sujeto obligado facilitará las condiciones y recursos que garanticen el desempeño
+            eficiente de las funciones del Oficial de cumplimiento o Persona de enlace.
+
+     24.3 La designación de un Oficial de cumplimiento o de una Persona de enlace, será
+            definida de acuerdo con el tipo de sujeto inscrito:
+
+            a)   Tipo 1, le corresponde designar un Oficial de cumplimiento.
+
+           b)   Tipos 2 y 3, les corresponde designar a una Persona de enlace.
+
+     24.4 La gestión de prevención del riesgo de LC/FT/FPADM no se limita exclusivamente
+           a las actividades desplegadas por el Oficial de cumplimiento o Persona de enlace,
+           sino que, por el contrario resulta ser una responsabilidad que comparten todos los
+           funcionarios de la estructura organizacional del sujeto obligado.
+
+
+25.  Requisitos del Oficial de cumplimiento o Persona de enlace
+
+El Oficial de cumplimiento o Persona de enlace cumplirá al menos con los requisitos y calidades
+que se establecen en este Reglamento.
+
+
+26.  Incompatibilidades en los nombramientos del Oficial de cumplimiento o Persona de
+     enlace
+
+     26.1 El sujeto obligado documentará en sus políticas y procedimientos, los aspectos
+           relacionados  con  la  incompatibilidad  en  el  nombramiento  del  Oficial  de
+          cumplimiento o Persona de enlace.
+
+     26.2 El sujeto obligado es responsable de realizar el análisis que corresponda para la
+            identificación de las personas que tengan impedimento para ser designados como
+            Oficial de cumplimiento o Persona de enlace.
+
+
+
+                                                                                         47
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 57 =====
+27.  Funciones del Oficial de cumplimiento o Persona de enlace
+
+Las funciones del Oficial de cumplimiento o Persona de enlace se encuentran establecidas en
+este Reglamento.
+
+
+ AUDITORÍA INTERNA Y EXTERNA SOBRE PREVENCIÓN Y CONTROL DE LA
+                          LC/FT/FPADM
+
+
+AUDITORÍA INTERNA
+
+
+28.  Auditoria interna para la prevención y control de LC/FT/FPADM
+
+Los sujetos obligados que requerirán las labores de auditoría interna serán aquellos catalogados
+por la Superintendencia como tipo 1.
+
+
+29.  Programa e informe de auditoría interna
+
+     29.1 El programa elaborado por la auditoría interna o funcionario designado del sujeto
+           obligado, incluirá al menos lo siguiente:
+
+            a)   Áreas a auditar, dando prioridad a las de mayor riesgo de LC/FT/FPADM.
+
+           b)   Aspectos a evaluar en cada área.
+
+            c)    Frecuencia de las auditorías (fechas aproximadas).
+
+     29.2 El informe de la auditoria interna contendrá, al menos, el alcance de la revisión, las
+           debilidades identificadas, las conclusiones con respecto a la exposición al riesgo de
+        LC/FT/FPADM y las recomendaciones.
+
+     29.3 El sujeto obligado dará a conocer el informe  a los siguientes órganos, cuando
+            existan dentro de la estructura del sujeto obligado:
+
+            a)    Autoridad máxima.
+
+           b)   Gerencia general u órgano homólogo.
+
+            c)    Oficial de cumplimiento.
+
+
+
+                                                                                         48
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 58 =====
+     29.4 La gerencia general u órgano homólogo del sujeto obligado establecerá un plan de
+           acción para la atención de las debilidades identificadas producto de la auditoría
+            interna realizada. Dicho plan de acción será aprobado por la autoridad máxima, a
+         más tardar 30 días hábiles posteriores a la presentación del informe por parte de la
+            auditoría interna.
+
+     29.5 La autoridad máxima del sujeto obligado dará seguimiento al cumplimiento del plan
+          de acción que atiende las debilidades identificadas por la auditoría interna o
+           funcionario designado.
+
+
+AUDITORÍA EXTERNA[6a]
+
+
+30.  Auditoría externa sobre prevención y control de LC/FT/FPADM
+
+     30.1 Los sujetos obligados que se someterán a la auditoría externa serán aquellos
+           catalogados por la Superintendencia como tipo 1.
+
+     30.2 El sujeto obligado se someterá a una auditoría externa al menos cada dos años, con
+            corte al 31 de diciembre del año correspondiente. El informe será presentado por
+            parte del sujeto obligado a la Superintendencia, a más tardar el último día hábil de
+             abril del año posterior al corte.
+
+     30.3 El sujeto obligado se someterá a la primera auditoría externa, con corte al 31 de
+           diciembre del año siguiente de la fecha de notificación del tipo de sujeto inscrito
+           asignado por la SUGEF.
+
+     30.4 El período de estudio de la Auditoría Externa debe ser de los últimos 12 meses, con
+           fecha corte a diciembre.
+
+     30.5 El sujeto obligado verificará que el personal de la auditoría externa que realice los
+            estudios de los riesgos de LC/FT/FPADM posea los conocimientos y experiencia
+           demostrables en estos riesgos.
+
+     30.6 El Sistema de Auditorías Externas (SAES) es el medio por el cual el sujeto obligado
+           suministrará  a  la  Superintendencia  el  Informe  de  Auditores  Externos  de
+        LC/FT/FPADM.
+
+
+
+
+
+                                                                                         49
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 59 =====
+     30.7 El sujeto obligado comunicará por medio del SAES el nombre de la firma de
+            auditoría externa o auditor externo independiente que realizará el informe, a más
+            tardar el 31 de agosto del año de corte de la información.
+
+
+31.  Alcance e informe de auditoría externa[6b]
+
+     31.1 El auditor externo emitirá los resultados de la revisión mediante un “Informe de
+           atestiguamiento o aseguramiento (Encargos de aseguramiento, distintos de la
+            auditoría  o  revisiones  de  información  financiera  histórica),  conforme  los
+           lineamientos definidos por el Colegio de Contadores Públicos de Costa Rica, con
+           base en la NIEA 3000 “Encargos de Aseguramiento, distintos de la auditoría o
+            revisiones de información financiera histórica”, atestiguando con una certeza
+           razonable con la opinión del auditor para cada área o aspecto evaluado, respecto a
+             la  eficacia y  efectividad  del  proceso de  identificación de  los  riesgos de
+        LC/FT/FPADM, así como la eficacia y efectividad de los controles implementados
+           para mitigar los riesgos y cumplimiento de la Ley 7786, sus reformas y normativa
+           conexa; junto con un informe complementario que debe contener al menos: i)
+           periodo de revisión, ii) objetivo del estudio, iii) alcance, iv) pruebas aplicadas, y
+           sus resultados, v) seguimientos de informes de periodos anteriores, vi) revisión de
+           planes de acción correctivos implementados por el sujeto en estudio para revisiones
+            anteriores.
+
+     31.2 Los resultados del trabajo de la auditoría externa serán comunicados mediante un
+           informe, con alcance, resultados y recomendaciones correspondientes, y será
+          conocido por los siguientes órganos, cuando existan dentro de  la estructura
+            organizativa, del sujeto obligado:
+
+            a)    Autoridad máxima.
+
+           b)   Gerencia general u órgano homólogo.
+
+            c)    Oficial de cumplimiento.
+
+           El informe y las comunicaciones del auditor externo, tales como la carta de
+            gerencia, deben ser conocidos, discutidos, valorados y aprobados por la autoridad
+          máxima, quien debe velar porque estos informes contribuyan al fortalecimiento de
+             la gestión del riesgo de LC/FT/FPADM.
+
+
+
+
+
+                                                                                         50
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 60 =====
+     31.3 El alcance del informe de auditoría externa será conforme las disposiciones de la
+         Ley 7786, sus reformas y normativa conexa relacionada con el cumplimiento de las
+          medidas para prevenir los riesgos de LC/FT/FPADM. La auditoría externa incluirá
+           pruebas  específicas con un enfoque basado en  riesgos, sobre  la  eficacia y
+            efectividad de las políticas, procedimientos y controles para prevenir los riesgos de
+        LC/FT/FPADM.
+
+     31.4 El SAES orientará al auditor externo durante el proceso de ejecución y preparación
+            del informe, asimismo, el sistema solicitará toda la información general del estudio
+         y los diferentes tipos de resultados y calificaciones que puede consignar el auditor.
+
+     31.5 Para la preparación y elaboración de este informe, los auditores externos no pueden
+            tener acceso a la identidad de los clientes de los casos que se investiguen, o que
+          hayan sido reportados a las autoridades como operaciones sospechosas. Esto no
+          impide que los auditores externos realicen evaluaciones al proceso implementado
+           por el sujeto obligado para la identificación de operaciones inusuales y sospechosas.
+         Cuando  el auditor externo detecte operaciones que a su  criterio constituyen
+           operaciones inusuales, el auditor informará al Oficial de cumplimiento, quien las
+           evaluará y decidirá si deben ser reportadas a la UIF.
+
+     31.6 El sujeto obligado establecerá un plan de acción para la atención de las debilidades
+            identificadas, producto de la auditoría externa realizada. Dicho plan de acción será
+          aprobado por la autoridad máxima, a más tardar 30 días hábiles posteriores a la
+           presentación del informe.
+
+     31.7 La autoridad máxima del sujeto obligado dará seguimiento al cumplimiento del plan
+          de acción, que atiende las debilidades identificadas en la auditoría externa.”
+
+
+ MANUAL DE PREVENCIÓN, CAPACITACIÓN Y CONOZCA A SU PERSONAL
+
+
+MANUAL DE PREVENCIÓN
+
+
+32.  Manual de prevención del riesgo de LC/FT/FPADM.
+
+El Manual de prevención del riesgo de LC/FT/FPADM contendrá al menos los aspectos que se
+describen a continuación:
+
+
+
+
+                                                                                         51
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 61 =====
+a)    Funciones, responsabilidades y obligaciones del Oficial de cumplimiento o Persona
+     de enlace, así como los requisitos mínimos que deben cumplir.
+
+b)    Políticas y procedimientos en relación con:
+
+         i.     Identificación y debida diligencia del cliente cuando establezcan relaciones
+           comerciales con el sujeto obligado.
+
+         ii.    El uso de dinero en efectivo en sus operaciones.
+
+         iii.   Mantenimiento y disponibilidad de información sobre  los  registros de
+           transacciones con el cliente.
+
+       iv.   Personas expuestas políticamente (PEP).
+
+      v.    Surgimiento de nuevas tecnologías, nuevos productos y nuevas prácticas
+           comerciales.
+
+       vi.   Sucursales y filiales extranjeras.
+
+       vii.  Relaciones comerciales y transacciones con personas físicas o jurídicas e
+            instituciones financieras domiciliadas en países catalogados de riesgo por
+          organismos internacionales.
+
+       viii.  Detección, análisis y reporte de operaciones sospechosas a la UIF del ICD,
+           incluyendo los intentos de realizarlas.
+
+       ix.   Confidencialidad cuando se está entregando a la UIF del ICD un reporte de
+           operación sospechosa o información relacionada.
+
+      x.    Clasificación de riesgo de los clientes.
+
+       xi.   El establecimiento de relaciones comerciales, o de negocios con contrapartes.
+
+       xii.   Registro, control y remisión de los reportes (operaciones únicas, múltiples,
+            transferencias, remesas u otros).
+
+       xiii.  Monitoreo de las transacciones de los clientes.
+
+      xiv.  Desarrollo de programas de capacitación.
+
+
+
+
+                                                                                   52
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 62 =====
+           xv.   Verificación  de  la  integridad  de  socios o  beneficiarios,  apoderados,
+                   directivos, administradores y empleados del sujeto obligado.
+
+            xvi.  Solicitudes de autoridades competentes, así como el decomiso, el secuestro u
+                  otra medida cautelar, sobre bases relacionadas con la comisión de los delitos
+                  previstos en la Ley 7786.
+
+             xvii. Evaluación del riesgo del sujeto obligado.
+
+      c)   Código de ética de conformidad con lo dispuesto en el Reglamento a la Ley 7786.
+
+      d)    Infracciones, sanciones u otras medidas disciplinarias internas aplicables por
+          incumplimiento de las disposiciones legales, regulatorias y políticas internas,
+             relativas a la Ley 7786.
+
+Cuando no proceda la incorporación de alguno de los aspectos citados anteriormente, el sujeto
+obligado justificará expresamente los motivos.
+
+
+CAPACITACIÓN
+
+
+33.  Capacitación
+
+     33.1 Los temas a considerar en la capacitación anual en materia de prevención del riesgo
+          de LC/FT/FPADM son los siguientes:
+
+            a)   Conceptos generales y su impacto en la sociedad.
+
+           b)    Legislación nacional y normativa vigente.
+
+            c)    Implicaciones para el sujeto obligado y su personal (Responsabilidades,
+                sanciones penales, administrativas e internas).
+
+           d)    Disposiciones de organismos internacionales, implicaciones para el sujeto
+                obligado y el país.
+
+            e)   Conocimiento del cliente y origen de fondos.
+
+              f)    Prevención del riesgo de LC/FT/FPADM.
+
+
+
+
+
+                                                                                         53
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 63 =====
+           g)    Tipologías según la actividad del sujeto obligado (Análisis y desarrollo de
+                casos relacionados con el tema).
+
+           h)    Señales de alerta según la actividad del sujeto obligado.
+
+               i)     Políticas y procedimientos que le apliquen al personal correspondiente según
+                 sus funciones.
+
+               j)   Manual de prevención del riesgo de LC/FT/FPADM.
+
+           k)    Ética y conflictos de interés.
+
+     33.2 La capacitación antes mencionada considerará aspectos diferenciados, de acuerdo
+          con las labores y puesto que desempeñe la persona para el sujeto obligado.
+
+     33.3 El sujeto obligado capacitará al personal de nuevo ingreso, que así lo requiera, en
+           materia prevención del riesgo de LC/FT/FPADM, durante los primeros tres meses
+            posteriores a su contratación.
+
+     33.4 La asimilación de conocimientos sobre las capacitaciones será validada por el sujeto
+           obligado, mediante  los mecanismos que  prefiera, cuya  evidencia pondrá a
+           disposición de la Superintendencia.
+
+     33.5 El sujeto obligado custodiará la evidencia de las capacitaciones impartidas a cada
+           funcionario y la conservará a disposición de la Superintendencia.
+
+
+34.  Capacitación del Oficial de cumplimiento o Persona de enlace.
+
+     34.1 La capacitación que reciba el Oficial de cumplimiento o Persona de enlace será
+            dirigida a fortalecer los conocimientos que le permitan cumplir a cabalidad con las
+           funciones establecidas en este Reglamento, relacionadas con la prevención del
+            riesgo de LC/FT/FPADM.
+
+     34.2 El sujeto obligado custodiará la evidencia de las capacitaciones recibidas por el
+            Oficial de cumplimiento o Persona de enlace y la conservará a disposición de la
+           Superintendencia.
+
+
+
+
+
+                                                                                         54
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 64 =====
+CONOZCA A SU PERSONAL
+
+
+35.   Política conozca a su personal
+
+     35.1 La  política  de  reclutamiento,  contratación  y  conocimiento  del  personal,
+          implementada por el sujeto obligado para todos sus funcionarios, establecerá un
+           procedimiento para la evaluación y comprobación de los antecedentes:
+
+            a)    Personales.
+
+           b)    Judiciales.
+
+            c)    Laborales.
+
+           d)    Patrimoniales (Cambios en el estilo de vida u otros aspectos que no guarden
+                  relación con los ingresos reportados).
+
+     35.2 El  sujeto  obligado  aplicará  la  política  de  reclutamiento,  contratación  y
+          conocimiento de su personal, al inicio y durante la relación laboral, manteniendo la
+           información actualizada.
+
+     35.3 El sujeto obligado verificará que su personal no se encuentre designado en las listas
+          de la Organización de las Naciones Unidas (ONU) y de la Oficina de Control de
+           Activos  Extranjeros de  Estados Unidos (OFAC por  sus  siglas en  inglés),
+           relacionadas con temas de LC/FT/FPADM.
+
+
+              MONITOREO Y SEÑALES DE ALERTA
+
+
+MONITOREO
+
+
+36.  Monitoreo
+
+     36.1 El sujeto obligado definirá un proceso de monitoreo de sus clientes, acorde con sus
+           condiciones, características, tamaño, estructura, cantidad de operaciones, número
+          de empleados, volumen transaccional y factores de exposición  al riesgo de
+        LC/FT/FPADM.
+
+     36.2 El monitoreo implementado por el sujeto obligado considerará, al menos:
+
+
+                                                                                         55
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 65 =====
+      a)    Identificar escenarios inusuales en relación con el perfil declarado del cliente.
+
+      b)    Identificar relaciones con personas y/o jurisdicciones catalogadas de riesgo
+          en materia de LC/FT/FPADM.
+
+36.3 La información requerida en el proceso de monitoreo, será como mínimo:
+
+      a)   Datos particulares del cliente.
+
+      b)    Detalles de las transacciones.
+
+      c)    Actividad económica.
+
+      d)    Categorías de riesgo del cliente.
+
+      e)    Tipos de alerta.
+
+36.4 De acuerdo con la evaluación de riesgo de los clientes, los niveles de monitoreo
+      serán:
+
+      a)   Monitoreo básico: proceso que le permite al sujeto obligado confirmar que
+             las transacciones realizadas por el cliente son congruentes con lo declarado
+          en el formulario denominado “Conozca a su cliente”, y con la categoría de
+            riesgo del mismo. Las medidas de monitoreo básico se aplicarán a los clientes
+            clasificados de riesgo bajo y de riesgo moderado.
+
+      b)   Monitoreo intensificado: proceso que incluye medidas adicionales a las
+           aplicadas en el monitoreo básico, de acuerdo con el riesgo de LC/FT/FPADM
+         y de las señales de alerta del cliente. Las medidas de monitoreo intensificado
+           se aplicarán a los clientes clasificados de riesgo alto y aquellos que considere
+            pertinente el sujeto obligado.
+
+36.5 El sujeto obligado utilizará información de organizaciones internacionales sobre
+      factores de exposición al riesgo de LC/FT/FPADM, tales como las siguientes:
+
+      a)   Grupo de Acción Financiera (GAFI).
+
+      b)   Organización de las Naciones Unidas (ONU).
+
+      c)   Grupo de Acción Financiera de Latinoamérica (GAFILAT).
+
+
+
+
+                                                                                   56
+                                                                     Acuerdo Sugef 13-19
+
+                                 Uso Interno
+
+===== PAGINA PDF 66 =====
+           d)    Oficina de control de activos extranjeros de los Estados Unidos de América
+            (OFAC por sus siglas en inglés).
+
+             La información obtenida de estas organizaciones será utilizada por el sujeto
+                obligado como uno de los insumos requeridos en sus programas de monitoreo
+              y para la identificación de señales de alerta.
+
+
+SEÑALES DE ALERTA
+
+
+37.  Señales de alertas
+
+     37.1 Del análisis de las señales de alerta identificadas, el sujeto obligado:
+
+            a)    Identificará y documentará situaciones inusuales de sus clientes.
+
+           b)    Elaborará  los  reportes de situaciones sospechosas para informar a  las
+                 autoridades competentes.
+
+     37.2 Para aquellas situaciones inusuales que se descarten, el sujeto obligado dejará
+            evidencia: del motivo por el cual no fueron reportadas, la documentación de
+           respaldo y el nombre del responsable.
+
+     37.3 El sujeto obligado mantendrá a disposición de la Superintendencia y de las otras
+           autoridades competentes, toda la documentación relacionada con este numeral.
+
+
+                   OTRAS OBLIGACIONES
+
+
+38.  Obligaciones adicionales para la Organización sin fines de lucro (OSFL)
+
+     38.1 La Organización sin fines de lucro (OSFL) que envíe o reciba dinero procedente de
+            jurisdicciones internacionalmente catalogadas de riesgo, o que mantenga relaciones
+          con matrices, sucursales o filiales extranjeras ubicadas en ellas, cumplirá al menos
+            lo siguiente:
+
+            a)   Adoptar medidas con base en riesgos, para el conocimiento de los donantes y
+                asociados del sujeto obligado y del origen de sus fondos.
+
+
+
+
+
+                                                                                         57
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 67 =====
+           b)   Adoptar medidas con base en riesgos, para el conocimiento de las personas
+                   físicas o jurídicas o grupos de ellas, que reciban donaciones a través de los
+                  servicios de la OSFL.
+
+            c)   Adoptar medidas con base en riesgos, para  el conocimiento de OSFL
+                  relacionadas.
+
+     38.2 La OSFL garantizará que los fondos recibidos o entregados son contabilizados
+          completamente y mantendrá a disposición de las autoridades competentes sus
+           estados financieros anuales, con sus respectivas notas complementarias, de acuerdo
+          con lo establecido en las Normas Internacionales de Información Financiera.
+
+
+39.  Responsabilidad indelegable del sujeto obligado sobre la debida diligencia
+
+El sujeto obligado es  el responsable de que se establezcan y apliquen sus políticas y
+procedimientos, para identificar al cliente, identificar al beneficiario  final y verificar la
+naturaleza de la actividad comercial, respecto del conocimiento del cliente.
+
+
+40.  Información sobre las cuentas, productos o servicios, de uso exclusivo
+
+     40.1 La información que  suministrarán  los  sujetos obligados sobre sus  cuentas,
+           productos o servicios, será al menos la siguiente:
+
+            a)   Nombre de la entidad financiera.
+
+           b)   Nombre del titular y autorizados de la cuenta, producto o servicio.
+
+            c)   Tipo de cuenta, producto o servicio.
+
+           d)   Número de cuenta, producto o servicio.
+
+     40.2 El sujeto obligado remitirá la información antes descrita a la Superintendencia, por
+            los medios que esta disponga.
+
+     40.3 Cualquier cambio en  la  información  remitida  a  la  Superintendencia,  será
+            actualizada por el sujeto obligado.
+
+
+
+
+
+                                                                                         58
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 68 =====
+41.  Sucursales y filiales en el extranjero
+
+     41.1 El  sujeto obligado  verificará que sus sucursales o  filiales en  el  extranjero
+          implementen políticas y procedimientos efectivos, para la prevención del riesgo de
+        LC/FT/FPADM, similares a las establecidas en este Reglamento y sus lineamientos
+            generales, de conformidad con el marco jurídico del país donde se ubiquen.
+
+     41.2 El sujeto obligado contará con políticas y procedimientos que posibiliten  el
+           intercambio de información con sucursales o  filiales en  el  extranjero, para
+           propósitos de prevención del riesgo de LC/FT/FPADM.
+
+Vigencia:
+
+Estos lineamientos generales rigen una vez que entre en vigencia el Reglamento para la
+prevención del riesgo de Legitimación de Capitales, Financiamiento del Terrorismo, y
+Financiamiento de la Proliferación de Armas de Destrucción Masiva, aplicable a los sujetos
+obligados por a los artículos 15 y 15 bis de la Ley 7786, Acuerdo SUGEF 13-19, excepto lo
+establecido en el numeral 4 y el numeral 40 que entran en vigor a los tres meses, contados a
+partir del primer día del mes siguiente de la publicación en el diario oficial La Gaceta, del
+Reglamento antes mencionado,  así como lo establecido en los numerales 24, 25, 26 y 27 en
+relación con la designación, los requisitos, las incompatibilidades y las funciones del Oficial de
+cumplimiento o Persona de enlace, que entrarán en vigor a los ocho meses contados a partir del
+primer día del mes siguiente de la publicación en el diario oficial La Gaceta del Reglamento
+antes mencionado.
+
+
+
+
+
+                                                                                         59
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 69 =====
+                               ANEXO[5b]
+
+               Modelo de clasificación por tipo de sujeto obligado
+
+
+
+En atención de lo dispuesto en la Ley 7786, en el Reglamento para la prevención del riesgo de
+legitimación de capitales, financiamiento al terrorismo y financiamiento de la proliferación de
+armas de destrucción masiva, aplicable a los sujetos obligados por los artículos 15 y 15 bis de
+la Ley 7786, y en complemento a estos Lineamientos generales, que forman parte integral de
+este Reglamento, a continuación se establecen los criterios y parámetros con base en los cuales
+se realiza la clasificación por tipo de sujeto obligado, considerando su tamaño, estructura,
+cantidad de operaciones, número de empleados, volumen transaccional y factores de exposición
+al riesgo de LC/FT/FPADM.
+
+1.    Criterios para la clasificación por tipo de sujeto obligado
+
+                                                            Ponderación
+          Criterio                     Variables               Por      Por
+                                                                variable    criterio
+
+                         Cantidad de personal1              2%
+  Tamaño              Tipo de relación laboral del personal2    2%
+                         Cantidad de sucursales y agencias3      2%    6%
+
+                         Cantidad de clientes4              5%
+   Clientes              Tipo de clientes                 5%
+                          Nacionalidad de clientes            5%     15%
+
+
+
+1 Cantidad de personal: Se debe indicar la cantidad de personal con el que el sujeto inscrito cuenta a la fecha de
+corte; cuando el sujeto inscrito es persona física debe incluirse él mismo como parte del personal; en el caso de los
+sujetos inscritos persona jurídica que no tiene personal (contratado o subcontratado) debe incluir al menos a la
+persona que realizará la función de Oficial de cumplimiento o Persona de enlace, según corresponda.
+2 Tipo de relación laboral del personal: Personal directo, se refiere a aquellas personas contratadas por el sujeto
+obligado que forman parte de la planilla reportada a la Caja Costarricense del Seguro Social (CCSS), el Instituto
+Nacional de Seguros (INS), entre otros; y Personal subcontratado se refiere a aquellas personas que el sujeto
+obligado emplea por medio de un contrato de servicios profesionales, no forman parte de la planilla, entre otros
+aspectos. Cuando el sujeto inscrito es persona física, debe incluirse él mismo como parte del personal directo; en
+el caso de los sujetos inscritos persona jurídica que no tiene personal (contratado o subcontratado) debe incluirse
+en personal directo al menos a la persona que realizará la función de Oficial de cumplimiento o Persona de enlace,
+según corresponda.
+3 Cantidad de sucursales y agencias: Incluye todas las sucursales, agencias, oficina principal, puntos de venta
+y/o servicio.
+4 Clientes: Se debe indicar la cantidad de clientes, tanto habituales como ocasionales, con los que el sujeto inscrito
+mantuvo relación comercial durante los últimos doce meses o fracción de tiempo, en caso de que el sujeto obligado
+tenga menos de un año de operar.
+
+                                                                                         60
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 70 =====
+                                                            Ponderación
+          Criterio                     Variables               Por      Por
+                                                                variable    criterio
+                          Actividades indicadas en los artículos
+   Actividad                                      20%    20%
+                       15 y 15 bis de la Ley 7786
+
+                     Volumen transaccional              20%
+   Transaccionalidad5
+                         Cantidad de transacciones            15%    35%
+
+   Instrumento de       Dinero en efectivo                 10%
+   pago6                 Dinero transfronterizo             7%     17%
+
+                         Operación nacional               5%
+   Geográfico
+                         Operación internacional7            2%    7%
+
+                             Total                     100%    100%
+
+
+
+
+
+5 Transaccionalidad: Se refiere al promedio mensual móvil (que comprende un período de 12 meses o fracción
+de tiempo cuando corresponda) del total de depósitos en las cuentas en Bancos, Cooperativas y otras entidades
+financieras supervisadas por la SUGEF.
+6 Instrumentos de pago: Dinero en efectivo, se entiende como billetes o monedas y Dinero transfronterizo se
+refiere a aquel dinero que proviene o se envía al extranjero.
+7 Operación internacional: Se refiere a la disposición operativa realizada por el sujeto obligado fuera del territorio
+nacional.
+
+                                                                                         61
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 71 =====
+2.   Condiciones para la calificación de cada variable
+      2.1  Tamaño
+
+      Cantidad de personal                              Ponderación
+      Hasta 5                                     25%
+     De 6 a 10                                   50%
+     De 11 a 20                                   75%
+     Más de 20                                    100%
+
+      Tipo de relación laboral del personal                Ponderación
+      Sólo personal directo                            25%
+      Mayoría personal directo(*)                        50%
+      Mayoría personal subcontratado(*)                   75%
+      Sólo personal subcontratado                        100%
+
+      Cantidad de sucursales y agencias                   Ponderación
+      Hasta 1                                     25%
+     De 2 a 5                                    50%
+     De 6 a 9                                    75%
+     Más de 9                                     100%
+
+      2.2   Clientes
+
+       Cantidad de clientes                                 Ponderación
+       Hasta 5                                      25%
+      De 6 a 15                                     50%
+      De 16 a 40                                    75%
+      Más de 40                                      100%
+
+       Tipo de clientes                                     Ponderación
+       Sólo clientes físicos                              25%
+       Mayoría de clientes físicos(*)                        50%
+       Mayoría de clientes jurídicos(*)                       75%
+       Sólo clientes jurídicos                              100%
+
+       Nacionalidad de clientes                             Ponderación
+       Sólo clientes nacionales                            25%
+       Mayoría clientes nacionales(*)                        50%
+       Mayoría clientes extranjeros(*)                       75%
+       Sólo clientes extranjeros                            100%
+(*) Para las categorías, “Tipo de Contratación del Trabajador”, “Tipo de clientes” y “Nacionalidad de Clientes”
+que contienen el criterio “Mayoría”, cuando su resultado corresponda a una misma cantidad entre los
+rangos, se calificará con el rango inferior de los dos criterios.
+
+
+                                                                                         62
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 72 =====
+   2.3  Actividades indicadas en los artículos 15 y 15 bis de la Ley 7786
+
+  Tipo de Actividad                                          Ponderación
+  Contadores, abogados y casas de empeño                      25%
+  Comerciantes de metales preciosos y piedras preciosas y
+                                                  50%
+  proveedores de servicios fiduciarios
+  Compra y venta de bienes inmuebles, organizaciones sin fines de
+                                                  75%
+  lucro y otorgamiento de facilidades crediticias
+  Casinos y actividades indicadas en el artículo 15 de la Ley 7786       100%
+
+   2.4  Transaccionalidad
+
+       Volumen transaccional                         Ponderación
+         Hasta US$ 100mil                           25%
+       Mayor a US$ 100mil hasta US$ 300mil             50%
+       Mayor a US$ 300mil hasta US$ 500mil             75%
+       Mayor a US$ 500mil                          100%
+
+        Cantidad de transacciones                      Ponderación
+         Hasta 50                                 25%
+       Mayor a 50 hasta 100                         50%
+       Mayor a 100 hasta 500                        75%
+       Mayor a 500                               100%
+
+   2.5  Instrumentos de pago
+
+Dinero efectivo                                                Ponderación
+No opera en efectivo                                      25%
+Opera con poco efectivo                                    50%
+Opera mayormente en efectivo                                75%
+Opera sólo en efectivo                                      100%
+
+Dinero Transfronterizo                                         Ponderación
+No opera dinero transfronterizo                               25%
+Opera con remesas de dinero                                 50%
+Opera con transferencias internacionales                         75%
+Opera con dos o más de  los  siguientes  instrumentos de  pago:
+Transferencias internacionales, remesas de dinero, money order, tarjetas
+                                                      100%
+de crédito o algún instrumento de pago que dificulte la trazabilidad de
+los ingresos o egresos de dinero de la transacción realizada.
+
+
+
+
+
+                                                                                      63
+                                                                        Acuerdo Sugef 13-19
+
+                                    Uso Interno
+
+===== PAGINA PDF 73 =====
+      2.6  Geográfico
+
+        Operación nacional                           Ponderación
+         Opera sólo en zonas de riesgo bajo                25%
+         Opera en zonas de riesgo medio y bajo             50%
+         Opera en una zona de riesgo alto                 75%
+         Opera en más de una zona de riesgo alto            100%
+
+        Operación internacional                       Ponderación
+       No tiene operación internacional                0%
+         Opera con países de riesgo medio y bajo            50%
+         Opera con algún país de riesgo alto               75%
+         Opera con más de un país de riesgo alto             100%
+
+
+3.   Determinación de la clasificación por tipo de sujeto obligado[6c]
+
+
+           Tipo                    Calificación
+             1    Mayor o igual a 70%
+             2    Mayor o igual a 55%, pero menor que 70%
+             3    Menor a 55%
+
+En el caso de los sujetos inscritos que realicen más de una actividad de los artículos 15 y 15 bis
+de la Ley 7786, prevalecerá la categoría con mayor calificación.
+
+La determinación de  la  clasificación del  sujeto obligado podrá  ser modificada por  la
+Superintendencia cuando en el proceso de supervisión se detecten debilidades en la gestión y
+prevención del riesgo de LC/FT/FPADM del sujeto obligado.
+
+El Superintendente podrá modificar, mediante resolución razonada, el Modelo de clasificación
+por tipo de sujeto obligado en cualquier momento o producto de la revisión al modelo que se
+llevará a cabo cada cuatro años. En caso de que el modelo sea modificado se comunicará a los
+sujetos obligados, a través de los medios que considere convenientes.
+
+
+
+
+
+                                                                                         64
+                                                                           Acuerdo Sugef 13-19
+
+                                      Uso Interno
+
+===== PAGINA PDF 74 =====
+                    HISTORIAL DE VERSIONES
+
+Versión 01:  Reglamento para la prevención del riesgo de LC/FT/FPADM, aplicable a los
+               sujetos obligados por los artículos 15 y 15 bis de la Ley 7786, Acuerdo SUGEF
+              13-19.  Reglamento aprobado por El Consejo Nacional de Supervisión del
+             Sistema Financiero, en el literal A, artículo 7, del acta de la sesión 1542-2019,
+              celebrada el 4 de noviembre de 2019.
+
+            Publicado en el Alcance No. 258 al diario oficial La Gaceta No. 220 del martes
+            19 de noviembre de 2019.
+
+            Lineamientos generales  al Reglamento para  la prevención  del  riesgo de
+           LC/FT/FPADM, aplicable a los sujetos obligados por los artículos 15 y 15 bis de
+                la Ley 7786, aprobados por el Superintendente General de Entidades Financieras,
+             mediante Resolución SGF 3419-2019 SGF-PUBLICO del 11 de noviembre de
+             2019. Pendiente de publicación en el diario oficial La Gaceta.
+
+Versión 02:  Publicación en el Alcance N° 275 al Diario Oficial La Gaceta N° 235 del martes
+            10 de diciembre de 2019 de los Lineamientos generales al Reglamento para la
+             prevención del riesgo de LC/FT/FPADM, aplicable a los sujetos obligados por los
+               artículos 15 y 15 bis de la Ley 7786, aprobados por el Superintendente General de
+              Entidades Financieras, mediante Resolución SGF 3419-2019 SGF-PUBLICO del
+            11 de noviembre de 2019.
+
+Versión 03:  Modificar el numeral 20.3 del apartado “20. Operaciones múltiples” del título
+              “Registro y notificación de transacciones” de la Resolución SGF 3419-2019
+             Lineamientos  generales  al  reglamento para  la  prevención  del  riesgo de
+              legitimación de capitales, financiamiento del terrorismo y financiamiento de la
+               proliferación de armas de destrucción masiva, aplicable a los sujetos obligados
+             por los artículos 15 y 15 bis de la ley 7786, Acuerdo Sugef 13-19, aprobada por el
+              Superintendente General de Entidades Financieras, mediante Resolución SGF
+            2136-20220 SGF-PUBLICO del 23 de junio de 2020. Pendiente de publicación
+            en el diario oficial La Gaceta.
+
+Versión 04:  Modificar el numeral 20.3 del apartado “20. Operaciones múltiples” del título
+              “Registro y notificación de transacciones” de la Resolución SGF 3419-2019
+             Lineamientos  generales  al  reglamento para  la  prevención  del  riesgo de
+              legitimación de capitales, financiamiento del terrorismo y financiamiento de la
+               proliferación de armas de destrucción masiva, aplicable a los sujetos obligados
+
+
+                                                                                          65
+                                                                            Acuerdo Sugef 13-19
+
+                                       Uso Interno
+
+===== PAGINA PDF 75 =====
+             por los artículos 15 y 15 bis de la ley 7786, Acuerdo Sugef 13-19, aprobada por el
+              Superintendente General de Entidades Financieras, mediante Resolución SGF
+            2136-20220 SGF-PUBLICO del 23 de junio de 2020. Publicado en el Diario
+              Oficial La Gaceta Nº 158 del miércoles 1° de julio del 2020.
+
+Versión 05:  Modificar la Resolución SGF 3419-2019 Lineamientos generales al reglamento
+             para la prevención del riesgo de legitimación de capitales, financiamiento del
+              terrorismo y financiamiento de la proliferación de armas de destrucción masiva,
+              aplicable a los sujetos obligados por los artículos 15 y 15 bis de la ley 7786,
+            Acuerdo Sugef 13-19, aprobada por la Superintendente General de Entidades
+               Financieras, mediante Resolución SGF 4004-2020 SGF-PUBLICO del 19 de
+            noviembre de 2020. Publicado en el Diario Oficial La Gaceta Nº 280 del
+             miércoles 25 de noviembre del 2020.
+
+              a) Modifica el segundo párrafo del numeral 4.2 del título 4. Tipos de sujetos
+                    inscritos.
+
+             b) Modifica el Anexo Modelo de clasificación por tipo de sujeto obligado.
+
+Versión 06:  Modificación a la Resolución SGF-3419-2019 del 11 de noviembre de 2019,
+             Lineamientos  generales  al Reglamento para  la prevención  del  riesgo de
+             Legitimación de Capitales, Financiamiento del Terrorismo y Financiamiento de
+               la Proliferación de Armas de Destrucción Masiva, aplicable a los sujetos
+             obligados por los artículos 15 y 15 bis de la Ley 7786, Acuerdo SUGEF 13-19,
+             aprobada por la Superintendente General de Entidades Financieras, mediante
+             Resolución SGF-1558-2024 del 24 de mayo de 2024.
+
+              a)  Modificar el numeral 30. Auditoría externa sobre prevención y control de
+             LC/FT/FPADM del apartado Auditoría interna y externa sobre prevención y
+                  control de la LC/FT/FPADM.
+
+             b) Modificar el numeral 31. Alcance e informe de auditoría externa del apartado
+                 Auditoría interna y externa sobre prevención y control de la LC/FT/FPADM.
+
+               c)  Modificar el texto del punto 3. Determinación de la clasificación por tipo de
+                   sujeto obligado del Anexo.
+
+              Estas modificaciones rigen a partir de su publicación en el Diario Oficial La
+              Gaceta. Publicado en La Gaceta 117 del 27 de junio de 2024.
+
+
+
+                                                                                          66
+                                                                            Acuerdo Sugef 13-19
+
+                                       Uso Interno
+

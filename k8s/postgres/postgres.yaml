@@ -76,7 +76,9 @@ spec:
                 - -c
                 - pg_isready -U postgres -d financial
             initialDelaySeconds: 5
+            timeoutSeconds: 5
             periodSeconds: 5
+            failureThreshold: 3
 
           livenessProbe:
             exec:
@@ -84,8 +86,10 @@ spec:
                 - sh
                 - -c
                 - pg_isready -U postgres -d financial
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
             periodSeconds: 10
+            failureThreshold: 6
 
       volumes:
         - name: postgres-storage

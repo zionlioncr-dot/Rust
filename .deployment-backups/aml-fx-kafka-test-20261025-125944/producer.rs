@@ -1,0 +1,635 @@
+use anyhow::{Context, Result};
+use apache_avro::{types::Value, Schema};
+use rdkafka::{
+    message::{Header, OwnedHeaders},
+    producer::{FutureProducer, FutureRecord},
+    util::Timeout,
+    ClientConfig,
+};
+use serde_json::Value as JsonValue;
+
+use crate::schema_registry::SchemaRegistryClient;
+
+pub struct KafkaProducer {
+    producer: FutureProducer,
+    schema_registry: SchemaRegistryClient,
+}
+
+impl KafkaProducer {
+    pub fn new(brokers: &str, schema_registry_url: &str) -> Result<Self> {
+        println!("==============================");
+        println!("KafkaProducer brokers = {}", brokers);
+        println!("Schema Registry = {}", schema_registry_url);
+        println!("==============================");
+
+        let producer = ClientConfig::new()
+            .set("bootstrap.servers", brokers)
+            .create()?;
+
+        let schema_registry = SchemaRegistryClient::new(schema_registry_url);
+
+        Ok(Self {
+            producer,
+            schema_registry,
+        })
+    }
+
+    pub async fn publish(&self, topic: &str, key: Option<&str>, payload: &str) -> Result<()> {
+        self.producer
+            .send(
+                FutureRecord::to(topic)
+                    .payload(payload)
+                    .key(key.unwrap_or("")),
+                Timeout::Never,
+            )
+            .await
+            .map_err(|(error, _)| anyhow::anyhow!(error))?;
+
+        Ok(())
+    }
+
+    pub async fn publish_with_schema(
+        &self,
+        topic: &str,
+        key: Option<&str>,
+        subject: &str,
+        payload: &str,
+        traceparent: Option<&str>,
+    ) -> Result<()> {
+        // ------------------------------------------------------------
+        // 1. Parse JSON payload
+        // ------------------------------------------------------------
+        let json_value: JsonValue =
+            serde_json::from_str(payload).context("Failed to parse payload as JSON")?;
+
+        // ------------------------------------------------------------
+        // 2. Resolve latest schema from Schema Registry
+        // ------------------------------------------------------------
+        let schema_response = self.schema_registry.get_latest_schema(subject).await?;
+
+        println!(
+            "Schema Registry schema resolved subject={} schema_version={} schema_id={}",
+            subject, schema_response.version, schema_response.id
+        );
+
+        // ------------------------------------------------------------
+        // 3. Convert schema JSON -> apache-avro Schema
+        // ------------------------------------------------------------
+        let schema = apache_avro::Schema::parse_str(&schema_response.schema)
+            .context("Failed to parse Avro schema")?;
+
+        // ------------------------------------------------------------
+        // 4. Convert JSON -> Avro Value
+        // ------------------------------------------------------------
+        let avro_value = Self::json_to_avro(&schema, &json_value)?;
+
+        // ------------------------------------------------------------
+        // 5. Encode Avro datum
+        // ------------------------------------------------------------
+        let avro_payload = apache_avro::to_avro_datum(&schema, avro_value)
+            .context("Failed to encode Avro datum")?;
+
+        // ------------------------------------------------------------
+        // 6. Schema ID
+        // ------------------------------------------------------------
+        let schema_id = schema_response.id;
+
+        // ------------------------------------------------------------
+        // 7. Build Confluent wire format
+        //
+        // Byte 0      = magic byte
+        // Bytes 1..5  = schema ID, big-endian
+        // Bytes 5..   = Avro binary payload
+        // ------------------------------------------------------------
+        let mut final_payload = Vec::with_capacity(5 + avro_payload.len());
+
+        final_payload.push(0u8);
+
+        final_payload.extend_from_slice(&schema_id.to_be_bytes());
+
+        final_payload.extend_from_slice(&avro_payload);
+
+        // ------------------------------------------------------------
+        // 8. Build Kafka record
+        // ------------------------------------------------------------
+        let mut record = FutureRecord::to(topic)
+            .payload(&final_payload)
+            .key(key.unwrap_or(""));
+
+        // ------------------------------------------------------------
+        // 9. Propagate W3C traceparent
+        // ------------------------------------------------------------
+        if let Some(traceparent) = traceparent {
+            let headers = OwnedHeaders::new().insert(Header {
+                key: "traceparent",
+                value: Some(traceparent),
+            });
+
+            record = record.headers(headers);
+        }
+
+        // ------------------------------------------------------------
+        // 10. Publish to Kafka / Redpanda
+        // ------------------------------------------------------------
+        self.producer
+            .send(record, Timeout::Never)
+            .await
+            .map_err(|(error, _)| anyhow::anyhow!("Kafka publish failed: {}", error))?;
+
+        Ok(())
+    }
+
+    // ====================================================================
+    // JSON -> Avro Value
+    // ====================================================================
+
+    fn json_to_avro(schema: &Schema, json: &JsonValue) -> Result<Value> {
+        use std::collections::HashMap;
+
+        match schema {
+            // ------------------------------------------------------------
+            // Null
+            // ------------------------------------------------------------
+            Schema::Null => {
+                if json.is_null() {
+                    Ok(Value::Null)
+                } else {
+                    anyhow::bail!("Expected null, got {}", json)
+                }
+            }
+
+            // ------------------------------------------------------------
+            // Boolean
+            // ------------------------------------------------------------
+            Schema::Boolean => match json {
+                JsonValue::Bool(value) => Ok(Value::Boolean(*value)),
+
+                _ => anyhow::bail!("Expected boolean, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // String
+            // ------------------------------------------------------------
+            Schema::String => match json {
+                JsonValue::String(value) => Ok(Value::String(value.clone())),
+
+                _ => anyhow::bail!("Expected string, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Int
+            // ------------------------------------------------------------
+            Schema::Int => match json {
+                JsonValue::Number(number) => {
+                    let value = number
+                        .as_i64()
+                        .context("Expected integer-compatible JSON number")?;
+
+                    let value =
+                        i32::try_from(value).context("JSON number is outside Avro Int range")?;
+
+                    Ok(Value::Int(value))
+                }
+
+                _ => anyhow::bail!("Expected integer, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Long
+            // ------------------------------------------------------------
+            Schema::Long => match json {
+                JsonValue::Number(number) => {
+                    let value = number
+                        .as_i64()
+                        .context("Expected integer-compatible JSON number")?;
+
+                    Ok(Value::Long(value))
+                }
+
+                _ => anyhow::bail!("Expected long integer, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Float
+            // ------------------------------------------------------------
+            Schema::Float => match json {
+                JsonValue::Number(number) => {
+                    let value = number.as_f64().context("Expected numeric JSON value")?;
+
+                    Ok(Value::Float(value as f32))
+                }
+
+                _ => anyhow::bail!("Expected float, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Double
+            // ------------------------------------------------------------
+            Schema::Double => match json {
+                JsonValue::Number(number) => {
+                    let value = number.as_f64().context("Expected numeric JSON value")?;
+
+                    Ok(Value::Double(value))
+                }
+
+                _ => anyhow::bail!("Expected double, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Bytes
+            // ------------------------------------------------------------
+            Schema::Bytes => match json {
+                JsonValue::String(value) => Ok(Value::Bytes(value.as_bytes().to_vec())),
+
+                JsonValue::Array(values) => {
+                    let mut bytes = Vec::with_capacity(values.len());
+
+                    for value in values {
+                        let number = value.as_u64().context("Expected byte value")?;
+
+                        let byte = u8::try_from(number).context("Byte value outside u8 range")?;
+
+                        bytes.push(byte);
+                    }
+
+                    Ok(Value::Bytes(bytes))
+                }
+
+                _ => anyhow::bail!("Expected string or byte array, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Array
+            // ------------------------------------------------------------
+            Schema::Array(array_schema) => match json {
+                JsonValue::Array(values) => {
+                    let item_schema = &array_schema.items;
+
+                    let mut items = Vec::with_capacity(values.len());
+
+                    for value in values {
+                        items.push(Self::json_to_avro(item_schema, value)?);
+                    }
+
+                    Ok(Value::Array(items))
+                }
+
+                _ => anyhow::bail!("Expected JSON array, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Map
+            // ------------------------------------------------------------
+            Schema::Map(map_schema) => match json {
+                JsonValue::Object(values) => {
+                    let value_schema = map_schema.types.as_ref();
+
+                    let mut entries = HashMap::with_capacity(values.len());
+
+                    for (key, value) in values {
+                        entries.insert(key.clone(), Self::json_to_avro(value_schema, value)?);
+                    }
+
+                    Ok(Value::Map(entries))
+                }
+
+                _ => anyhow::bail!("Expected JSON object for Avro map, got {}", json),
+            },
+
+            // ------------------------------------------------------------
+            // Record
+            // ------------------------------------------------------------
+            Schema::Record(record_schema) => {
+                let object = json
+                    .as_object()
+                    .context("Expected JSON object for Avro record")?;
+
+                let mut record = Vec::new();
+
+                for field in &record_schema.fields {
+                    let avro_value = match object.get(&field.name) {
+                        Some(value) => Self::json_to_avro(&field.schema, value)?,
+                        None => match &field.default {
+                            Some(default_value) => {
+                                Self::json_to_avro(&field.schema, default_value)?
+                            }
+                            None => {
+                                anyhow::bail!("Missing required field '{}'", field.name);
+                            }
+                        },
+                    };
+
+                    record.push((field.name.clone(), avro_value));
+                }
+
+                Ok(Value::Record(record))
+            }
+
+            // ------------------------------------------------------------
+            // Enum
+            // ------------------------------------------------------------
+            Schema::Enum(enum_schema) => {
+                let symbol = json.as_str().context("Expected enum symbol string")?;
+
+                let symbols = &enum_schema.symbols;
+
+                let index = symbols
+                    .iter()
+                    .position(|value| value == symbol)
+                    .with_context(|| format!("Invalid enum symbol '{}'", symbol))?;
+
+                Ok(Value::Enum(index as u32, symbol.to_string()))
+            }
+
+            // ------------------------------------------------------------
+            // Fixed
+            // ------------------------------------------------------------
+            Schema::Fixed(fixed_schema) => {
+                let string = json.as_str().context("Expected string for Avro fixed")?;
+
+                let bytes = string.as_bytes().to_vec();
+
+                let size = fixed_schema.size;
+
+                if bytes.len() != size {
+                    anyhow::bail!(
+                        "Fixed value must contain exactly {} bytes, got {}",
+                        size,
+                        bytes.len()
+                    );
+                }
+
+                Ok(Value::Fixed(size, bytes))
+            }
+
+            // ------------------------------------------------------------
+            // Union
+            // ------------------------------------------------------------
+            Schema::Union(union_schema) => {
+                for (index, variant) in union_schema.variants().iter().enumerate() {
+                    if let Ok(value) = Self::json_to_avro(variant, json) {
+                        return Ok(Value::Union(index as u32, Box::new(value)));
+                    }
+                }
+
+                anyhow::bail!("JSON value {} does not match any Avro union variant", json)
+            }
+
+            // ------------------------------------------------------------
+            // Reference
+            // ------------------------------------------------------------
+            Schema::Ref { name } => {
+                anyhow::bail!("Unresolved Avro schema reference: {}", name)
+            }
+
+            _ => {
+                anyhow::bail!(
+                    "Unsupported Avro schema type for JSON conversion: {:?}",
+                    schema
+                )
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn record_uses_null_default_when_optional_field_is_missing() {
+        let schema = Schema::parse_str(
+            r#"{
+                "type": "record",
+                "name": "AuditPayload",
+                "fields": [
+                    {"name": "action", "type": "string"},
+                    {
+                        "name": "client_ip",
+                        "type": ["null", "string"],
+                        "default": null
+                    }
+                ]
+            }"#,
+        )
+        .expect("schema should be valid");
+
+        let json = json!({"action": "login"});
+
+        let result = KafkaProducer::json_to_avro(&schema, &json);
+
+        assert!(
+            result.is_ok(),
+            "missing optional field should use its default: {:?}",
+            result.err()
+        );
+
+        let value = result.expect("conversion should succeed");
+
+        match value {
+            Value::Record(fields) => {
+                assert!(fields.iter().any(|(name, value)| name == "client_ip"
+                    && value == &Value::Union(0, Box::new(Value::Null))));
+            }
+            other => panic!("expected Avro record, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn record_still_rejects_missing_required_field() {
+        let schema = Schema::parse_str(
+            r#"{
+                "type": "record",
+                "name": "AuditPayloadRequired",
+                "fields": [
+                    {"name": "action", "type": "string"}
+                ]
+            }"#,
+        )
+        .expect("schema should be valid");
+
+        let json = json!({});
+
+        let result = KafkaProducer::json_to_avro(&schema, &json);
+
+        assert!(result.is_err());
+        assert!(
+            result.unwrap_err().to_string().contains("action"),
+            "error should identify the missing required field"
+        );
+    }
+
+    #[test]
+    fn real_financial_transaction_envelope_matches_aml_avro_schema() {
+        use chrono::{DateTime, Utc};
+        use domain::{
+            events::{
+                event_envelope::EventEnvelope, event_metadata::EventMetadata,
+                event_types::FINANCIAL_TRANSACTION_CREATED, event_version::EventVersion,
+            },
+            financial_transaction::FinancialTransaction,
+        };
+        use rust_decimal::Decimal;
+        use serde_json::json;
+        use std::str::FromStr;
+        use uuid::Uuid;
+
+        let transaction_id = Uuid::parse_str("00000000-0000-4000-8000-000000000003").unwrap();
+        let tenant_id = "tenant-aml-integration-test".to_string();
+
+        let transaction = FinancialTransaction {
+            id: transaction_id,
+            tenant_id: tenant_id.clone(),
+            external_transaction_id: Some("bank-tx-001".to_string()),
+            amount: Decimal::from_str("12345678901234567890.12345678").unwrap(),
+            currency: "CRC".to_string(),
+            source_account_id: "account-source".to_string(),
+            destination_account_id: "account-destination".to_string(),
+            counterparty: Some("counterparty-test".to_string()),
+            country_code: "CR".to_string(),
+            channel: "bank_transfer".to_string(),
+            client_ip: Some("192.0.2.10".to_string()),
+            occurred_at: DateTime::parse_from_rfc3339("2026-10-14T11:59:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+            created_at: DateTime::parse_from_rfc3339("2026-10-14T12:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
+        };
+
+        let envelope = EventEnvelope {
+            metadata: EventMetadata {
+                event_id: Uuid::parse_str("00000000-0000-4000-8000-000000000002").unwrap(),
+                correlation_id: transaction_id,
+                trace_id: String::new(),
+                traceparent: None,
+                source: "financial-transaction-service".to_string(),
+                timestamp: Utc::now(),
+                tenant_id: tenant_id.clone(),
+            },
+            version: EventVersion::default(),
+            event_type: FINANCIAL_TRANSACTION_CREATED.to_string(),
+            payload: json!({
+                "transaction": transaction,
+            }),
+        };
+
+        let event_json =
+            serde_json::to_value(&envelope).expect("real event envelope should serialize");
+
+        assert_eq!(event_json["metadata"]["tenant_id"], tenant_id);
+        assert_eq!(event_json["payload"]["transaction"]["tenant_id"], tenant_id);
+        assert_eq!(
+            event_json["payload"]["transaction"]["amount"].as_str(),
+            Some("12345678901234567890.12345678")
+        );
+        assert_eq!(
+            event_json["payload"]["transaction"]["client_ip"].as_str(),
+            Some("192.0.2.10")
+        );
+        assert_eq!(
+            event_json["payload"]["transaction"]["external_transaction_id"].as_str(),
+            Some("bank-tx-001")
+        );
+
+        let schema_text = include_str!("../../../schemas/financial-transaction-created-v1.avsc");
+        let schema = Schema::parse_str(schema_text).expect("AML Avro schema should be valid");
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event_json)
+            .expect("serialized real event should match AML Avro schema");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("real financial transaction event should encode as Avro");
+
+        assert!(!encoded.is_empty());
+    }
+
+    #[test]
+    fn financial_transaction_schema_accepts_decimal_string_and_optional_fields() {
+        let schema_text = include_str!("../../../schemas/financial-transaction-created-v1.avsc");
+        let schema = Schema::parse_str(schema_text)
+            .expect("financial transaction Avro schema should be valid");
+
+        let event = json!({
+            "event_type": "FinancialTransactionCreated",
+            "metadata": {
+                "correlation_id": "00000000-0000-4000-8000-000000000001",
+                "event_id": "00000000-0000-4000-8000-000000000002",
+                "source": "financial-transaction-service",
+                "timestamp": "2026-10-14T12:00:00Z",
+                "trace_id": "",
+                "tenant_id": "tenant-test"
+            },
+            "payload": {
+                "transaction": {
+                    "id": "00000000-0000-4000-8000-000000000003",
+                    "tenant_id": "tenant-test",
+                    "external_transaction_id": null,
+                    "amount": "12345678901234567890.12345678",
+                    "currency": "CRC",
+                    "source_account_id": "account-source",
+                    "destination_account_id": "account-destination",
+                    "counterparty": null,
+                    "country_code": "CR",
+                    "channel": "bank_transfer",
+                    "client_ip": "192.0.2.10",
+                    "occurred_at": "2026-10-14T11:59:00Z",
+                    "created_at": "2026-10-14T12:00:00Z"
+                }
+            },
+            "version": {
+                "major": 1,
+                "minor": 0,
+                "patch": 0
+            }
+        });
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event)
+            .expect("event JSON should match the AML Avro schema");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("event should encode as Avro binary");
+
+        assert!(!encoded.is_empty());
+
+        let event_without_optional_values = json!({
+            "event_type": "FinancialTransactionCreated",
+            "metadata": {
+                "correlation_id": "00000000-0000-4000-8000-000000000001",
+                "event_id": "00000000-0000-4000-8000-000000000002",
+                "source": "financial-transaction-service",
+                "timestamp": "2026-10-14T12:00:00Z",
+                "trace_id": "",
+                "tenant_id": "tenant-test"
+            },
+            "payload": {
+                "transaction": {
+                    "id": "00000000-0000-4000-8000-000000000003",
+                    "tenant_id": "tenant-test",
+                    "amount": "10.25",
+                    "currency": "CRC",
+                    "source_account_id": "account-source",
+                    "destination_account_id": "account-destination",
+                    "country_code": "CR",
+                    "channel": "bank_transfer",
+                    "occurred_at": "2026-10-14T11:59:00Z",
+                    "created_at": "2026-10-14T12:00:00Z"
+                }
+            },
+            "version": {
+                "major": 1,
+                "minor": 0,
+                "patch": 0
+            }
+        });
+
+        let avro_value = KafkaProducer::json_to_avro(&schema, &event_without_optional_values)
+            .expect("optional fields with schema defaults may be omitted");
+
+        let encoded = apache_avro::to_avro_datum(&schema, avro_value)
+            .expect("event with optional fields omitted should encode");
+
+        assert!(!encoded.is_empty());
+    }
+}
